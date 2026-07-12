@@ -100,7 +100,6 @@ final class AttributeMapper
         }
 
         if (isset($attrs['letterSpacing'])) {
-            // letterSpacing not yet in Style; skip until Style supports it
         }
 
         if (isset($attrs['opacity'])) {
@@ -146,12 +145,10 @@ final class AttributeMapper
 
         $str = (string) $value;
 
-        // Hex color: #rgb, #rrggbb
         if (preg_match('/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $str)) {
             return Color::hex($str);
         }
 
-        // Named colors
         return self::namedColor($str);
     }
 
@@ -204,12 +201,10 @@ final class AttributeMapper
     {
         $str = (string) $value;
 
-        // "100" → 100pt
         if (is_numeric($str)) {
             return Length::pt((float) $str);
         }
 
-        // "100pt", "100px", "50%", "10cm", "5in"
         if (preg_match('/^([\d.]+)\s*(pt|px|cm|mm|%)$/', $str, $m)) {
             $val = (float) $m[1];
             return match ($m[2]) {

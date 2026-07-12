@@ -36,7 +36,6 @@ final class Formatter
         foreach ($lines as $line) {
             $trimmed = trim($line);
 
-            // Skip empty lines (preserve single empty lines between blocks)
             if ($trimmed === '') {
                 if (!empty($formatted) && end($formatted) !== '') {
                     $formatted[] = '';
@@ -44,23 +43,19 @@ final class Formatter
                 continue;
             }
 
-            // Skip comments
             if (str_starts_with($trimmed, '//')) {
                 $formatted[] = $this->indent($indentLevel) . $trimmed;
                 continue;
             }
 
-            // Handle closing braces
             if (str_starts_with($trimmed, '}')) {
                 $indentLevel = max(0, $indentLevel - 1);
                 $inBlock = false;
             }
 
-            // Format the line
             $formattedLine = $this->formatLine($trimmed, $indentLevel);
             $formatted[] = $formattedLine;
 
-            // Handle opening braces and control structures
             if (str_ends_with($trimmed, '{')) {
                 $indentLevel++;
                 $inBlock = true;
@@ -69,19 +64,15 @@ final class Formatter
                 $inBlock = true;
             }
 
-            // Handle closing braces on same line
             if (str_contains($trimmed, '}')) {
                 $indentLevel = max(0, $indentLevel - 1);
                 $inBlock = false;
             }
         }
 
-        // Remove trailing empty lines
         while (!empty($formatted) && end($formatted) === '') {
             array_pop($formatted);
         }
-
-        // Join and add final newline if requested
         $result = implode("\n", $formatted);
         if ($this->insertFinalNewline) {
             $result .= "\n";
@@ -97,22 +88,18 @@ final class Formatter
     {
         $indent = $this->indent($indentLevel);
 
-        // Format directives
         if (str_starts_with($line, '@')) {
             return $indent . $line;
         }
 
-        // Format element declarations
         if (preg_match('/^(page|column|row|text|heading)\b/', $line)) {
             return $this->formatElement($line, $indent);
         }
 
-        // Format control structures
         if (preg_match('/^(if|foreach|else|elseif)\b/', $line)) {
             return $this->formatControlStructure($line, $indent);
         }
 
-        // Format content
         return $indent . $line;
     }
 
@@ -121,7 +108,6 @@ final class Formatter
      */
     private function formatElement(string $line, string $indent): string
     {
-        // Extract element name and content
         if (preg_match('/^(\w+)(?:\s*\(([^)]*)\))?\s*(\{)?(.*)$/', $line, $matches)) {
             $element = $matches[1];
             $attributes = $matches[2] ?? '';
@@ -130,18 +116,15 @@ final class Formatter
 
             $result = $indent . $element;
 
-            // Add attributes if present
             if ($attributes !== '') {
                 $formattedAttributes = $this->formatAttributes($attributes);
                 $result .= '(' . $formattedAttributes . ')';
             }
 
-            // Add brace if present
             if ($hasBrace) {
                 $result .= ' {';
             }
 
-            // Add content if present
             if ($content !== '') {
                 $result .= ' ' . $content;
             }
@@ -163,7 +146,6 @@ final class Formatter
 
             $result = $indent . $keyword . ' ';
 
-            // Format condition
             if (str_ends_with($condition, '{')) {
                 $result .= trim(substr($condition, 0, -1)) . ' {';
             } else {

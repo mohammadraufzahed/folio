@@ -51,13 +51,11 @@ final class GridLayout
 
             $currentColumn++;
             if ($currentColumn >= $this->columns) {
-                // Move to next row
                 $x = $paddingLeft;
                 $y += $maxRowHeight + $this->gap;
                 $maxRowHeight = 0.0;
                 $currentColumn = 0;
             } else {
-                // Move to next column
                 $x += $columnWidth + $this->gap;
             }
         }

@@ -49,33 +49,26 @@ final class Lexer
     {
         $char = $this->currentChar();
 
-        // Skip whitespace (track newlines for line/col)
         if (ctype_space($char)) {
             $this->advance();
             return null;
         }
 
-        // Comments
         if ($char === '/' && $this->peekChar() === '/') {
             return $this->lexComment();
         }
 
-        // Identifiers and keywords
         if (ctype_alpha($char) || $char === '_') {
             return $this->lexIdentifier();
         }
 
-        // Strings
         if ($char === '"' || $char === "'") {
             return $this->lexString();
         }
 
-        // Numbers
         if (ctype_digit($char)) {
             return $this->lexNumber();
         }
-
-        // Operators and punctuation
         return match ($char) {
             '{' => $this->makeToken(TokenType::LeftBrace, '{'),
             '}' => $this->makeToken(TokenType::RightBrace, '}'),
@@ -104,8 +97,8 @@ final class Lexer
         $start = $this->position;
         $startLine = $this->line;
         $startCol = $this->column;
-        $this->advance(); // Skip first /
-        $this->advance(); // Skip second /
+        $this->advance();
+        $this->advance();
 
         while ($this->position < $this->length && $this->currentChar() !== "\n") {
             $this->advance();
@@ -145,20 +138,15 @@ final class Lexer
     private function getKeywordType(string $value): TokenType
     {
         return match ($value) {
-            // Layout elements
             'page', 'column', 'row', 'text', 'heading',
             'table', 'tr', 'th', 'td', 'header', 'footer' => TokenType::Keyword,
 
-            // Control flow
             'if', 'else', 'elseif', 'foreach', 'as', 'empty' => TokenType::Keyword,
 
-            // Declarations
             'var', 'prop', 'partial', 'pageheader', 'pagefooter' => TokenType::Keyword,
 
-            // Chrome widgets
             'monogram', 'badge', 'spacer', 'rule', 'box', 'pagenum', 'img' => TokenType::Keyword,
 
-            // Boolean operators (word form)
             'and', 'or', 'not' => TokenType::Keyword,
 
             default => TokenType::Identifier,
@@ -171,7 +159,7 @@ final class Lexer
         $start = $this->position;
         $startLine = $this->line;
         $startCol = $this->column;
-        $this->advance(); // Skip opening quote
+        $this->advance();
 
         $value = '';
         while ($this->position < $this->length) {

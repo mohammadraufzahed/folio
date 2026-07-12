@@ -178,7 +178,6 @@ final class LayoutEngine
 
     private function layoutDefault(Node $node, LayoutContext $context): LayoutBox
     {
-        // Default layout for unknown node types
         return LayoutBox::make(
             Point::origin(),
             Size::make($context->availableWidth(), 0.0)

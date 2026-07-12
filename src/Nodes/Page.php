@@ -18,8 +18,8 @@ final class Page extends AbstractNode
     private readonly ?Node $content;
 
     public function __construct(
-        float $width = 595.0, // A4 width in points
-        float $height = 842.0, // A4 height in points
+        float $width = 595.0,
+        float $height = 842.0,
         ?Style $style = null,
         ?Node $content = null
     ) {

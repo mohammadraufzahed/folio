@@ -287,7 +287,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
     private function generatePhp(AstNode $node): string
     {
-        // Only Document is top-level full file
         if ($node->type === 'Document') {
             return $this->generateDocument($node);
         }
@@ -310,7 +309,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $php .= "use Folio\\Pdf\\Template\\Scope;\n";
         $php .= "use Folio\\Pdf\\Template\\AttributeMapper;\n\n";
 
-        // Collect var/prop defaults
         $defaults = [];
         foreach ($node->children as $child) {
             if ($child->type === 'VarDecl') {
@@ -323,7 +321,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         }
 
         $php .= "return static function (array \$data = []): Pdf {\n";
-        // Apply defaults for missing keys
         if ($defaults !== []) {
             $defaultsExpr = var_export($defaults, true);
             $php .= "    \$data = array_merge({$defaultsExpr}, \$data);\n";
@@ -333,12 +330,10 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $php .= "    \$pdf = Pdf::make();\n\n";
 
         foreach ($node->children as $i => $child) {
-            // Skip var/prop declarations - they're handled above
             if ($child->type === 'VarDecl') {
                 continue;
             }
 
-            // Document-level page chrome (repeating header/footer)
             if ($child->type === 'PageChrome') {
                 $php .= $this->generatePageChromeStatement($child, '    ');
                 continue;
@@ -348,7 +343,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             if ($child->type === 'Element' && ($child->attributes['type'] ?? '') === 'page') {
                 $php .= "    \$pdf = \$pdf->{$expr};\n";
             } elseif ($child->type === 'Foreach') {
-                // foreach at document level may emit multiple pages
                 $php .= $this->generateForeachStatement($child, '    ', true);
             } else {
                 $php .= "    \$pdf = \$pdf->page(Page::a4()->withContent({$expr}));\n";
@@ -434,7 +428,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             }
         }
 
-        // Custom chrome body: children present => layout tree mode
         if ($node->children !== []) {
             $layoutExpr = $this->generateChromeNodeList($node->children);
             $parts[] = "'layout' => " . $layoutExpr;
@@ -496,7 +489,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             }
         }
 
-        // Inline value (text "x", monogram "AR", badge foo)
         $valueExpr = "''";
         $childNodes = $node->children;
         if ($childNodes !== [] && in_array($childNodes[0]->type, ['StringLiteral', 'NumberLiteral', 'Identifier', 'PropertyAccess', 'BinaryOp', 'UnaryOp'], true)) {
@@ -523,7 +515,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $else = $node->children[1] ?? null;
         $thenExpr = $then ? $this->generateChromeNodeList($then->type === 'Block' ? $then->children : [$then]) : '[]';
 
-        // else-if chain: child[1] is an If node
         if ($else !== null && $else->type === 'If') {
             $elseExpr = $this->generateChromeIf($else);
         } elseif ($else !== null && $else->type === 'Block') {
@@ -609,22 +600,18 @@ final class PhpTemplateCompiler implements TemplateCompiler
             default => null,
         };
 
-        // Custom size: "600x800"
         if ($factory === null && $sizeStr !== null && preg_match('/^([\d.]+)\s*x\s*([\d.]+)$/', $sizeStr, $m)) {
             $w = (float) $m[1];
             $h = (float) $m[2];
             $factory = "Page::make({$w}, {$h})";
         }
 
-        // Fallback to a4
         if ($factory === null) {
             $factory = 'Page::a4()';
         }
 
-        // Apply landscape orientation: swap width/height
         if (is_string($orientation) && strtolower($orientation) === 'landscape') {
             $factory = "({$factory})->withSize(({$factory})->height(), ({$factory})->width())";
-            // Simplify: use a direct expression
             if ($sizeStr === 'a4' || $sizeStr === null || $sizeStr === '') {
                 $factory = 'Page::make(842.0, 595.0)';
             } elseif ($sizeStr === 'letter') {
@@ -677,7 +664,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             return 'null';
         }
 
-        // Style-related attribute keys
         $styleKeys = [
             'color',
             'background',
@@ -748,18 +734,14 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $path = (string) ($node->attributes['path'] ?? '');
         $escaped = var_export($path, true);
 
-        // At compile time, attempt to resolve and inline the partial.
         $resolved = $this->resolvePartialPath($path);
         if ($resolved !== null) {
             $partialContent = file_get_contents($resolved);
             if ($partialContent !== false) {
-                // Parse the partial and generate only the body expressions
-                // (not the full document wrapper with <?php / return static function)
                 $lexer = new Lexer($partialContent);
                 $parser = new Parser($lexer->tokenize());
                 $partialAst = $parser->parse();
 
-                // Generate each child expression and wrap in an array
                 $parts = [];
                 foreach ($partialAst->children as $child) {
                     if ($child->type === 'VarDecl') {
@@ -776,7 +758,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
                     return $parts[0];
                 }
 
-                // Multiple nodes: wrap in a Column
                 return 'Column::make(null, [' . implode(', ', $parts) . '])';
             }
         }
@@ -857,7 +838,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
      */
     private function generateNodeList(array $children): string
     {
-        // Filter out VarDecl nodes - they are metadata, not rendered
         $children = array_values(array_filter(
             $children,
             static fn(AstNode $c): bool => $c->type !== 'VarDecl'
@@ -867,7 +847,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             return '[]';
         }
 
-        // If any child is Foreach/If, build via array_merge fragments
         $needsMerge = false;
         foreach ($children as $child) {
             if ($child->type === 'Foreach' || $child->type === 'If') {
@@ -940,7 +919,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             $parts[] = var_export($p, true);
         }
 
-        // Use Scope for safe path resolution
         return '$scope->getPath([' . implode(', ', $parts) . '])';
     }
 
@@ -957,7 +935,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
         $thenExpr = $then ? $this->blockToArray($then) : '[]';
 
-        // else-if chain: child[1] is an If node (not a Block)
         if ($else !== null && $else->type === 'If') {
             $elseExpr = $this->generateIfExpression($else);
         } elseif ($else !== null && $else->type === 'Block') {
@@ -1084,7 +1061,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
     private function resolvePartialPath(string $path): ?string
     {
-        // Try relative to base dir
         if ($this->baseDir !== null) {
             $candidate = $this->baseDir . '/' . $path;
             if (!str_ends_with($candidate, '.folio')) {
@@ -1095,7 +1071,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             }
         }
 
-        // Try each partial dir
         foreach ($this->partialDirs as $dir) {
             $candidate = $dir . '/' . $path;
             if (!str_ends_with($candidate, '.folio')) {
@@ -1106,7 +1081,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             }
         }
 
-        // Try as absolute path
         if (is_file($path)) {
             return $path;
         }

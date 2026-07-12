@@ -73,11 +73,9 @@ final class PaginationEngine
         $layoutBox = $layoutEngine->layoutNode($node, $context);
 
         if ($layoutBox->height() <= $availableHeight) {
-            // Content fits on one page
             return [$node];
         }
 
-        // Content needs to be split
         return $this->splitContent($node, $availableWidth, $availableHeight, $layoutEngine);
     }
 
@@ -107,11 +105,9 @@ final class PaginationEngine
             $childBox = $layoutEngine->layoutNode($child, $context);
 
             if ($currentHeight + $childBox->height() <= $availableHeight) {
-                // Child fits on current page
                 $currentPageChildren[] = $child;
                 $currentHeight += $childBox->height();
             } else {
-                // Child doesn't fit, start new page
                 if (!empty($currentPageChildren)) {
                     $pages[] = $this->createPageFromChildren($currentPageChildren);
                 }
@@ -132,16 +128,12 @@ final class PaginationEngine
      */
     private function createPageFromChildren(array $children): Node
     {
-        // This is a simplified version - in reality, you'd want to preserve
-        // the original node type and just update its children
         $node = $children[0];
 
-        // Try to create a new instance with the children
         if (method_exists($node, 'withChildren')) {
             return $node->withChildren($children);
         }
 
-        // Fallback: return the first child if we can't reconstruct
         return $children[0];
     }
 

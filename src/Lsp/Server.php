@@ -48,7 +48,6 @@ final class Server
         $id = $request['id'] ?? null;
         $params = $request['params'] ?? [];
 
-        // Notifications have no id
         if ($method === null) {
             return;
         }
@@ -92,7 +91,7 @@ final class Server
                 'capabilities' => [
                     'textDocumentSync' => [
                         'openClose' => true,
-                        'change' => 1, // Full
+                        'change' => 1,
                     ],
                     'completionProvider' => [
                         'resolveProvider' => false,
@@ -135,7 +134,6 @@ final class Server
             return;
         }
 
-        // Full document sync
         $text = $changes[array_key_last($changes)]['text'] ?? '';
         $this->documents[$uri] = $text;
         $this->publishDiagnostics($uri, $text);
@@ -201,7 +199,7 @@ final class Server
             'kind' => $kind,
             'detail' => $detail,
             'insertText' => $insert,
-            'insertTextFormat' => 2, // Snippet
+            'insertTextFormat' => 2,
         ];
     }
 
@@ -284,13 +282,15 @@ final class Server
         return [
             'jsonrpc' => '2.0',
             'id' => $id,
-            'result' => [[
-                'range' => [
-                    'start' => ['line' => 0, 'character' => 0],
-                    'end' => ['line' => $lastLine, 'character' => $lastChar],
-                ],
-                'newText' => $formatted,
-            ]],
+            'result' => [
+                [
+                    'range' => [
+                        'start' => ['line' => 0, 'character' => 0],
+                        'end' => ['line' => $lastLine, 'character' => $lastChar],
+                    ],
+                    'newText' => $formatted,
+                ]
+            ],
         ];
     }
 
@@ -317,14 +317,12 @@ final class Server
 
             $opens = substr_count($trimmed, '{');
             $closes = substr_count($trimmed, '}');
-            // Net open braces increase indent for following lines
             $net = $opens - $closes;
             if (!str_starts_with($trimmed, '}') && $net > 0) {
                 $level += $net;
             } elseif (str_starts_with($trimmed, '}') && $opens > $closes) {
                 $level += $opens - $closes;
             } elseif (!str_starts_with($trimmed, '}') && $net < 0) {
-                // already handled closes at start; remaining net closes
             }
         }
 
@@ -394,8 +392,6 @@ final class Server
 
     private function methodNotFound(int|string $id, string $method): array
     {
-        // Don't error on unknown methods that are optional — return null result
-        // for requests we don't implement, except true unknowns.
         $optional = [
             'workspace/didChangeConfiguration',
             'workspace/didChangeWatchedFiles',

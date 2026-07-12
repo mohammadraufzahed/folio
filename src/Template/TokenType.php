@@ -9,18 +9,14 @@ namespace Folio\Pdf\Template;
  */
 enum TokenType: string
 {
-    // Literals
     case String = 'string';
     case Number = 'number';
     case Identifier = 'identifier';
 
-    // Keywords
     case Keyword = 'keyword';
 
-    // Directives
     case Directive = 'directive';
 
-    // Operators
     case Equals = '=';
     case EqualsEquals = '==';
     case NotEquals = '!=';
@@ -29,7 +25,6 @@ enum TokenType: string
     case GreaterThan = '>';
     case GreaterThanOrEqual = '>=';
 
-    // Punctuation
     case LeftBrace = '{';
     case RightBrace = '}';
     case LeftParen = '(';
@@ -41,7 +36,6 @@ enum TokenType: string
     case At = '@';
     case Bang = '!';
 
-    // Other
     case Comment = 'comment';
     case Unknown = 'unknown';
     case EOF = 'eof';

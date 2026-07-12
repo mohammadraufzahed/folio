@@ -258,7 +258,6 @@ final class Document
         if ($isHeader) {
             $bandTop = $pageHeight - 10.0;
             $bandBottom = $bandTop - $height;
-            // Background band
             $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $height, $theme['bg']);
             $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
             $originY = $bandTop;
@@ -276,7 +275,6 @@ final class Document
         if (!is_array($layout)) {
             $layout = [];
         }
-        // Flatten accidental nested arrays from if/foreach merges
         $layout = $this->flattenChromeNodes($layout);
 
         $ctx = [
@@ -313,11 +311,9 @@ final class Document
             if (!is_array($n)) {
                 continue;
             }
-            // if/foreach may return list of nodes without type key
             if (isset($n['type'])) {
                 $out[] = $n;
             } else {
-                // numeric list
                 $isList = array_keys($n) === range(0, count($n) - 1);
                 if ($isList) {
                     foreach ($this->flattenChromeNodes($n) as $child) {
@@ -349,7 +345,6 @@ final class Document
             return;
         }
 
-        // Default: stack vertically if multiple roots, or paint single root
         if (count($nodes) === 1) {
             $this->paintChromeNode($g, $t, $nodes[0], $x, $topY, $width, $height, $ctx);
             return;
@@ -400,7 +395,6 @@ final class Document
         $innerTop = $topY - $padY;
         $innerH = max(8.0, $height - $padY * 2);
 
-        // Optional box background
         if ($type === 'box' || isset($attrs['bg'])) {
             $bg = $this->resolveColorAttr((string) ($attrs['bg'] ?? ''), $theme, $theme['bg']);
             $g[] = $this->pdfFillRect($x, $topY - $height, $width, $height, $bg);
@@ -409,7 +403,6 @@ final class Document
         if ($type === 'row') {
             $align = (string) ($attrs['align'] ?? 'center');
             $n = max(1, count($children));
-            // Compute grow units
             $grows = [];
             $fixed = 0.0;
             foreach ($children as $i => $child) {
@@ -467,8 +460,13 @@ final class Document
             $y = $topY - $height / 2.0;
             $g[] = sprintf(
                 "%.3f %.3f %.3f RG\n1 w\n%.2f %.2f m\n%.2f %.2f l\nS\n0 0 0 RG\n",
-                $color[0], $color[1], $color[2],
-                $x, $y, $x + $width, $y
+                $color[0],
+                $color[1],
+                $color[2],
+                $x,
+                $y,
+                $x + $width,
+                $y
             );
             return;
         }
@@ -522,7 +520,6 @@ final class Document
             $type = 'text';
         }
 
-        // text / heading / default
         $size = (int) ($attrs['size'] ?? ($type === 'heading' ? 14 : 10));
         $size = max(6, min(28, $size));
         $weight = (string) ($attrs['weight'] ?? ($type === 'heading' ? 'bold' : 'normal'));
@@ -555,7 +552,6 @@ final class Document
             $this->escapePdfString($label)
         );
 
-        // paint nested children below text if any
         if ($children !== []) {
             $this->paintChromeNodes($g, $t, $children, $x, $topY - $size - 4.0, $width, max(8.0, $height - $size - 4.0), $ctx);
         }
@@ -615,7 +611,7 @@ final class Document
     {
         $value = ltrim(trim($value), '#');
         if (preg_match('/^[0-9a-fA-F]{3}$/', $value)) {
-            $value = $value[0].$value[0].$value[1].$value[1].$value[2].$value[2];
+            $value = $value[0] . $value[0] . $value[1] . $value[1] . $value[2] . $value[2];
         }
         if (!preg_match('/^[0-9a-fA-F]{6}$/', $value)) {
             return null;
@@ -650,31 +646,25 @@ final class Document
             'minimal' => 42.0,
             'split' => 58.0,
             'band' => 62.0,
-            default => 56.0, // bar
+            default => 56.0,
         };
         $bandBottom = $bandTop - $bandHeight;
 
-        // Background
         if ($style === 'minimal') {
-            // light wash + accent underline
             $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $bandHeight, $theme['wash']);
             $g[] = $this->pdfFillRect(0.0, $bandBottom - 2.5, $pageWidth, 2.5, $theme['accent']);
         } elseif ($style === 'band') {
             $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $bandHeight, $theme['bg']);
-            // soft top highlight strip
             $g[] = $this->pdfFillRect(0.0, $bandTop - 4.0, $pageWidth, 4.0, $theme['accentSoft']);
             $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
         } elseif ($style === 'split') {
-            // left brand panel + right meta panel
             $split = $pageWidth * 0.62;
             $g[] = $this->pdfFillRect(0.0, $bandBottom, $split, $bandHeight, $theme['bg']);
             $g[] = $this->pdfFillRect($split, $bandBottom, $pageWidth - $split, $bandHeight, $theme['bgAlt']);
             $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
         } else {
-            // bar (default): solid brand bar + accent edge
             $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $bandHeight, $theme['bg']);
             $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
-            // left accent rail
             $g[] = $this->pdfFillRect(0.0, $bandBottom, 5.0, $bandHeight, $theme['accent']);
         }
 
@@ -682,12 +672,10 @@ final class Document
         $mutedColor = $style === 'minimal' ? $theme['mutedDark'] : $theme['mutedLight'];
 
         $cursorX = $x;
-        // Monogram tile
         if ($showMonogram && $monogram !== '') {
             $tile = 28.0;
             $tileY = $bandTop - 40.0;
             $g[] = $this->pdfFillRect($cursorX, $tileY, $tile, $tile, $theme['accent']);
-            // inner lighter edge
             $g[] = $this->pdfFillRect($cursorX + 1.5, $tileY + 1.5, $tile - 3.0, $tile - 3.0, $theme['accentSoft']);
             $t[] = $this->pdfSetRgb($theme['textLight']);
             $t[] = sprintf(
@@ -699,7 +687,6 @@ final class Document
             $cursorX += $tile + 10.0;
         }
 
-        // Title block
         $titleY = $bandTop - 24.0;
         $subY = $bandTop - 40.0;
         $t[] = $this->pdfSetRgb($textColor);
@@ -721,7 +708,6 @@ final class Document
             );
         }
 
-        // Right meta column (avoid badge collision)
         $rightColW = 150.0;
         $rightX = $pageWidth - self::MARGIN_X - $rightColW;
         $metaBottomReserve = $badge !== '' ? 18.0 : 0.0;
@@ -745,7 +731,6 @@ final class Document
             );
         }
 
-        // Badge pill (bottom-right of header, never over text)
         if ($badge !== '') {
             $badgeLabel = strtoupper($badge);
             $badgeW = max(52.0, strlen($badgeLabel) * 5.2 + 18.0);
@@ -753,7 +738,6 @@ final class Document
             $badgeX = $pageWidth - self::MARGIN_X - $badgeW;
             $badgeY = $bandBottom + 8.0;
             $g[] = $this->pdfFillRect($badgeX, $badgeY, $badgeW, $badgeH, $theme['accent']);
-            // subtle left notch bar
             $g[] = $this->pdfFillRect($badgeX, $badgeY, 3.0, $badgeH, $theme['accentSoft']);
             $t[] = $this->pdfSetRgb($theme['textLight']);
             $t[] = sprintf(
@@ -798,18 +782,19 @@ final class Document
             $g[] = $this->pdfFillRect(0.0, 0.0, $pageWidth, $footerTop + 6.0, $theme['wash']);
             $g[] = $this->pdfFillRect(0.0, $footerTop + 4.0, $pageWidth, 2.5, $theme['accent']);
         } elseif ($style === 'minimal') {
-            // no fill, thin accent ticks
             $g[] = $this->pdfFillRect($x, $footerTop, 28.0, 1.5, $theme['accent']);
             $g[] = $this->pdfFillRect($x + $contentWidth - 28.0, $footerTop, 28.0, 1.5, $theme['accent']);
         } else {
-            // rule
             $g[] = sprintf(
                 "%.3f %.3f %.3f RG\n0.7 w\n%.2f %.2f m\n%.2f %.2f l\nS\n0 0 0 RG\n",
-                $theme['rule'][0], $theme['rule'][1], $theme['rule'][2],
-                $x, $footerTop,
-                $x + $contentWidth, $footerTop
+                $theme['rule'][0],
+                $theme['rule'][1],
+                $theme['rule'][2],
+                $x,
+                $footerTop,
+                $x + $contentWidth,
+                $footerTop
             );
-            // accent center diamond-ish bar
             $mid = $x + $contentWidth / 2.0;
             $g[] = $this->pdfFillRect($mid - 18.0, $footerTop - 0.5, 36.0, 2.0, $theme['accent']);
         }
@@ -933,7 +918,6 @@ final class Document
         $base['mutedDark'] = [0.38, 0.42, 0.48];
         $base['rule'] = [0.72, 0.74, 0.78];
 
-        // Custom hex overrides: bg, bgAlt, accent, accentSoft, wash
         foreach (['bg', 'bgAlt', 'accent', 'accentSoft', 'wash'] as $key) {
             if (!isset($overrides[$key])) {
                 continue;
@@ -952,7 +936,13 @@ final class Document
     {
         return sprintf(
             "%.3f %.3f %.3f rg\n%.2f %.2f %.2f %.2f re f\n0 0 0 rg\n",
-            $rgb[0], $rgb[1], $rgb[2], $x, $y, $w, $h
+            $rgb[0],
+            $rgb[1],
+            $rgb[2],
+            $x,
+            $y,
+            $w,
+            $h
         );
     }
 
@@ -1154,16 +1144,13 @@ final class Document
         $variantColors = [
             'warning' => [1.0, 0.93, 0.70],
             'success' => [0.85, 0.93, 0.85],
-            'danger'  => [0.98, 0.85, 0.85],
-            'info'    => [0.85, 0.90, 0.97],
+            'danger' => [0.98, 0.85, 0.85],
+            'info' => [0.85, 0.90, 0.97],
             'primary' => [0.82, 0.86, 0.92],
         ];
         $footerRgb = [0.88, 0.88, 0.90];
 
-        $drawRow = function (int $rowIndex, int $bodyIndex) use (
-            $table, $rows, $rowHeights, $columnWidths, &$y, $x,
-            $headerRgb, $zebraRgb, $variantColors, $footerRgb
-        ): void {
+        $drawRow = function (int $rowIndex, int $bodyIndex) use ($table, $rows, $rowHeights, $columnWidths, &$y, $x, $headerRgb, $zebraRgb, $variantColors, $footerRgb): void {
             $row = $rows[$rowIndex];
             $rowHeight = $rowHeights[$rowIndex];
             $rowTop = $y;
@@ -1196,15 +1183,23 @@ final class Document
                 if ($fillRgb !== null) {
                     $this->gBuf[] = sprintf(
                         "%.3f %.3f %.3f rg\n%.2f %.2f %.2f %.2f re f\n0 0 0 rg\n",
-                        $fillRgb[0], $fillRgb[1], $fillRgb[2],
-                        $cellX, $rowBottom, $cellWidth, $rowHeight
+                        $fillRgb[0],
+                        $fillRgb[1],
+                        $fillRgb[2],
+                        $cellX,
+                        $rowBottom,
+                        $cellWidth,
+                        $rowHeight
                     );
                 }
 
                 if ($table->showBorders()) {
                     $this->gBuf[] = sprintf(
                         "%.2f %.2f %.2f %.2f re S\n",
-                        $cellX, $rowBottom, $cellWidth, $rowHeight
+                        $cellX,
+                        $rowBottom,
+                        $cellWidth,
+                        $rowHeight
                     );
                 }
 

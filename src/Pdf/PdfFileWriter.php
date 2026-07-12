@@ -84,14 +84,11 @@ final class PdfFileWriter implements PdfWriterInterface
     {
         $pdf = "%PDF-1.7\n";
 
-        // Create info object
         $this->infoObject = $this->createObject();
         $this->objects[$this->infoObject] = $this->generateInfoObject();
 
-        // Create root object (catalog)
         $this->rootObject = $this->createObject();
 
-        // Create pages and kids
         $kids = [];
         foreach ($this->pages as $page) {
             $pageObjId = $page['id'];
@@ -123,17 +120,16 @@ final class PdfFileWriter implements PdfWriterInterface
                 "    >>\n" .
                 "  >>\n" .
                 ">>\n",
-                0, // Will be set to pages object
+                0,
                 $page['width'],
                 $page['height'],
                 $contentObjId,
-                0 // Font object, will be created
+                0
             );
 
             $kids[] = sprintf("%d 0 R", $pageObjId);
         }
 
-        // Create pages object
         $pagesObjectId = $this->createObject();
         $this->objects[$pagesObjectId] = sprintf(
             "<<\n" .
@@ -145,7 +141,6 @@ final class PdfFileWriter implements PdfWriterInterface
             count($this->pages)
         );
 
-        // Update page parent references
         foreach ($this->pages as $page) {
             $this->objects[$page['id']] = str_replace(
                 sprintf('/Parent %d 0 R', 0),
@@ -154,7 +149,6 @@ final class PdfFileWriter implements PdfWriterInterface
             );
         }
 
-        // Create font object
         $fontObjectId = $this->createObject();
         $this->objects[$fontObjectId] = sprintf(
             "<<\n" .
@@ -164,7 +158,6 @@ final class PdfFileWriter implements PdfWriterInterface
             ">>\n"
         );
 
-        // Update font references in pages
         foreach ($this->pages as $page) {
             $this->objects[$page['id']] = str_replace(
                 sprintf('/F1 %d 0 R', 0),
@@ -173,7 +166,6 @@ final class PdfFileWriter implements PdfWriterInterface
             );
         }
 
-        // Create root catalog
         $this->objects[$this->rootObject] = sprintf(
             "<<\n" .
             "  /Type /Catalog\n" .
@@ -182,7 +174,6 @@ final class PdfFileWriter implements PdfWriterInterface
             $pagesObjectId
         );
 
-        // Write all objects
         $offsets = [];
         foreach ($this->objects as $id => $content) {
             $offsets[$id] = strlen($pdf);
@@ -191,7 +182,6 @@ final class PdfFileWriter implements PdfWriterInterface
             $pdf .= "endobj\n";
         }
 
-        // Write xref table
         $xrefOffset = strlen($pdf);
         $pdf .= "xref\n";
         $pdf .= sprintf("0 %d\n", $this->objectId + 1);
@@ -200,7 +190,6 @@ final class PdfFileWriter implements PdfWriterInterface
             $pdf .= sprintf("%010d 00000 n \n", $offset);
         }
 
-        // Write trailer
         $pdf .= "trailer\n";
         $pdf .= sprintf(
             "<<\n" .
@@ -213,7 +202,6 @@ final class PdfFileWriter implements PdfWriterInterface
             $this->infoObject
         );
 
-        // Write startxref
         $pdf .= sprintf("startxref\n%d\n", $xrefOffset);
         $pdf .= "%%EOF\n";
 

@@ -160,7 +160,6 @@ final class Style
         return get_object_vars($this);
     }
 
-    // Getters
     public function padding(): ?float
     {
         return $this->padding;

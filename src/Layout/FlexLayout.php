@@ -42,7 +42,6 @@ final class FlexLayout
             $children = array_reverse($children);
         }
 
-        // Calculate total grow factor
         $totalGrow = 0.0;
         foreach ($children as $child) {
             $childStyle = $child->style();
@@ -50,7 +49,6 @@ final class FlexLayout
             $totalGrow += $grow;
         }
 
-        // Layout children
         $x = $paddingLeft;
         $maxHeight = 0.0;
         $childBoxes = [];
@@ -61,7 +59,6 @@ final class FlexLayout
             $grow = $childStyle?->grow() ?? 0.0;
             $shrink = $childStyle?->shrink() ?? 1.0;
 
-            // Calculate child width based on grow factor
             if ($grow > 0 && $totalGrow > 0) {
                 $childWidth = ($grow / $totalGrow) * $remainingWidth;
             } else {
@@ -103,7 +100,6 @@ final class FlexLayout
             $children = array_reverse($children);
         }
 
-        // Calculate total grow factor
         $totalGrow = 0.0;
         foreach ($children as $child) {
             $childStyle = $child->style();
@@ -111,7 +107,6 @@ final class FlexLayout
             $totalGrow += $grow;
         }
 
-        // Layout children
         $y = $paddingTop;
         $maxWidth = 0.0;
         $childBoxes = [];
@@ -121,7 +116,6 @@ final class FlexLayout
             $childStyle = $child->style();
             $grow = $childStyle?->grow() ?? 0.0;
 
-            // Calculate child height based on grow factor
             if ($grow > 0 && $totalGrow > 0) {
                 $childHeight = ($grow / $totalGrow) * $remainingHeight;
             } else {
@@ -149,7 +143,6 @@ final class FlexLayout
 
     public function layoutChild(Node $child, LayoutContext $context): LayoutBox
     {
-        // Delegate to the main layout engine for child layout
         $layoutEngine = new LayoutEngine();
         return $layoutEngine->layoutNode($child, $context);
     }
