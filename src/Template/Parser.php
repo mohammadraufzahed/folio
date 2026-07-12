@@ -4,14 +4,23 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
+use Folio\Pdf\Template\Error\TemplateError;
+
 /**
- * Parser for the custom template language.
+ * Parser for the Folio template language.
+ *
+ * Recursive-descent parser with a Pratt-style expression parser
+ * supporting comparisons, boolean operators, and grouping.
  */
 final class Parser
 {
     private int $position = 0;
+    /** @var array<int, Token> */
     private array $tokens;
 
+    /**
+     * @param array<int, Token> $tokens
+     */
     public function __construct(array $tokens)
     {
         $this->tokens = array_values(array_filter(
@@ -52,14 +61,8 @@ final class Parser
             TokenType::Keyword => $this->parseKeyword(),
             TokenType::LeftBrace => $this->parseBlock(),
             TokenType::String, TokenType::Identifier, TokenType::Number => $this->parseExpression(),
-            default => $this->skipUnknown(),
+            default => $this->error("Unexpected token {$token->type->name} '{$token->value}'", $token),
         };
-    }
-
-    private function skipUnknown(): ?AstNode
-    {
-        $this->advance();
-        return null;
     }
 
     private function parseDirective(): AstNode
@@ -83,7 +86,7 @@ final class Parser
             'foreach' => $this->parseForeach(),
             'var', 'prop' => $this->parseVarDecl($keyword),
             'partial' => $this->parsePartial(),
-            default => new AstNode('Keyword', [], ['value' => $keyword]),
+            default => $this->error("Unknown keyword '{$keyword}'", $token),
         };
     }
 
@@ -92,15 +95,13 @@ final class Parser
         $children = [];
         $attributes = $this->parseAttributes();
 
-        // Inline content: text "Hello", heading title, td row.label (keywords allowed as vars)
+        // Inline content: text "Hello", heading title, td row.label
         if (
             $this->check(TokenType::String)
             || $this->check(TokenType::Identifier)
             || $this->check(TokenType::Number)
             || $this->check(TokenType::Keyword)
         ) {
-            // Only treat keyword as expression if it looks like a value (followed by . or end of element)
-            // Always try expression first for dotted paths like row.label / company.name
             $children[] = $this->parseExpression();
         }
 
@@ -133,25 +134,23 @@ final class Parser
 
         while (!$this->check(TokenType::RightParen) && !$this->isAtEnd()) {
             $nameToken = $this->consume(TokenType::Identifier, 'Expected attribute name');
-            $this->consume(TokenType::Equals, "Expected '=' after attribute name");
+            $this->consume(TokenType::Equals, "Expected '=' after attribute name '{$nameToken->value}'");
 
-            // Allow string/number literals OR dotted property paths (company.name)
             if (
                 $this->check(TokenType::String) || $this->check(TokenType::Number)
                 || $this->check(TokenType::Identifier) || $this->check(TokenType::Keyword)
+                || $this->check(TokenType::LeftParen)
             ) {
                 $valueNode = $this->parseExpression();
-                // Keep simple scalars as raw values for existing callers (variant=warning)
                 if ($valueNode->type === 'StringLiteral' || $valueNode->type === 'NumberLiteral') {
                     $attributes[$nameToken->value] = $valueNode->attributes['value'] ?? '';
                 } elseif ($valueNode->type === 'Identifier') {
                     $attributes[$nameToken->value] = $valueNode->attributes['value'] ?? '';
                 } else {
-                    // PropertyAccess etc. stored as AST for compiler
                     $attributes[$nameToken->value] = $valueNode;
                 }
             } else {
-                throw new \RuntimeException('Expected attribute value');
+                $this->error('Expected attribute value', $this->peek());
             }
 
             if ($this->check(TokenType::Comma)) {
@@ -202,7 +201,7 @@ final class Parser
             $kw = $token->value;
             // Disallow body-only constructs inside chrome
             if (in_array($kw, ['page', 'table', 'tr', 'th', 'td', 'header', 'footer', 'pageheader', 'pagefooter'], true)) {
-                throw new \RuntimeException("Element '{$kw}' is not allowed inside page chrome");
+                $this->error("Element '{$kw}' is not allowed inside page chrome", $token);
             }
             return $this->parseKeyword();
         }
@@ -219,20 +218,16 @@ final class Parser
             return $this->parseExpression();
         }
 
-        $this->advance();
-        return null;
+        $this->error("Unexpected token in page chrome: {$token->type->name} '{$token->value}'", $token);
     }
 
     /**
      * Parse a var/prop declaration: var name = "default" or prop name = expr
-     * Produces an AstNode with type 'VarDecl'.
      */
     private function parseVarDecl(string $keyword): AstNode
     {
-        // var name = "value"
-        // prop name = expression
         $nameToken = $this->consume(TokenType::Identifier, "Expected variable name after '{$keyword}'");
-        $this->consume(TokenType::Equals, "Expected '=' after variable name");
+        $this->consume(TokenType::Equals, "Expected '=' after variable name '{$nameToken->value}'");
 
         $defaultExpr = $this->parseExpression();
 
@@ -245,11 +240,9 @@ final class Parser
 
     /**
      * Parse a partial include: partial "path/to/file" or partial name
-     * Produces an AstNode with type 'Partial'.
      */
     private function parsePartial(): AstNode
     {
-        // partial "path" or partial identifier
         if ($this->check(TokenType::String)) {
             $path = $this->advance();
             return new AstNode('Partial', [], ['path' => $path->value]);
@@ -260,7 +253,7 @@ final class Parser
             return new AstNode('Partial', [], ['path' => $name->value]);
         }
 
-        throw new \RuntimeException("Expected partial path after 'partial'");
+        $this->error("Expected path after 'partial'", $this->peek());
     }
 
     private function parseBlock(): AstNode
@@ -279,49 +272,221 @@ final class Parser
         return new AstNode('Block', $children);
     }
 
+    /**
+     * Parse if/elseif/else chains.
+     *
+     * AST: If node with children = [thenBlock, elseIf1, elseIf2, ..., elseBlock?]
+     * Each elseIf is an If node stored as a child.
+     */
     private function parseIf(): AstNode
     {
         $condition = $this->parseExpression();
         $thenBranch = $this->parseBlock();
-        $elseBranch = null;
+
+        $children = [$thenBranch];
+        $attributes = ['condition' => $condition];
+
+        // else if / elseif chain
+        if ($this->check(TokenType::Keyword) && $this->peek()->value === 'else') {
+            $this->advance(); // consume 'else'
+
+            if ($this->check(TokenType::Keyword) && $this->peek()->value === 'if') {
+                // else if → nested If as child
+                $this->advance(); // consume 'if'
+                $children[] = $this->parseIf();
+            } elseif ($this->check(TokenType::Keyword) && $this->peek()->value === 'elseif') {
+                // elseif → nested If as child
+                $this->advance(); // consume 'elseif'
+                $children[] = $this->parseIfContinued();
+            } else {
+                // plain else block
+                $children[] = $this->parseBlock();
+            }
+        } elseif ($this->check(TokenType::Keyword) && $this->peek()->value === 'elseif') {
+            $this->advance(); // consume 'elseif'
+            $children[] = $this->parseIfContinued();
+        }
+
+        return new AstNode('If', $children, $attributes);
+    }
+
+    /**
+     * Parse the rest of an elseif chain (condition + block + more elseif/else).
+     */
+    private function parseIfContinued(): AstNode
+    {
+        $condition = $this->parseExpression();
+        $thenBranch = $this->parseBlock();
+
+        $children = [$thenBranch];
+        $attributes = ['condition' => $condition];
 
         if ($this->check(TokenType::Keyword) && $this->peek()->value === 'else') {
             $this->advance();
-            $elseBranch = $this->parseBlock();
+            if ($this->check(TokenType::Keyword) && $this->peek()->value === 'if') {
+                $this->advance(); // consume 'if'
+                $children[] = $this->parseIf();
+            } elseif ($this->check(TokenType::Keyword) && $this->peek()->value === 'elseif') {
+                $this->advance();
+                $children[] = $this->parseIfContinued();
+            } else {
+                $children[] = $this->parseBlock();
+            }
+        } elseif ($this->check(TokenType::Keyword) && $this->peek()->value === 'elseif') {
+            $this->advance();
+            $children[] = $this->parseIfContinued();
         }
 
-        $children = [$thenBranch];
-        if ($elseBranch !== null) {
-            $children[] = $elseBranch;
-        }
-
-        return new AstNode('If', $children, ['condition' => $condition]);
+        return new AstNode('If', $children, $attributes);
     }
 
+    /**
+     * Parse foreach with optional index and empty block.
+     *
+     * Syntax:
+     *   foreach collection as item { ... }
+     *   foreach collection as index, item { ... }
+     *   foreach collection as item { ... } empty { ... }
+     */
     private function parseForeach(): AstNode
     {
-        // foreach collection as item { ... }
         $collection = $this->parseExpression();
         $as = $this->consume(TokenType::Keyword, "Expected 'as' after foreach collection");
         if ($as->value !== 'as') {
-            throw new \RuntimeException("Expected 'as' after foreach collection");
+            $this->error("Expected 'as' after foreach collection, got '{$as->value}'", $as);
         }
+
         // Item may be a keyword (e.g. "row") used as a loop variable name
+        $index = null;
         if ($this->check(TokenType::Identifier) || $this->check(TokenType::Keyword)) {
-            $item = $this->advance();
+            $first = $this->advance();
+            // Check for "index, item" pattern
+            if ($this->check(TokenType::Comma)) {
+                $this->advance(); // consume ','
+                if ($this->check(TokenType::Identifier) || $this->check(TokenType::Keyword)) {
+                    $index = $first->value;
+                    $item = $this->advance();
+                } else {
+                    $this->error("Expected item identifier after comma in foreach", $this->peek());
+                }
+            } else {
+                $item = $first;
+            }
         } else {
-            throw new \RuntimeException("Expected item identifier after 'as'");
+            $this->error("Expected item identifier after 'as'", $this->peek());
         }
+
         $body = $this->parseBlock();
 
-        return new AstNode('Foreach', [$body], [
+        $emptyBody = null;
+        if ($this->check(TokenType::Keyword) && $this->peek()->value === 'empty') {
+            $this->advance();
+            $emptyBody = $this->parseBlock();
+        }
+
+        $children = [$body];
+        if ($emptyBody !== null) {
+            $children[] = $emptyBody;
+        }
+
+        return new AstNode('Foreach', $children, [
             'collection' => $collection,
             'item' => $item->value,
+            'index' => $index,
+            'hasEmpty' => $emptyBody !== null,
         ]);
     }
 
+    // ─── Expression parser (Pratt-style precedence climbing) ───
+
     private function parseExpression(): AstNode
     {
+        return $this->parseOr();
+    }
+
+    private function parseOr(): AstNode
+    {
+        $left = $this->parseAnd();
+
+        while ($this->check(TokenType::Keyword) && $this->peek()->value === 'or') {
+            $op = $this->advance();
+            $right = $this->parseAnd();
+            $left = new AstNode('BinaryOp', [$left, $right], ['op' => 'or']);
+        }
+
+        return $left;
+    }
+
+    private function parseAnd(): AstNode
+    {
+        $left = $this->parseNot();
+
+        while ($this->check(TokenType::Keyword) && $this->peek()->value === 'and') {
+            $op = $this->advance();
+            $right = $this->parseNot();
+            $left = new AstNode('BinaryOp', [$left, $right], ['op' => 'and']);
+        }
+
+        return $left;
+    }
+
+    private function parseNot(): AstNode
+    {
+        if ($this->check(TokenType::Keyword) && $this->peek()->value === 'not') {
+            $this->advance();
+            $operand = $this->parseNot();
+            return new AstNode('UnaryOp', [$operand], ['op' => 'not']);
+        }
+
+        if ($this->check(TokenType::Bang)) {
+            $this->advance();
+            $operand = $this->parseNot();
+            return new AstNode('UnaryOp', [$operand], ['op' => 'not']);
+        }
+
+        return $this->parseComparison();
+    }
+
+    private function parseComparison(): AstNode
+    {
+        $left = $this->parsePrimary();
+
+        $comparisonTypes = [
+            TokenType::EqualsEquals,
+            TokenType::NotEquals,
+            TokenType::LessThan,
+            TokenType::LessThanOrEqual,
+            TokenType::GreaterThan,
+            TokenType::GreaterThanOrEqual,
+        ];
+
+        while ($this->check($comparisonTypes)) {
+            $opToken = $this->advance();
+            $op = match ($opToken->type) {
+                TokenType::EqualsEquals => '==',
+                TokenType::NotEquals => '!=',
+                TokenType::LessThan => '<',
+                TokenType::LessThanOrEqual => '<=',
+                TokenType::GreaterThan => '>',
+                TokenType::GreaterThanOrEqual => '>=',
+                default => '==',
+            };
+            $right = $this->parsePrimary();
+            $left = new AstNode('BinaryOp', [$left, $right], ['op' => $op]);
+        }
+
+        return $left;
+    }
+
+    private function parsePrimary(): AstNode
+    {
+        // Grouping: (expr)
+        if ($this->match(TokenType::LeftParen)) {
+            $expr = $this->parseExpression();
+            $this->consume(TokenType::RightParen, "Expected ')' after expression");
+            return $expr;
+        }
+
         if ($this->match(TokenType::String)) {
             return new AstNode('StringLiteral', [], ['value' => $this->previous()->value]);
         }
@@ -337,7 +502,7 @@ final class Parser
                 if ($this->check(TokenType::Identifier) || $this->check(TokenType::Keyword)) {
                     $parts[] = $this->advance()->value;
                 } else {
-                    throw new \RuntimeException("Expected property after '.'");
+                    $this->error("Expected property after '.'", $this->peek());
                 }
             }
 
@@ -348,8 +513,11 @@ final class Parser
             return new AstNode('PropertyAccess', [], ['path' => $parts]);
         }
 
-        throw new \RuntimeException("Unexpected token: {$this->peek()->value}");
+        $token = $this->peek();
+        $this->error("Unexpected token in expression: {$token->type->name} '{$token->value}'", $token);
     }
+
+    // ─── Helpers ───
 
     private function match(TokenType $type): bool
     {
@@ -360,12 +528,19 @@ final class Parser
         return false;
     }
 
-    private function check(TokenType $type): bool
+    /**
+     * @param TokenType|list<TokenType> $type
+     */
+    private function check(TokenType|array $type): bool
     {
         if ($this->isAtEnd()) {
             return false;
         }
-        return $this->peek()->type === $type;
+        $t = $this->peek()->type;
+        if (is_array($type)) {
+            return in_array($t, $type, true);
+        }
+        return $t === $type;
     }
 
     private function advance(): Token
@@ -381,11 +556,36 @@ final class Parser
         if ($this->check($type)) {
             return $this->advance();
         }
-        throw new \RuntimeException($message . " (got {$this->peek()->type->name}: {$this->peek()->value})");
+        $token = $this->peek();
+        $this->error(
+            $message . " (got {$token->type->name}: '{$token->value}')",
+            $token,
+        );
+    }
+
+    /**
+     * Throw a TemplateError with the token's source location.
+     *
+     * @return never
+     */
+    private function error(string $message, Token $token): never
+    {
+        throw new TemplateError(
+            $message,
+            $token->line,
+            $token->column,
+            $token->length,
+        );
     }
 
     private function peek(): Token
     {
+        if ($this->position >= count($this->tokens)) {
+            $last = $this->tokens[count($this->tokens) - 1] ?? null;
+            $line = $last?->line ?? 1;
+            $column = $last?->column + $last?->length ?? 1;
+            return new Token(TokenType::EOF, '', PHP_INT_MAX, $line, $column, 0);
+        }
         return $this->tokens[$this->position];
     }
 

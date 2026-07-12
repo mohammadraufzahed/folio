@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
+use Folio\Pdf\Template\Error\TemplateError;
+
 /**
- * Lexer for the custom template language.
+ * Lexer for the Folio template language.
+ *
+ * Produces tokens with 1-based line and column for diagnostics.
+ * Throws TemplateError on unterminated strings and unknown characters.
  */
 final class Lexer
 {
     private int $position = 0;
+    private int $line = 1;
+    private int $column = 1;
     private string $input;
     private int $length;
 
@@ -42,7 +49,7 @@ final class Lexer
     {
         $char = $this->currentChar();
 
-        // Skip whitespace
+        // Skip whitespace (track newlines for line/col)
         if (ctype_space($char)) {
             $this->advance();
             return null;
@@ -83,13 +90,20 @@ final class Lexer
             '!' => $this->lexBang(),
             '<' => $this->lexLessThan(),
             '>' => $this->lexGreaterThan(),
-            default => $this->makeToken(TokenType::Unknown, $char),
+            default => throw new TemplateError(
+                "Unexpected character '{$char}'",
+                $this->line,
+                $this->column,
+                1,
+            ),
         };
     }
 
     private function lexComment(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
         $this->advance(); // Skip first /
         $this->advance(); // Skip second /
 
@@ -98,12 +112,21 @@ final class Lexer
         }
 
         $value = substr($this->input, $start, $this->position - $start);
-        return $this->makeToken(TokenType::Comment, $value);
+        return new Token(
+            TokenType::Comment,
+            $value,
+            $start,
+            $startLine,
+            $startCol,
+            strlen($value),
+        );
     }
 
     private function lexIdentifier(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
 
         while ($this->position < $this->length) {
             $char = $this->currentChar();
@@ -116,21 +139,28 @@ final class Lexer
         $value = substr($this->input, $start, $this->position - $start);
         $type = $this->getKeywordType($value);
 
-        return new Token($type, $value, $start);
+        return new Token($type, $value, $start, $startLine, $startCol, strlen($value));
     }
 
     private function getKeywordType(string $value): TokenType
     {
         return match ($value) {
-            'page', 'column', 'row', 'text', 'heading' => TokenType::Keyword,
+            // Layout elements
+            'page', 'column', 'row', 'text', 'heading',
             'table', 'tr', 'th', 'td', 'header', 'footer' => TokenType::Keyword,
-            'if', 'else', 'elseif', 'endif' => TokenType::Keyword,
-            'foreach', 'endforeach', 'as' => TokenType::Keyword,
-            'switch', 'case', 'break', 'default', 'endswitch' => TokenType::Keyword,
-            'import', 'layout', 'slot', 'endslot' => TokenType::Keyword,
-            'component', 'endcomponent' => TokenType::Keyword,
+
+            // Control flow
+            'if', 'else', 'elseif', 'foreach', 'as', 'empty' => TokenType::Keyword,
+
+            // Declarations
             'var', 'prop', 'partial', 'pageheader', 'pagefooter' => TokenType::Keyword,
+
+            // Chrome widgets
             'monogram', 'badge', 'spacer', 'rule', 'box', 'pagenum', 'img' => TokenType::Keyword,
+
+            // Boolean operators (word form)
+            'and', 'or', 'not' => TokenType::Keyword,
+
             default => TokenType::Identifier,
         };
     }
@@ -139,6 +169,8 @@ final class Lexer
     {
         $quote = $this->currentChar();
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
         $this->advance(); // Skip opening quote
 
         $value = '';
@@ -157,19 +189,33 @@ final class Lexer
 
             if ($char === $quote) {
                 $this->advance();
-                break;
+                return new Token(
+                    TokenType::String,
+                    $value,
+                    $start,
+                    $startLine,
+                    $startCol,
+                    $this->position - $start,
+                );
             }
 
             $value .= $char;
             $this->advance();
         }
 
-        return new Token(TokenType::String, $value, $start);
+        throw new TemplateError(
+            'Unterminated string literal',
+            $startLine,
+            $startCol,
+            $this->position - $start,
+        );
     }
 
     private function lexNumber(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
 
         while ($this->position < $this->length && ctype_digit($this->currentChar())) {
             $this->advance();
@@ -183,12 +229,14 @@ final class Lexer
         }
 
         $value = substr($this->input, $start, $this->position - $start);
-        return new Token(TokenType::Number, $value, $start);
+        return new Token(TokenType::Number, $value, $start, $startLine, $startCol, strlen($value));
     }
 
     private function lexAtSymbol(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
         $this->advance();
 
         if ($this->position < $this->length && ctype_alpha($this->currentChar())) {
@@ -196,7 +244,7 @@ final class Lexer
                 $this->advance();
             }
             $value = substr($this->input, $start, $this->position - $start);
-            return new Token(TokenType::Directive, $value, $start);
+            return new Token(TokenType::Directive, $value, $start, $startLine, $startCol, strlen($value));
         }
 
         return $this->makeToken(TokenType::At, '@');
@@ -205,53 +253,61 @@ final class Lexer
     private function lexEquals(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
         $this->advance();
 
         if ($this->position < $this->length && $this->currentChar() === '=') {
             $this->advance();
-            return $this->makeToken(TokenType::EqualsEquals, '==', $start);
+            return new Token(TokenType::EqualsEquals, '==', $start, $startLine, $startCol, 2);
         }
 
-        return $this->makeToken(TokenType::Equals, '=', $start);
+        return new Token(TokenType::Equals, '=', $start, $startLine, $startCol, 1);
     }
 
     private function lexBang(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
         $this->advance();
 
         if ($this->position < $this->length && $this->currentChar() === '=') {
             $this->advance();
-            return $this->makeToken(TokenType::NotEquals, '!=', $start);
+            return new Token(TokenType::NotEquals, '!=', $start, $startLine, $startCol, 2);
         }
 
-        return $this->makeToken(TokenType::Bang, '!', $start);
+        return new Token(TokenType::Bang, '!', $start, $startLine, $startCol, 1);
     }
 
     private function lexLessThan(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
         $this->advance();
 
         if ($this->position < $this->length && $this->currentChar() === '=') {
             $this->advance();
-            return $this->makeToken(TokenType::LessThanOrEqual, '<=', $start);
+            return new Token(TokenType::LessThanOrEqual, '<=', $start, $startLine, $startCol, 2);
         }
 
-        return $this->makeToken(TokenType::LessThan, '<', $start);
+        return new Token(TokenType::LessThan, '<', $start, $startLine, $startCol, 1);
     }
 
     private function lexGreaterThan(): Token
     {
         $start = $this->position;
+        $startLine = $this->line;
+        $startCol = $this->column;
         $this->advance();
 
         if ($this->position < $this->length && $this->currentChar() === '=') {
             $this->advance();
-            return $this->makeToken(TokenType::GreaterThanOrEqual, '>=', $start);
+            return new Token(TokenType::GreaterThanOrEqual, '>=', $start, $startLine, $startCol, 2);
         }
 
-        return $this->makeToken(TokenType::GreaterThan, '>', $start);
+        return new Token(TokenType::GreaterThan, '>', $start, $startLine, $startCol, 1);
     }
 
     private function currentChar(): string
@@ -267,18 +323,21 @@ final class Lexer
 
     private function advance(): void
     {
-        $this->position++;
+        if ($this->position < $this->length) {
+            if ($this->input[$this->position] === "\n") {
+                $this->line++;
+                $this->column = 1;
+            } else {
+                $this->column++;
+            }
+            $this->position++;
+        }
     }
 
-    private function makeToken(TokenType $type, string $value, ?int $position = null): Token
+    private function makeToken(TokenType $type, string $value): Token
     {
-        // When $position is provided, the caller already advanced past the token.
-        // When null, consume the current single-character token.
-        if ($position === null) {
-            $position = $this->position;
-            $this->advance();
-        }
-
-        return new Token($type, $value, $position);
+        $token = new Token($type, $value, $this->position, $this->line, $this->column, 1);
+        $this->advance();
+        return $token;
     }
 }
