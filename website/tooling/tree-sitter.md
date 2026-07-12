@@ -1,10 +1,11 @@
-# Tree-sitter Grammar for Folio PDF Template Language
+# Tree-sitter Grammar
 
 This is the Tree-sitter grammar for the Folio PDF template language, providing syntax highlighting and parsing for editor support.
 
 ## Installation
 
 ```bash
+cd tree-sitter-folio-pdf
 npm install
 ```
 
@@ -39,29 +40,18 @@ npm run parse example.folio
 - **Numbers**: Integer and floating-point numbers
 - **Expressions**: Comparisons and logical operations
 
-## Example Template
+## Integration
 
-```folio
-page {
-    column {
-        heading "Invoice"
-        text "Customer: John Doe"
-        
-        foreach items as item {
-            text item
-        }
-    }
-}
-```
-
-## Editor Integration
-
-This grammar can be used in:
-- VS Code (via tree-sitter extension)
-- Neovim (via nvim-treesitter)
-- Emacs (via tree-sitter-langs)
-- Sublime Text (via tree-sitter-sublime)
+The grammar is used by:
+- [VS Code Extension](./vscode.md) for syntax highlighting
+- [LSP](./lsp.md) for parsing and analysis
+- Other editors that support Tree-sitter
 
 ## Development
 
-To modify the grammar, edit `grammar.js` and run `npm run generate` to regenerate the parser.
+To modify the grammar:
+
+1. Edit `grammar.js`
+2. Run `npm run generate` to regenerate the parser
+3. Run `npm run test` to verify changes
+4. Update the VS Code extension with the new grammar

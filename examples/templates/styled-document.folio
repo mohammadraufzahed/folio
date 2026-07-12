@@ -1,0 +1,22 @@
+// Styled Document Template
+// Demonstrates the @style directive and inline attributes
+
+var title = "Styled Document"
+var content = "This document demonstrates styling in templates."
+
+@style padding=20, margin=10 {
+  page(size=a4) {
+    column {
+      heading title
+      text content
+      
+      @style color="#333333", fontSize=14 {
+        text "This text has custom color and font size."
+      }
+      
+      @style alignment=center {
+        text "This text is centered."
+      }
+    }
+  }
+}

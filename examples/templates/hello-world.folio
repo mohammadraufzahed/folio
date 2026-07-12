@@ -1,0 +1,14 @@
+// Hello World Template
+// Demonstrates basic template syntax with variables
+
+var title = "Hello, World!"
+var subtitle = "Welcome to Folio PDF"
+
+page {
+  column {
+    heading title
+    text subtitle
+    text "This is a modern PDF generated with Folio PDF."
+    text "Built with PHP 8.3+ and pure PHP."
+  }
+}

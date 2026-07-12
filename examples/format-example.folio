@@ -1,2 +1,22 @@
-page { column { heading "Invoice" text "Customer: John Doe" } }
-if showDetails { column { text "Address" text "Phone"  } }
+// Format Example Template
+// Demonstrates proper formatting with variables and control flow
+
+var customerName = "John Doe"
+var showDetails = true
+
+page {
+    column {
+        heading "Invoice"
+        text "Customer: {customerName}"
+    }
+}
+
+if showDetails {
+    page {
+        column {
+            heading "Details"
+            text "Address"
+            text "Phone"
+        }
+    }
+}

@@ -45,6 +45,11 @@ vscode-extension/out/
 vscode-extension/*.vsix
 vscode-extension/package-lock.json
 
+# Node (Documentation website)
+website/node_modules/
+website/.vitepress/cache/
+website/.vitepress/dist/
+
 # PHPUnit
 .phpunit.result.cache
 
