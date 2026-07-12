@@ -23,15 +23,23 @@ final class Document
     private const float MARGIN_X = 40.0;
     private const float MARGIN_TOP = 36.0;
     private const float MARGIN_BOTTOM = 40.0;
+    private const float HEADER_BAND = 86.0;
+    private const float FOOTER_BAND = 48.0;
     private const float BASE_ROW_HEIGHT = 18.0;
     private const float CELL_PAD_X = 5.0;
     private const float CELL_PAD_Y = 4.0;
-    private const float TABLE_AFTER_GAP = 16.0;  // space after table before next heading
-    private const float HEADING_AFTER_GAP = 8.0; // space after heading before table
+    private const float TABLE_AFTER_GAP = 16.0;
+    private const float HEADING_AFTER_GAP = 8.0;
     private const float TEXT_GAP = 12.0;
     private const float TITLE_GAP = 14.0;
 
     private readonly array $pages;
+
+    /** @var array{title?: string, subtitle?: string, badge?: string, rightTitle?: string, rightSubtitle?: string}|null */
+    private readonly ?array $pageHeader;
+
+    /** @var array{left?: string, center?: string, right?: string, showPageNumber?: bool}|null */
+    private readonly ?array $pageFooter;
 
     /** @var list<string> */
     private array $gBuf = [];
@@ -39,9 +47,16 @@ final class Document
     private array $tBuf = [];
     private int $tableStyleIndex = 0;
 
-    public function __construct(array $pages = [])
+    /**
+     * @param array<int, Page> $pages
+     * @param array{title?: string, subtitle?: string, badge?: string, rightTitle?: string, rightSubtitle?: string}|null $pageHeader
+     * @param array{left?: string, center?: string, right?: string, showPageNumber?: bool}|null $pageFooter
+     */
+    public function __construct(array $pages = [], ?array $pageHeader = null, ?array $pageFooter = null)
     {
         $this->pages = array_values($pages);
+        $this->pageHeader = $pageHeader;
+        $this->pageFooter = $pageFooter;
     }
 
     public static function make(): self
@@ -51,7 +66,23 @@ final class Document
 
     public function addPage(Page $page): self
     {
-        return new self([...$this->pages, $page]);
+        return new self([...$this->pages, $page], $this->pageHeader, $this->pageFooter);
+    }
+
+    /**
+     * @param array{title?: string, subtitle?: string, badge?: string, rightTitle?: string, rightSubtitle?: string} $header
+     */
+    public function withPageHeader(array $header): self
+    {
+        return new self($this->pages, $header, $this->pageFooter);
+    }
+
+    /**
+     * @param array{left?: string, center?: string, right?: string, showPageNumber?: bool} $footer
+     */
+    public function withPageFooter(array $footer): self
+    {
+        return new self($this->pages, $this->pageHeader, $footer);
     }
 
     /** @return array<int, Page> */
@@ -81,15 +112,31 @@ final class Document
             }
         }
 
-        $contentWidth = $pageWidth - (self::MARGIN_X * 2);
-        $renderedPages = $this->flowBlocksToPages($blocks, $pageWidth, $pageHeight, $contentWidth);
+        $hasChrome = $this->pageHeader !== null || $this->pageFooter !== null;
+        $topMargin = $hasChrome ? (self::MARGIN_TOP + self::HEADER_BAND) : self::MARGIN_TOP;
+        $bottomMargin = $hasChrome ? (self::MARGIN_BOTTOM + self::FOOTER_BAND) : self::MARGIN_BOTTOM;
 
-        foreach ($renderedPages as $content) {
-            $writer->addPage($pageWidth, $pageHeight, $content);
-        }
+        $contentWidth = $pageWidth - (self::MARGIN_X * 2);
+        $renderedPages = $this->flowBlocksToPages(
+            $blocks,
+            $pageWidth,
+            $pageHeight,
+            $contentWidth,
+            $topMargin,
+            $bottomMargin
+        );
 
         if ($renderedPages === []) {
-            $writer->addPage($pageWidth, $pageHeight, "BT\n/F1 12 Tf\nET\n");
+            $renderedPages = [''];
+        }
+
+        $totalPages = count($renderedPages);
+        foreach ($renderedPages as $i => $content) {
+            $pageNo = $i + 1;
+            $chrome = $hasChrome
+                ? $this->renderPageChrome($pageWidth, $pageHeight, $pageNo, $totalPages)
+                : '';
+            $writer->addPage($pageWidth, $pageHeight, $chrome . $content);
         }
 
         return $writer;
@@ -109,16 +156,408 @@ final class Document
     }
 
     /**
+     * Draw branded header + footer chrome on every page.
+     *
+     * Header options:
+     *  title, subtitle, badge, rightTitle, rightSubtitle, monogram,
+     *  theme (navy|teal|slate|emerald|crimson|violet),
+     *  style (bar|band|minimal|split),
+     *  showMonogram (true|false), accent (hex or named)
+     *
+     * Footer options:
+     *  left, center, right, showPageNumber, pageFormat ("Page {page} of {pages}"),
+     *  style (rule|band|minimal), theme
+     */
+    private function renderPageChrome(float $pageWidth, float $pageHeight, int $pageNo, int $totalPages): string
+    {
+        $g = [];
+        $t = ["BT\n/F1 12 Tf\n"];
+        $x = self::MARGIN_X;
+        $contentWidth = $pageWidth - (self::MARGIN_X * 2);
+
+        if ($this->pageHeader !== null) {
+            $this->drawHeaderChrome($g, $t, $pageWidth, $pageHeight, $x, $contentWidth);
+        }
+
+        if ($this->pageFooter !== null) {
+            $this->drawFooterChrome($g, $t, $pageWidth, $pageHeight, $x, $contentWidth, $pageNo, $totalPages);
+        }
+
+        $t[] = "ET\n";
+        return implode('', $g) . implode('', $t);
+    }
+
+    /**
+     * @param list<string> $g
+     * @param list<string> $t
+     */
+    private function drawHeaderChrome(array &$g, array &$t, float $pageWidth, float $pageHeight, float $x, float $contentWidth): void
+    {
+        $h = $this->pageHeader ?? [];
+        $theme = $this->resolveChromeTheme((string) ($h['theme'] ?? 'navy'));
+        $style = strtolower((string) ($h['style'] ?? 'bar'));
+        $title = (string) ($h['title'] ?? '');
+        $subtitle = (string) ($h['subtitle'] ?? '');
+        $badge = (string) ($h['badge'] ?? '');
+        $rightTitle = (string) ($h['rightTitle'] ?? '');
+        $rightSubtitle = (string) ($h['rightSubtitle'] ?? '');
+        $monogram = (string) ($h['monogram'] ?? $this->makeMonogram($title));
+        $showMonogram = $this->toBool($h['showMonogram'] ?? true);
+
+        $bandTop = $pageHeight - 14.0;
+        $bandHeight = match ($style) {
+            'minimal' => 42.0,
+            'split' => 58.0,
+            'band' => 62.0,
+            default => 56.0, // bar
+        };
+        $bandBottom = $bandTop - $bandHeight;
+
+        // Background
+        if ($style === 'minimal') {
+            // light wash + accent underline
+            $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $bandHeight, $theme['wash']);
+            $g[] = $this->pdfFillRect(0.0, $bandBottom - 2.5, $pageWidth, 2.5, $theme['accent']);
+        } elseif ($style === 'band') {
+            $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $bandHeight, $theme['bg']);
+            // soft top highlight strip
+            $g[] = $this->pdfFillRect(0.0, $bandTop - 4.0, $pageWidth, 4.0, $theme['accentSoft']);
+            $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
+        } elseif ($style === 'split') {
+            // left brand panel + right meta panel
+            $split = $pageWidth * 0.62;
+            $g[] = $this->pdfFillRect(0.0, $bandBottom, $split, $bandHeight, $theme['bg']);
+            $g[] = $this->pdfFillRect($split, $bandBottom, $pageWidth - $split, $bandHeight, $theme['bgAlt']);
+            $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
+        } else {
+            // bar (default): solid brand bar + accent edge
+            $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $bandHeight, $theme['bg']);
+            $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
+            // left accent rail
+            $g[] = $this->pdfFillRect(0.0, $bandBottom, 5.0, $bandHeight, $theme['accent']);
+        }
+
+        $textColor = $style === 'minimal' ? $theme['textDark'] : $theme['textLight'];
+        $mutedColor = $style === 'minimal' ? $theme['mutedDark'] : $theme['mutedLight'];
+
+        $cursorX = $x;
+        // Monogram tile
+        if ($showMonogram && $monogram !== '') {
+            $tile = 28.0;
+            $tileY = $bandTop - 40.0;
+            $g[] = $this->pdfFillRect($cursorX, $tileY, $tile, $tile, $theme['accent']);
+            // inner lighter edge
+            $g[] = $this->pdfFillRect($cursorX + 1.5, $tileY + 1.5, $tile - 3.0, $tile - 3.0, $theme['accentSoft']);
+            $t[] = $this->pdfSetRgb($theme['textLight']);
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 11 Tf\n(%s) Tj\n",
+                $cursorX + 6.0,
+                $tileY + 9.0,
+                $this->escapePdfString(strtoupper(substr($monogram, 0, 3)))
+            );
+            $cursorX += $tile + 10.0;
+        }
+
+        // Title block
+        $titleY = $bandTop - 24.0;
+        $subY = $bandTop - 40.0;
+        $t[] = $this->pdfSetRgb($textColor);
+        if ($title !== '') {
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 15 Tf\n(%s) Tj\n",
+                $cursorX,
+                $titleY,
+                $this->escapePdfString($title)
+            );
+        }
+        if ($subtitle !== '') {
+            $t[] = $this->pdfSetRgb($mutedColor);
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 9 Tf\n(%s) Tj\n",
+                $cursorX,
+                $subY,
+                $this->escapePdfString($subtitle)
+            );
+        }
+
+        // Right meta column (avoid badge collision)
+        $rightColW = 150.0;
+        $rightX = $pageWidth - self::MARGIN_X - $rightColW;
+        $metaBottomReserve = $badge !== '' ? 18.0 : 0.0;
+
+        if ($rightTitle !== '') {
+            $t[] = $this->pdfSetRgb($textColor);
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 10 Tf\n(%s) Tj\n",
+                $rightX,
+                $titleY,
+                $this->escapePdfString($this->truncateText($rightTitle, $rightColW, 10))
+            );
+        }
+        if ($rightSubtitle !== '') {
+            $t[] = $this->pdfSetRgb($mutedColor);
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 8 Tf\n(%s) Tj\n",
+                $rightX,
+                $subY,
+                $this->escapePdfString($this->truncateText($rightSubtitle, $rightColW, 8))
+            );
+        }
+
+        // Badge pill (bottom-right of header, never over text)
+        if ($badge !== '') {
+            $badgeLabel = strtoupper($badge);
+            $badgeW = max(52.0, strlen($badgeLabel) * 5.2 + 18.0);
+            $badgeH = 13.0;
+            $badgeX = $pageWidth - self::MARGIN_X - $badgeW;
+            $badgeY = $bandBottom + 8.0;
+            $g[] = $this->pdfFillRect($badgeX, $badgeY, $badgeW, $badgeH, $theme['accent']);
+            // subtle left notch bar
+            $g[] = $this->pdfFillRect($badgeX, $badgeY, 3.0, $badgeH, $theme['accentSoft']);
+            $t[] = $this->pdfSetRgb($theme['textLight']);
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 7 Tf\n(%s) Tj\n",
+                $badgeX + 8.0,
+                $badgeY + 3.2,
+                $this->escapePdfString($badgeLabel)
+            );
+        }
+
+        $t[] = "0 0 0 rg\n/F1 12 Tf\n";
+    }
+
+    /**
+     * @param list<string> $g
+     * @param list<string> $t
+     */
+    private function drawFooterChrome(
+        array &$g,
+        array &$t,
+        float $pageWidth,
+        float $pageHeight,
+        float $x,
+        float $contentWidth,
+        int $pageNo,
+        int $totalPages
+    ): void {
+        $f = $this->pageFooter ?? [];
+        $themeName = (string) ($f['theme'] ?? ($this->pageHeader['theme'] ?? 'navy'));
+        $theme = $this->resolveChromeTheme($themeName);
+        $style = strtolower((string) ($f['style'] ?? 'rule'));
+        $left = (string) ($f['left'] ?? '');
+        $center = (string) ($f['center'] ?? '');
+        $right = (string) ($f['right'] ?? '');
+        $showPage = $this->toBool($f['showPageNumber'] ?? true);
+        $pageFormat = (string) ($f['pageFormat'] ?? 'Page {page} of {pages}');
+
+        $footerTop = 46.0;
+        $footerY = 24.0;
+
+        if ($style === 'band') {
+            $g[] = $this->pdfFillRect(0.0, 0.0, $pageWidth, $footerTop + 6.0, $theme['wash']);
+            $g[] = $this->pdfFillRect(0.0, $footerTop + 4.0, $pageWidth, 2.5, $theme['accent']);
+        } elseif ($style === 'minimal') {
+            // no fill, thin accent ticks
+            $g[] = $this->pdfFillRect($x, $footerTop, 28.0, 1.5, $theme['accent']);
+            $g[] = $this->pdfFillRect($x + $contentWidth - 28.0, $footerTop, 28.0, 1.5, $theme['accent']);
+        } else {
+            // rule
+            $g[] = sprintf(
+                "%.3f %.3f %.3f RG\n0.7 w\n%.2f %.2f m\n%.2f %.2f l\nS\n0 0 0 RG\n",
+                $theme['rule'][0], $theme['rule'][1], $theme['rule'][2],
+                $x, $footerTop,
+                $x + $contentWidth, $footerTop
+            );
+            // accent center diamond-ish bar
+            $mid = $x + $contentWidth / 2.0;
+            $g[] = $this->pdfFillRect($mid - 18.0, $footerTop - 0.5, 36.0, 2.0, $theme['accent']);
+        }
+
+        $t[] = $this->pdfSetRgb($theme['mutedDark']);
+
+        if ($left !== '') {
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 8 Tf\n(%s) Tj\n",
+                $x,
+                $footerY,
+                $this->escapePdfString($this->truncateText($left, $contentWidth * 0.32, 8))
+            );
+        }
+
+        if ($center !== '') {
+            $approx = strlen($center) * 4.0;
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 8 Tf\n(%s) Tj\n",
+                $x + ($contentWidth - $approx) / 2.0,
+                $footerY,
+                $this->escapePdfString($center)
+            );
+        }
+
+        $pageLabel = '';
+        if ($showPage) {
+            $pageLabel = str_replace(
+                ['{page}', '{pages}', '{PAGE}', '{PAGES}'],
+                [(string) $pageNo, (string) $totalPages, (string) $pageNo, (string) $totalPages],
+                $pageFormat
+            );
+        }
+        if ($right !== '' && $pageLabel !== '') {
+            $pageLabel = $right . '  ·  ' . $pageLabel;
+        } elseif ($right !== '') {
+            $pageLabel = $right;
+        }
+
+        if ($pageLabel !== '') {
+            $approxW = strlen($pageLabel) * 4.1;
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 8 Tf\n(%s) Tj\n",
+                $x + $contentWidth - $approxW,
+                $footerY,
+                $this->escapePdfString($pageLabel)
+            );
+        }
+
+        $t[] = "0 0 0 rg\n/F1 12 Tf\n";
+    }
+
+    /**
+     * @return array{
+     *   bg: array{0:float,1:float,2:float},
+     *   bgAlt: array{0:float,1:float,2:float},
+     *   accent: array{0:float,1:float,2:float},
+     *   accentSoft: array{0:float,1:float,2:float},
+     *   wash: array{0:float,1:float,2:float},
+     *   textLight: array{0:float,1:float,2:float},
+     *   textDark: array{0:float,1:float,2:float},
+     *   mutedLight: array{0:float,1:float,2:float},
+     *   mutedDark: array{0:float,1:float,2:float},
+     *   rule: array{0:float,1:float,2:float}
+     * }
+     */
+    private function resolveChromeTheme(string $name): array
+    {
+        $themes = [
+            'navy' => [
+                'bg' => [0.10, 0.18, 0.32],
+                'bgAlt' => [0.14, 0.24, 0.40],
+                'accent' => [0.18, 0.48, 0.86],
+                'accentSoft' => [0.28, 0.58, 0.92],
+                'wash' => [0.94, 0.96, 0.99],
+            ],
+            'teal' => [
+                'bg' => [0.07, 0.25, 0.28],
+                'bgAlt' => [0.10, 0.32, 0.36],
+                'accent' => [0.10, 0.62, 0.58],
+                'accentSoft' => [0.22, 0.72, 0.68],
+                'wash' => [0.93, 0.98, 0.97],
+            ],
+            'slate' => [
+                'bg' => [0.18, 0.22, 0.28],
+                'bgAlt' => [0.24, 0.28, 0.34],
+                'accent' => [0.42, 0.50, 0.62],
+                'accentSoft' => [0.55, 0.62, 0.72],
+                'wash' => [0.96, 0.96, 0.97],
+            ],
+            'emerald' => [
+                'bg' => [0.08, 0.24, 0.18],
+                'bgAlt' => [0.12, 0.32, 0.24],
+                'accent' => [0.16, 0.65, 0.42],
+                'accentSoft' => [0.28, 0.75, 0.52],
+                'wash' => [0.94, 0.98, 0.95],
+            ],
+            'crimson' => [
+                'bg' => [0.30, 0.10, 0.14],
+                'bgAlt' => [0.38, 0.14, 0.18],
+                'accent' => [0.78, 0.22, 0.30],
+                'accentSoft' => [0.88, 0.36, 0.42],
+                'wash' => [0.99, 0.95, 0.95],
+            ],
+            'violet' => [
+                'bg' => [0.18, 0.12, 0.32],
+                'bgAlt' => [0.24, 0.16, 0.40],
+                'accent' => [0.52, 0.34, 0.86],
+                'accentSoft' => [0.64, 0.48, 0.92],
+                'wash' => [0.96, 0.94, 0.99],
+            ],
+        ];
+
+        $base = $themes[$name] ?? $themes['navy'];
+        $base['textLight'] = [1.0, 1.0, 1.0];
+        $base['textDark'] = [0.12, 0.14, 0.18];
+        $base['mutedLight'] = [0.78, 0.84, 0.92];
+        $base['mutedDark'] = [0.38, 0.42, 0.48];
+        $base['rule'] = [0.72, 0.74, 0.78];
+        return $base;
+    }
+
+    /** @param array{0:float,1:float,2:float} $rgb */
+    private function pdfFillRect(float $x, float $y, float $w, float $h, array $rgb): string
+    {
+        return sprintf(
+            "%.3f %.3f %.3f rg\n%.2f %.2f %.2f %.2f re f\n0 0 0 rg\n",
+            $rgb[0], $rgb[1], $rgb[2], $x, $y, $w, $h
+        );
+    }
+
+    /** @param array{0:float,1:float,2:float} $rgb */
+    private function pdfSetRgb(array $rgb): string
+    {
+        return sprintf("%.3f %.3f %.3f rg\n", $rgb[0], $rgb[1], $rgb[2]);
+    }
+
+    private function makeMonogram(string $title): string
+    {
+        $title = trim($title);
+        if ($title === '') {
+            return 'AR';
+        }
+        $parts = preg_split('/\s+/', $title) ?: [];
+        $letters = '';
+        foreach ($parts as $p) {
+            if ($p === '') {
+                continue;
+            }
+            $letters .= strtoupper($p[0]);
+            if (strlen($letters) >= 2) {
+                break;
+            }
+        }
+        if (strlen($letters) < 2) {
+            $letters = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $title) ?: 'AR', 0, 2));
+        }
+        return $letters;
+    }
+
+    private function toBool(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_int($value) || is_float($value)) {
+            return (bool) $value;
+        }
+        $v = strtolower(trim((string) $value));
+        return !in_array($v, ['', '0', 'false', 'no', 'off'], true);
+    }
+
+    /**
      * @param array<int, Node> $blocks
      * @return array<int, string>
      */
-    private function flowBlocksToPages(array $blocks, float $pageWidth, float $pageHeight, float $contentWidth): array
-    {
+    private function flowBlocksToPages(
+        array $blocks,
+        float $pageWidth,
+        float $pageHeight,
+        float $contentWidth,
+        float $topMargin = self::MARGIN_TOP,
+        float $bottomMargin = self::MARGIN_BOTTOM
+    ): array {
         $pages = [];
         $this->gBuf = [];
         $this->tBuf = ["BT\n/F1 12 Tf\n"];
-        $y = $pageHeight - self::MARGIN_TOP;
-        $bottom = self::MARGIN_BOTTOM;
+        $y = $pageHeight - $topMargin;
+        $bottom = $bottomMargin;
         $x = self::MARGIN_X;
         $this->tableStyleIndex = 0;
         $prevWasTable = false;
@@ -130,9 +569,9 @@ final class Document
             $this->tBuf = ["BT\n/F1 12 Tf\n"];
         };
 
-        $newPage = function () use (&$y, $pageHeight, $flush): void {
+        $newPage = function () use (&$y, $pageHeight, $topMargin, $flush): void {
             $flush();
-            $y = $pageHeight - self::MARGIN_TOP;
+            $y = $pageHeight - $topMargin;
         };
 
         foreach ($blocks as $block) {
@@ -147,7 +586,6 @@ final class Document
             }
 
             if ($block instanceof Heading) {
-                // Extra gap when heading follows a table
                 if ($prevWasTable) {
                     $y -= 6.0;
                 }
@@ -178,6 +616,7 @@ final class Document
                     $contentWidth,
                     $bottom,
                     $pageHeight,
+                    $topMargin,
                     $newPage,
                     $style
                 );
@@ -217,6 +656,7 @@ final class Document
         float $availableWidth,
         float $bottom,
         float $pageHeight,
+        float $topMargin,
         callable $newPage,
         int $style
     ): void {
@@ -234,11 +674,12 @@ final class Document
         $rowHeights = $this->measureRowHeights($table, $columnWidths);
 
         $headerIndexes = [];
+        $footerIndexes = [];
         foreach ($rows as $i => $row) {
             if ($row->isHeader()) {
                 $headerIndexes[] = $i;
-            } else {
-                break;
+            } elseif ($row->isFooter()) {
+                $footerIndexes[] = $i;
             }
         }
 
@@ -247,26 +688,25 @@ final class Document
             $headerHeight += $rowHeights[$hi];
         }
 
-        // Style palettes: header fill RGB + zebra fill RGB
         $styles = [
-            // blue-gray headers, light blue zebra
             [[0.82, 0.86, 0.92], [0.95, 0.97, 0.99]],
-            // green-gray headers, light green zebra
             [[0.84, 0.90, 0.84], [0.96, 0.98, 0.96]],
-            // warm headers, light warm zebra
             [[0.92, 0.88, 0.82], [0.99, 0.97, 0.94]],
         ];
         [$headerRgb, $zebraRgb] = $styles[$style] ?? $styles[0];
 
+        $variantColors = [
+            'warning' => [1.0, 0.93, 0.70],
+            'success' => [0.85, 0.93, 0.85],
+            'danger'  => [0.98, 0.85, 0.85],
+            'info'    => [0.85, 0.90, 0.97],
+            'primary' => [0.82, 0.86, 0.92],
+        ];
+        $footerRgb = [0.88, 0.88, 0.90];
+
         $drawRow = function (int $rowIndex, int $bodyIndex) use (
-            $table,
-            $rows,
-            $rowHeights,
-            $columnWidths,
-            &$y,
-            $x,
-            $headerRgb,
-            $zebraRgb
+            $table, $rows, $rowHeights, $columnWidths, &$y, $x,
+            $headerRgb, $zebraRgb, $variantColors, $footerRgb
         ): void {
             $row = $rows[$rowIndex];
             $rowHeight = $rowHeights[$rowIndex];
@@ -275,7 +715,8 @@ final class Document
             $cellX = $x;
             $colCursor = 0;
             $isHeaderRow = $row->isHeader();
-            $zebra = !$isHeaderRow && ($bodyIndex % 2 === 1);
+            $isFooterRow = $row->isFooter();
+            $zebra = !$isHeaderRow && !$isFooterRow && ($bodyIndex % 2 === 1);
 
             $this->gBuf[] = "0.65 w\n0 0 0 RG\n";
 
@@ -283,38 +724,31 @@ final class Document
                 $colSpan = max(1, $cell->colSpan());
                 $cellWidth = $this->sumColumnWidths($columnWidths, $colCursor, $colSpan);
                 $isHeader = $cell->isHeader() || $isHeaderRow;
+                $variant = $cell->variant();
 
+                $fillRgb = null;
                 if ($isHeader) {
-                    $this->gBuf[] = sprintf(
-                        "%.3f %.3f %.3f rg\n%.2f %.2f %.2f %.2f re f\n0 0 0 rg\n",
-                        $headerRgb[0],
-                        $headerRgb[1],
-                        $headerRgb[2],
-                        $cellX,
-                        $rowBottom,
-                        $cellWidth,
-                        $rowHeight
-                    );
+                    $fillRgb = $headerRgb;
+                } elseif ($isFooterRow) {
+                    $fillRgb = $footerRgb;
+                } elseif ($variant !== null && isset($variantColors[$variant])) {
+                    $fillRgb = $variantColors[$variant];
                 } elseif ($zebra) {
+                    $fillRgb = $zebraRgb;
+                }
+
+                if ($fillRgb !== null) {
                     $this->gBuf[] = sprintf(
                         "%.3f %.3f %.3f rg\n%.2f %.2f %.2f %.2f re f\n0 0 0 rg\n",
-                        $zebraRgb[0],
-                        $zebraRgb[1],
-                        $zebraRgb[2],
-                        $cellX,
-                        $rowBottom,
-                        $cellWidth,
-                        $rowHeight
+                        $fillRgb[0], $fillRgb[1], $fillRgb[2],
+                        $cellX, $rowBottom, $cellWidth, $rowHeight
                     );
                 }
 
                 if ($table->showBorders()) {
                     $this->gBuf[] = sprintf(
                         "%.2f %.2f %.2f %.2f re S\n",
-                        $cellX,
-                        $rowBottom,
-                        $cellWidth,
-                        $rowHeight
+                        $cellX, $rowBottom, $cellWidth, $rowHeight
                     );
                 }
 
@@ -339,26 +773,35 @@ final class Document
             }
         };
 
+        $drawFooters = function () use ($footerIndexes, $drawRow): void {
+            foreach ($footerIndexes as $fi) {
+                $drawRow($fi, -1);
+            }
+        };
+
         $firstBody = count($headerIndexes);
+        $bodyEnd = count($rows) - count($footerIndexes);
         $minNeeded = $headerHeight + ($rowHeights[$firstBody] ?? self::BASE_ROW_HEIGHT);
         if ($y - $minNeeded < $bottom) {
             $newPage();
-            $y = $pageHeight - self::MARGIN_TOP;
+            $y = $pageHeight - $topMargin;
         }
 
         $drawHeaders();
 
         $bodyIndex = 0;
-        for ($i = $firstBody; $i < count($rows); $i++) {
+        for ($i = $firstBody; $i < $bodyEnd; $i++) {
             $rowHeight = $rowHeights[$i];
             if ($y - $rowHeight < $bottom) {
                 $newPage();
-                $y = $pageHeight - self::MARGIN_TOP;
+                $y = $pageHeight - $topMargin;
                 $drawHeaders();
             }
             $drawRow($i, $bodyIndex);
             $bodyIndex++;
         }
+
+        $drawFooters();
     }
 
     private function renderCellContent(
@@ -384,7 +827,6 @@ final class Document
         }
 
         if ($content instanceof Table) {
-            // Nested: simple inline render without page splits
             $nestedY = $topY;
             $this->renderNestedTable($content, $nestedY, $x, $maxWidth);
             return;

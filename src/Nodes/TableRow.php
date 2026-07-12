@@ -15,12 +15,14 @@ final readonly class TableRow implements Node
     private readonly array $cells;
     private readonly ?Style $style;
     private readonly bool $isHeader;
+    private readonly bool $isFooter;
 
-    public function __construct(array $cells, ?Style $style = null, bool $isHeader = false)
+    public function __construct(array $cells, ?Style $style = null, bool $isHeader = false, bool $isFooter = false)
     {
         $this->cells = array_values(array_filter($cells, fn($cell) => $cell instanceof TableCell));
         $this->style = $style;
         $this->isHeader = $isHeader;
+        $this->isFooter = $isFooter;
     }
 
     public static function make(array $cells): self
@@ -31,6 +33,11 @@ final readonly class TableRow implements Node
     public static function header(array $cells, ?Style $style = null): self
     {
         return new self($cells, $style, true);
+    }
+
+    public static function footer(array $cells, ?Style $style = null): self
+    {
+        return new self($cells, $style, false, true);
     }
 
     public function cells(): array
@@ -63,13 +70,18 @@ final readonly class TableRow implements Node
         return $this->isHeader;
     }
 
+    public function isFooter(): bool
+    {
+        return $this->isFooter;
+    }
+
     public function withStyle(?Style $style): self
     {
-        return new self($this->cells, $style, $this->isHeader);
+        return new self($this->cells, $style, $this->isHeader, $this->isFooter);
     }
 
     public function addCell(TableCell $cell): self
     {
-        return new self([...$this->cells, $cell], $this->style, $this->isHeader);
+        return new self([...$this->cells, $cell], $this->style, $this->isHeader, $this->isFooter);
     }
 }

@@ -287,11 +287,39 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $php .= "use Folio\\Pdf\\Nodes\\TableRow;\n";
         $php .= "use Folio\\Pdf\\Nodes\\Text;\n\n";
 
+        // Collect var/prop defaults
+        $defaults = [];
+        foreach ($node->children as $child) {
+            if ($child->type === 'VarDecl') {
+                $name = (string) ($child->attributes['name'] ?? '');
+                $defaultNode = $child->attributes['default'] ?? null;
+                if ($name !== '' && $defaultNode instanceof AstNode) {
+                    $defaults[$name] = $defaultNode->attributes['value'] ?? '';
+                }
+            }
+        }
+
         $php .= "return static function (array \$data = []): Pdf {\n";
+        // Apply defaults for missing keys
+        if ($defaults !== []) {
+            $defaultsExpr = var_export($defaults, true);
+            $php .= "    \$data = array_merge({$defaultsExpr}, \$data);\n";
+        }
         $php .= "    extract(\$data, EXTR_SKIP);\n\n";
         $php .= "    \$pdf = Pdf::make();\n\n";
 
         foreach ($node->children as $i => $child) {
+            // Skip var/prop declarations - they're handled above
+            if ($child->type === 'VarDecl') {
+                continue;
+            }
+
+            // Document-level page chrome (repeating header/footer)
+            if ($child->type === 'PageChrome') {
+                $php .= $this->generatePageChromeStatement($child, '    ');
+                continue;
+            }
+
             $expr = $this->generateExpression($child);
             if ($child->type === 'Element' && ($child->attributes['type'] ?? '') === 'page') {
                 $php .= "    \$pdf = \$pdf->{$expr};\n";
@@ -320,9 +348,39 @@ final class PhpTemplateCompiler implements TemplateCompiler
             'PropertyAccess' => $this->generatePropertyAccess($node),
             'If' => $this->generateIfExpression($node),
             'Foreach' => $this->generateForeachExpression($node),
+            'VarDecl' => $this->generateVarDecl($node),
+            'Partial' => $this->generatePartial($node),
+            'PageChrome' => 'null',
             'Directive' => 'null',
             default => 'null',
         };
+    }
+
+    private function generatePageChromeStatement(AstNode $node, string $indent): string
+    {
+        $kind = (string) ($node->attributes['kind'] ?? 'pageheader');
+        $attrs = $node->attributes['attributes'] ?? [];
+        if (!is_array($attrs)) {
+            $attrs = [];
+        }
+
+        $method = $kind === 'pagefooter' ? 'pageFooter' : 'pageHeader';
+        $parts = [];
+        foreach ($attrs as $key => $value) {
+            $key = (string) $key;
+            if ($value instanceof AstNode) {
+                $parts[] = var_export($key, true) . ' => (string)(' . $this->generateExpression($value) . ')';
+            } elseif (is_string($value) || is_numeric($value)) {
+                if ($value === 'true' || $value === 'false') {
+                    $parts[] = var_export($key, true) . ' => ' . ($value === 'true' ? 'true' : 'false');
+                } else {
+                    $parts[] = var_export($key, true) . ' => ' . var_export((string) $value, true);
+                }
+            }
+        }
+
+        $arrayExpr = '[' . implode(', ', $parts) . ']';
+        return $indent . "\$pdf = \$pdf->{$method}({$arrayExpr});\n";
     }
 
     private function generateElement(AstNode $node): string
@@ -336,7 +394,9 @@ final class PhpTemplateCompiler implements TemplateCompiler
             'text' => $this->generateText($node),
             'heading' => $this->generateHeading($node),
             'table' => $this->generateTable($node),
-            'tr', 'header' => $this->generateTableRow($node, $type === 'header'),
+            'tr' => $this->generateTableRow($node, false),
+            'header' => $this->generateTableRow($node, true),
+            'footer' => $this->generateTableFooter($node),
             'th' => $this->generateTableCell($node, true),
             'td' => $this->generateTableCell($node, false),
             default => 'null',
@@ -380,11 +440,46 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return 'TableRow::' . $method . '(' . $this->generateChildrenArray($node) . ')';
     }
 
+    private function generateTableFooter(AstNode $node): string
+    {
+        return 'TableRow::footer(' . $this->generateChildrenArray($node) . ')';
+    }
+
+    private function generateVarDecl(AstNode $node): string
+    {
+        // var/prop declarations produce no output at render time;
+        // they are metadata for IDE + defaults applied at compile time.
+        // The default is injected into $data before extract().
+        return 'null';
+    }
+
+    private function generatePartial(AstNode $node): string
+    {
+        $path = (string) ($node->attributes['path'] ?? '');
+        $escaped = var_export($path, true);
+
+        // At compile time, attempt to resolve and inline the partial.
+        // If not found, produce a placeholder text.
+        $resolved = $this->resolvePartialPath($path);
+        if ($resolved !== null) {
+            $partialContent = file_get_contents($resolved);
+            if ($partialContent !== false) {
+                $partialCompiler = new self($this->cacheDir);
+                $partialPhp = $partialCompiler->compileFresh($partialContent);
+                // Wrap as a sub-expression: evaluate partial and inline its nodes
+                return '(function() use ($data) { ' . $partialPhp . ' })()';
+            }
+        }
+
+        return 'Text::make("[partial not found: ' . $path . ']")';
+    }
+
     private function generateTableCell(AstNode $node, bool $isHeader): string
     {
         $attrs = $node->attributes['attributes'] ?? [];
         $rowSpan = (int) ($attrs['rowspan'] ?? $attrs['rowSpan'] ?? 1);
         $colSpan = (int) ($attrs['colspan'] ?? $attrs['colSpan'] ?? 1);
+        $variant = $attrs['variant'] ?? $attrs['color'] ?? null;
         $content = $this->generateCellContent($node);
 
         if ($isHeader) {
@@ -405,7 +500,8 @@ final class PhpTemplateCompiler implements TemplateCompiler
             );
         }
 
-        return 'TableCell::make(' . $content . ')';
+        $variantExpr = $variant !== null ? ', ' . var_export((string) $variant, true) : '';
+        return 'TableCell::make(' . $content . $variantExpr . ')';
     }
 
     private function generateCellContent(AstNode $node): string
@@ -451,6 +547,12 @@ final class PhpTemplateCompiler implements TemplateCompiler
      */
     private function generateNodeList(array $children): string
     {
+        // Filter out VarDecl nodes - they are metadata, not rendered
+        $children = array_values(array_filter(
+            $children,
+            static fn(AstNode $c): bool => $c->type !== 'VarDecl'
+        ));
+
         if ($children === []) {
             return '[]';
         }
@@ -615,5 +717,106 @@ final class PhpTemplateCompiler implements TemplateCompiler
     {
         // Variables commonly extracted; use $data only in use() for nested closures
         return 'data';
+    }
+
+    /**
+     * Resolve a partial path relative to the template file or include dirs.
+     */
+    private ?string $baseDir = null;
+
+    /** @var array<int, string> */
+    private array $partialDirs = [];
+
+    /**
+     * Set the base directory for resolving partials.
+     */
+    public function setBaseDir(string $dir): void
+    {
+        $this->baseDir = $dir;
+    }
+
+    /**
+     * Add a directory to search for partials.
+     */
+    public function addPartialDir(string $dir): void
+    {
+        $this->partialDirs[] = $dir;
+    }
+
+    private function resolvePartialPath(string $path): ?string
+    {
+        // Try relative to base dir
+        if ($this->baseDir !== null) {
+            $candidate = $this->baseDir . '/' . $path;
+            if (!str_ends_with($candidate, '.folio')) {
+                $candidate .= '.folio';
+            }
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        // Try each partial dir
+        foreach ($this->partialDirs as $dir) {
+            $candidate = $dir . '/' . $path;
+            if (!str_ends_with($candidate, '.folio')) {
+                $candidate .= '.folio';
+            }
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        // Try as absolute path
+        if (is_file($path)) {
+            return $path;
+        }
+
+        $withExt = $path;
+        if (!str_ends_with($withExt, '.folio')) {
+            $withExt .= '.folio';
+        }
+        if (is_file($withExt)) {
+            return $withExt;
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract var/prop declarations from the AST for IDE metadata.
+     *
+     * @return array<int, array{name: string, keyword: string, default: mixed}>
+     */
+    public function extractDeclarations(string $template): array
+    {
+        $lexer = new Lexer($template);
+        $tokens = $lexer->tokenize();
+        $parser = new Parser($tokens);
+        $ast = $parser->parse();
+
+        $decls = [];
+        $this->collectDecls($ast, $decls);
+
+        return $decls;
+    }
+
+    /** @param array<int, array{name: string, keyword: string, default: mixed}> $decls */
+    private function collectDecls(AstNode $node, array &$decls): void
+    {
+        if ($node->type === 'VarDecl') {
+            $name = (string) ($node->attributes['name'] ?? '');
+            $keyword = (string) ($node->attributes['keyword'] ?? 'var');
+            $defaultNode = $node->attributes['default'] ?? null;
+            $default = '';
+            if ($defaultNode instanceof AstNode) {
+                $default = $defaultNode->attributes['value'] ?? '';
+            }
+            $decls[] = ['name' => $name, 'keyword' => $keyword, 'default' => $default];
+        }
+
+        foreach ($node->children as $child) {
+            $this->collectDecls($child, $decls);
+        }
     }
 }

@@ -16,23 +16,26 @@ final readonly class TableCell implements Node
     private readonly int $rowSpan;
     private readonly int $colSpan;
     private readonly bool $isHeader;
+    private readonly ?string $variant;
 
     public function __construct(
         private readonly Node $content,
         ?Style $style = null,
         int $rowSpan = 1,
         int $colSpan = 1,
-        bool $isHeader = false
+        bool $isHeader = false,
+        ?string $variant = null
     ) {
         $this->style = $style;
         $this->rowSpan = $rowSpan;
         $this->colSpan = $colSpan;
         $this->isHeader = $isHeader;
+        $this->variant = $variant;
     }
 
-    public static function make(Node $content): self
+    public static function make(Node $content, ?string $variant = null): self
     {
-        return new self($content);
+        return new self($content, null, 1, 1, false, $variant);
     }
 
     public static function header(Node $content, ?Style $style = null, int $rowSpan = 1, int $colSpan = 1): self
@@ -85,13 +88,18 @@ final readonly class TableCell implements Node
         return $this->isHeader;
     }
 
+    public function variant(): ?string
+    {
+        return $this->variant;
+    }
+
     public function withStyle(?Style $style): self
     {
-        return new self($this->content, $style, $this->rowSpan, $this->colSpan, $this->isHeader);
+        return new self($this->content, $style, $this->rowSpan, $this->colSpan, $this->isHeader, $this->variant);
     }
 
     public function withContent(Node $content): self
     {
-        return new self($content, $this->style, $this->rowSpan, $this->colSpan, $this->isHeader);
+        return new self($content, $this->style, $this->rowSpan, $this->colSpan, $this->isHeader, $this->variant);
     }
 }

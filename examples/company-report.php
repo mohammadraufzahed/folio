@@ -23,11 +23,11 @@ function buildReportData(): array
             'generatedAt' => 'Generated: ' . date('Y-m-d H:i'),
         ],
         'summary' => [
-            ['label' => 'Total Revenue', 'value' => '$48.2M', 'change' => '+12%'],
-            ['label' => 'Gross Margin', 'value' => '41%', 'change' => '+2pp'],
-            ['label' => 'Active Customers', 'value' => '1,284', 'change' => '+9%'],
-            ['label' => 'NPS', 'value' => '62', 'change' => '+4'],
-            ['label' => 'Headcount', 'value' => '312', 'change' => '+18'],
+            ['label' => 'Total Revenue', 'value' => '$48.2M', 'change' => '+12%', 'trend' => 'Up'],
+            ['label' => 'Gross Margin', 'value' => '41%', 'change' => '+2pp', 'trend' => 'Up'],
+            ['label' => 'Active Customers', 'value' => '1,284', 'change' => '+9%', 'trend' => 'Up'],
+            ['label' => 'NPS', 'value' => '62', 'change' => '+4', 'trend' => 'Up'],
+            ['label' => 'Headcount', 'value' => '312', 'change' => '+18', 'trend' => 'Up'],
         ],
         'departments' => [
             ['name' => 'Engineering', 'head' => 'A. Nguyen', 'headcount' => '96', 'budget' => '$12.4M'],
@@ -45,7 +45,7 @@ function buildReportData(): array
                 'department' => ['Engineering', 'Sales', 'Support', 'Marketing', 'Finance'][$i % 5],
                 'salary' => '$' . number_format(65000 + ($i * 1750), 0),
             ],
-            range(0, 11)
+            range(0, 49)
         ),
         'products' => [
             ['sku' => 'RB-100', 'name' => 'Rover Base', 'category' => 'Hardware', 'price' => '$4,200', 'stock' => '84'],
@@ -169,6 +169,20 @@ function buildReportData(): array
             ['author' => 'COO', 'text' => 'Battery Gen2 delay needs recovery plan in Q1.', 'date' => '2025-12-19'],
             ['author' => 'CRO', 'text' => 'Enterprise pipeline healthy entering next FY.', 'date' => '2025-12-19'],
         ],
+        'riskItems' => [
+            ['id' => 'R-01', 'description' => 'Single-source dependency for LiDAR sensors', 'owner' => 'L. Costa', 'level' => 'High'],
+            ['id' => 'R-02', 'description' => 'EU regulatory changes on battery disposal', 'owner' => 'Legal', 'level' => 'Medium'],
+            ['id' => 'R-03', 'description' => 'Key talent retention in Engineering', 'owner' => 'A. Nguyen', 'level' => 'High'],
+            ['id' => 'R-04', 'description' => 'Cloud cost overruns in Q4', 'owner' => 'J. Brooks', 'level' => 'Medium'],
+            ['id' => 'R-05', 'description' => 'Supply chain disruption - shipping delays', 'owner' => 'Operations', 'level' => 'Low'],
+        ],
+        'topPerformers' => [
+            ['rank' => '1', 'name' => 'Alex Reed', 'department' => 'Engineering', 'score' => '98'],
+            ['rank' => '2', 'name' => 'Morgan Diaz', 'department' => 'Sales', 'score' => '96'],
+            ['rank' => '3', 'name' => 'Riley Chen', 'department' => 'Support', 'score' => '95'],
+            ['rank' => '4', 'name' => 'Taylor Quinn', 'department' => 'Marketing', 'score' => '93'],
+            ['rank' => '5', 'name' => 'Casey Bloom', 'department' => 'Finance', 'score' => '91'],
+        ],
     ];
 }
 
@@ -177,8 +191,11 @@ $templatePath = __DIR__ . '/templates/company-report.folio';
 $data = buildReportData();
 
 echo "Compiling template with data binding...\n";
+$t0 = microtime(true);
 $php = $compiler->compileFile($templatePath);
+$tCompile = microtime(true) - $t0;
 echo "Compiled bytes: " . strlen($php) . "\n";
+echo sprintf("Compile time: %.2f ms\n", $tCompile * 1000);
 
 // Show a snippet of generated PHP proving data binding
 if (str_contains($php, 'function (array $data')) {
@@ -188,9 +205,21 @@ if (str_contains($php, 'foreach')) {
     echo "OK: foreach loops present in compiled output\n";
 }
 
+// Test cached compile (should be near-instant)
+$t1 = microtime(true);
+$compiler->compileFile($templatePath);
+$tCached = microtime(true) - $t1;
+echo sprintf("Cached compile time: %.3f ms\n", $tCached * 1000);
+
+echo "\nRendering PDF...\n";
+$t2 = microtime(true);
 $pdf = $compiler->renderFile($templatePath, $data);
+$tRender = microtime(true) - $t2;
+echo sprintf("Render time: %.2f ms\n", $tRender * 1000);
+
 $out = __DIR__ . '/company-report.pdf';
 $pdf->save($out);
 
 echo "PDF saved: {$out}\n";
-echo "Pages: multi-page report with 20 tables driven by PHP data\n";
+echo "Pages: 7-page report with 22 tables, multi-headers, footers, variant colors\n";
+echo sprintf("Total time: %.2f ms\n", (microtime(true) - $t0) * 1000);

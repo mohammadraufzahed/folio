@@ -1,35 +1,89 @@
 // Company multi-page report driven by PHP $data
-// Expected keys: company, report, summary, departments, employees,
-// products, sales, inventory, customers, invoices, expenses,
-// projects, metrics, regions, vendors, supportTickets
+// Template engine: var/prop declarations, foreach, partials, cell variants
 
+// --- Property declarations (optional, for IDE + defaults) ---
+prop company = ""
+prop report = ""
+prop summary = ""
+prop departments = ""
+prop employees = ""
+prop products = ""
+prop sales = ""
+prop inventory = ""
+prop customers = ""
+prop invoices = ""
+prop expenses = ""
+prop projects = ""
+prop metrics = ""
+prop regions = ""
+prop vendors = ""
+prop supportTickets = ""
+prop quarters = ""
+prop channels = ""
+prop training = ""
+prop compliance = ""
+prop assets = ""
+prop notes = ""
+prop riskItems = ""
+prop topPerformers = ""
+var reportTitle = "Annual Operations Report"
+
+// Repeating chrome on every page (themeable + layout variants)
+// header styles: bar | band | minimal | split
+// themes: navy | teal | slate | emerald | crimson | violet
+pageheader(
+title=company.name,
+subtitle=report.title,
+rightTitle=report.period,
+rightSubtitle=report.generatedAt,
+badge="CONFIDENTIAL",
+monogram="AR",
+theme=navy,
+style=bar,
+showMonogram=true
+)
+pagefooter(
+left=company.name,
+center="Internal Use Only",
+right="Acme Robotics",
+showPageNumber=true,
+pageFormat="Page {page} of {pages}",
+style=rule,
+theme=navy
+)
+
+// --- Page 1: Branded header + Executive Summary + Departments ---
 page {
     column {
-        heading company.name
-        text report.title
-        text report.period
-        text report.generatedAt
-
         heading "1. Executive Summary"
         table {
             header {
                 th "Metric"
                 th "Value"
                 th "Change"
+                th "Trend"
             }
             foreach summary as row {
                 tr {
                     td row.label
                     td row.value
                     td row.change
+                    td(variant=success) row.trend
                 }
+            }
+            footer {
+                td(colspan=4) "All figures preliminary - subject to audit adjustment"
             }
         }
 
         heading "2. Departments"
         table {
             header {
-                th "Department"
+                th(colspan=2) "Department Info"
+                th(colspan=2) "Resources"
+            }
+            header {
+                th "Name"
                 th "Head"
                 th "Headcount"
                 th "Budget"
@@ -41,6 +95,11 @@ page {
                     td dept.headcount
                     td dept.budget
                 }
+            }
+            footer {
+                td(colspan=2) "Total"
+                td "312"
+                td "$36.3M"
             }
         }
 
@@ -66,6 +125,7 @@ page {
     }
 }
 
+// --- Page 2: Products + Sales + Inventory with warning columns ---
 page {
     column {
         heading "4. Product Catalog"
@@ -83,7 +143,7 @@ page {
                     td product.name
                     td product.category
                     td product.price
-                    td product.stock
+                    td(variant=warning) product.stock
                 }
             }
         }
@@ -104,6 +164,11 @@ page {
                     td sale.region
                 }
             }
+            footer {
+                td(colspan=2) "Total"
+                td "$4.08M"
+                td "All"
+            }
         }
 
         heading "6. Inventory Status"
@@ -120,30 +185,35 @@ page {
                     td item.warehouse
                     td item.sku
                     td item.onHand
-                    td item.reserved
-                    td item.available
+                    td(variant=warning) item.reserved
+                    td(variant=success) item.available
                 }
             }
         }
     }
 }
 
+// --- Page 3: Customers + Invoices + Expenses ---
 page {
     column {
-        heading "7. Customers"
+        heading "7. Top Customers"
         table {
             header {
-                th "Customer"
+                th(colspan=2) "Customer"
+                th(colspan=2) "Value"
+            }
+            header {
+                th "Name"
                 th "Segment"
                 th "Country"
-                th "Lifetime Value"
+                th "LTV"
             }
             foreach customers as customer {
                 tr {
                     td customer.name
                     td customer.segment
                     td customer.country
-                    td customer.ltv
+                    td(variant=info) customer.ltv
                 }
             }
         }
@@ -162,13 +232,19 @@ page {
                     td invoice.number
                     td invoice.customer
                     td invoice.amount
-                    td invoice.status
+                    td(variant=danger) invoice.status
                     td invoice.dueDate
                 }
             }
+            footer {
+                td(colspan=2) "Outstanding"
+                td "$446,550"
+                td "2 Open"
+                td ""
+            }
         }
 
-        heading "9. Expenses"
+        heading "9. Operating Expenses"
         table {
             header {
                 th "Category"
@@ -180,7 +256,7 @@ page {
                 tr {
                     td expense.category
                     td expense.vendor
-                    td expense.amount
+                    td(variant=warning) expense.amount
                     td expense.month
                 }
             }
@@ -188,9 +264,10 @@ page {
     }
 }
 
+// --- Page 4: Projects + KPIs + Regional Performance ---
 page {
     column {
-        heading "10. Projects"
+        heading "10. Project Portfolio"
         table {
             header {
                 th "Project"
@@ -210,7 +287,7 @@ page {
             }
         }
 
-        heading "11. KPI Metrics"
+        heading "11. KPI Scorecard"
         table {
             header {
                 th "KPI"
@@ -223,8 +300,12 @@ page {
                     td metric.name
                     td metric.target
                     td metric.actual
-                    td metric.status
+                    td(variant=success) metric.status
                 }
+            }
+            footer {
+                td(colspan=3) "Overall Score"
+                td "4/5 Hit"
             }
         }
 
@@ -240,17 +321,49 @@ page {
                 tr {
                     td region.name
                     td region.revenue
-                    td region.growth
+                    td(variant=success) region.growth
                     td region.customers
                 }
+            }
+            footer {
+                td "Total"
+                td "$48.2M"
+                td "+15%"
+                td "1,284"
             }
         }
     }
 }
 
+// --- Page 5: Risk Register + Vendors + Support ---
 page {
     column {
-        heading "13. Vendors"
+        heading "13. Risk Register"
+        table {
+            header {
+                th(colspan=3) "Risk Details"
+                th "Severity"
+            }
+            header {
+                th "ID"
+                th "Description"
+                th "Owner"
+                th "Level"
+            }
+            foreach riskItems as risk {
+                tr {
+                    td risk.id
+                    td risk.description
+                    td risk.owner
+                    td(variant=danger) risk.level
+                }
+            }
+            footer {
+                td(colspan=4) "Review cadence: monthly | Next review: 2025-02-15"
+            }
+        }
+
+        heading "14. Vendor Management"
         table {
             header {
                 th "Vendor"
@@ -262,13 +375,13 @@ page {
                 tr {
                     td vendor.name
                     td vendor.category
-                    td vendor.rating
+                    td(variant=info) vendor.rating
                     td vendor.contractEnd
                 }
             }
         }
 
-        heading "14. Support Tickets"
+        heading "15. Support Tickets"
         table {
             header {
                 th "Ticket"
@@ -280,15 +393,20 @@ page {
             foreach supportTickets as ticket {
                 tr {
                     td ticket.id
-                    td ticket.priority
+                    td(variant=warning) ticket.priority
                     td ticket.customer
                     td ticket.status
                     td ticket.assignee
                 }
             }
         }
+    }
+}
 
-        heading "15. Quarterly Comparison"
+// --- Page 6: Quarterly + Marketing + Top Performers ---
+page {
+    column {
+        heading "16. Quarterly Comparison"
         table {
             header {
                 th(colspan=4) "Year over Year"
@@ -304,12 +422,18 @@ page {
                     td q.name
                     td q.revenue
                     td q.expenses
-                    td q.profit
+                    td(variant=success) q.profit
                 }
+            }
+            footer {
+                td "FY Total"
+                td "$48.2M"
+                td "$31.1M"
+                td "$17.1M"
             }
         }
 
-        heading "16. Marketing Channels"
+        heading "17. Marketing Channels"
         table {
             header {
                 th "Channel"
@@ -322,16 +446,38 @@ page {
                     td channel.name
                     td channel.spend
                     td channel.leads
-                    td channel.cac
+                    td(variant=warning) channel.cac
                 }
+            }
+        }
+
+        heading "18. Top Performers"
+        table {
+            header {
+                th "Rank"
+                th "Name"
+                th "Department"
+                th "Score"
+            }
+            foreach topPerformers as performer {
+                tr {
+                    td performer.rank
+                    td performer.name
+                    td performer.department
+                    td(variant=success) performer.score
+                }
+            }
+            footer {
+                td(colspan=4) "Awards ceremony: 2025-02-28 | Venue: Austin HQ"
             }
         }
     }
 }
 
+// --- Page 7: Training + Compliance + Assets + Notes ---
 page {
     column {
-        heading "17. Training Programs"
+        heading "19. Training Programs"
         table {
             header {
                 th "Program"
@@ -344,12 +490,12 @@ page {
                     td course.name
                     td course.attendees
                     td course.hours
-                    td course.score
+                    td(variant=success) course.score
                 }
             }
         }
 
-        heading "18. Compliance Checklist"
+        heading "20. Compliance Checklist"
         table {
             header {
                 th "Control"
@@ -362,12 +508,12 @@ page {
                     td item.control
                     td item.owner
                     td item.due
-                    td item.state
+                    td(variant=info) item.state
                 }
             }
         }
 
-        heading "19. Asset Register"
+        heading "21. Asset Register"
         table {
             header {
                 th "Asset"
@@ -380,12 +526,16 @@ page {
                     td asset.name
                     td asset.type
                     td asset.location
-                    td asset.value
+                    td(variant=info) asset.value
                 }
+            }
+            footer {
+                td(colspan=3) "Total Registered"
+                td "$1.17M"
             }
         }
 
-        heading "20. Closing Notes"
+        heading "22. Closing Notes"
         table {
             header {
                 th "Author"

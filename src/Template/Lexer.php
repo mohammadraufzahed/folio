@@ -123,12 +123,13 @@ final class Lexer
     {
         return match ($value) {
             'page', 'column', 'row', 'text', 'heading' => TokenType::Keyword,
-            'table', 'tr', 'th', 'td', 'header' => TokenType::Keyword,
+            'table', 'tr', 'th', 'td', 'header', 'footer' => TokenType::Keyword,
             'if', 'else', 'elseif', 'endif' => TokenType::Keyword,
             'foreach', 'endforeach', 'as' => TokenType::Keyword,
             'switch', 'case', 'break', 'default', 'endswitch' => TokenType::Keyword,
             'import', 'layout', 'slot', 'endslot' => TokenType::Keyword,
             'component', 'endcomponent' => TokenType::Keyword,
+            'var', 'prop', 'partial', 'pageheader', 'pagefooter' => TokenType::Keyword,
             default => TokenType::Identifier,
         };
     }

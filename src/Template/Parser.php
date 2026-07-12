@@ -76,9 +76,12 @@ final class Parser
 
         return match ($keyword) {
             'page', 'column', 'row', 'text', 'heading',
-            'table', 'tr', 'th', 'td', 'header' => $this->parseElement($keyword),
+            'table', 'tr', 'th', 'td', 'header', 'footer' => $this->parseElement($keyword),
+            'pageheader', 'pagefooter' => $this->parsePageChrome($keyword),
             'if' => $this->parseIf(),
             'foreach' => $this->parseForeach(),
+            'var', 'prop' => $this->parseVarDecl($keyword),
+            'partial' => $this->parsePartial(),
             default => new AstNode('Keyword', [], ['value' => $keyword]),
         };
     }
@@ -131,8 +134,21 @@ final class Parser
             $nameToken = $this->consume(TokenType::Identifier, 'Expected attribute name');
             $this->consume(TokenType::Equals, "Expected '=' after attribute name");
 
-            if ($this->match(TokenType::String) || $this->match(TokenType::Number) || $this->match(TokenType::Identifier)) {
-                $attributes[$nameToken->value] = $this->previous()->value;
+            // Allow string/number literals OR dotted property paths (company.name)
+            if (
+                $this->check(TokenType::String) || $this->check(TokenType::Number)
+                || $this->check(TokenType::Identifier) || $this->check(TokenType::Keyword)
+            ) {
+                $valueNode = $this->parseExpression();
+                // Keep simple scalars as raw values for existing callers (variant=warning)
+                if ($valueNode->type === 'StringLiteral' || $valueNode->type === 'NumberLiteral') {
+                    $attributes[$nameToken->value] = $valueNode->attributes['value'] ?? '';
+                } elseif ($valueNode->type === 'Identifier') {
+                    $attributes[$nameToken->value] = $valueNode->attributes['value'] ?? '';
+                } else {
+                    // PropertyAccess etc. stored as AST for compiler
+                    $attributes[$nameToken->value] = $valueNode;
+                }
             } else {
                 throw new \RuntimeException('Expected attribute value');
             }
@@ -145,6 +161,58 @@ final class Parser
         $this->consume(TokenType::RightParen, "Expected ')' after attributes");
 
         return $attributes;
+    }
+
+    /**
+     * Parse page chrome: pageheader(title=..., subtitle=..., ...) or pagefooter(...)
+     */
+    private function parsePageChrome(string $keyword): AstNode
+    {
+        $attributes = $this->parseAttributes();
+        return new AstNode('PageChrome', [], [
+            'kind' => $keyword,
+            'attributes' => $attributes,
+        ]);
+    }
+
+    /**
+     * Parse a var/prop declaration: var name = "default" or prop name = expr
+     * Produces an AstNode with type 'VarDecl'.
+     */
+    private function parseVarDecl(string $keyword): AstNode
+    {
+        // var name = "value"
+        // prop name = expression
+        $nameToken = $this->consume(TokenType::Identifier, "Expected variable name after '{$keyword}'");
+        $this->consume(TokenType::Equals, "Expected '=' after variable name");
+
+        $defaultExpr = $this->parseExpression();
+
+        return new AstNode('VarDecl', [], [
+            'keyword' => $keyword,
+            'name' => $nameToken->value,
+            'default' => $defaultExpr,
+        ]);
+    }
+
+    /**
+     * Parse a partial include: partial "path/to/file" or partial name
+     * Produces an AstNode with type 'Partial'.
+     */
+    private function parsePartial(): AstNode
+    {
+        // partial "path" or partial identifier
+        if ($this->check(TokenType::String)) {
+            $path = $this->advance();
+            return new AstNode('Partial', [], ['path' => $path->value]);
+        }
+
+        if ($this->check(TokenType::Identifier) || $this->check(TokenType::Keyword)) {
+            $name = $this->advance();
+            return new AstNode('Partial', [], ['path' => $name->value]);
+        }
+
+        throw new \RuntimeException("Expected partial path after 'partial'");
     }
 
     private function parseBlock(): AstNode
