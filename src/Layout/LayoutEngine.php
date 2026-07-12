@@ -146,7 +146,6 @@ final class LayoutEngine
         $fontSize = $style?->fontSize() ?? 12.0;
         $lineHeight = $style?->lineHeight() ?? 1.5;
 
-        // Simple text measurement (approximation)
         $charWidth = $fontSize * 0.6;
         $textWidth = strlen($text->text()) * $charWidth;
         $textHeight = $fontSize * $lineHeight;

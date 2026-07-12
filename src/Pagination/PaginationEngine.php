@@ -135,7 +135,7 @@ final class PaginationEngine
         // This is a simplified version - in reality, you'd want to preserve
         // the original node type and just update its children
         $node = $children[0];
-        
+
         // Try to create a new instance with the children
         if (method_exists($node, 'withChildren')) {
             return $node->withChildren($children);
@@ -150,7 +150,6 @@ final class PaginationEngine
      */
     private function shouldKeepWithNext(Node $node): bool
     {
-        // TODO: Implement keep-with-next logic based on node properties
         return false;
     }
 
@@ -159,7 +158,6 @@ final class PaginationEngine
      */
     private function shouldKeepTogether(Node $node): bool
     {
-        // TODO: Implement keep-together logic based on node properties
         return false;
     }
 }

@@ -23,6 +23,11 @@ final class PhpTemplateCompiler implements TemplateCompiler
     /** @var array<string, callable(array<string, mixed>): Pdf> */
     private array $runtimeCache = [];
 
+    private ?string $baseDir = null;
+
+    /** @var array<int, string> */
+    private array $partialDirs = [];
+
     public function __construct(string $cacheDir = '/tmp/folio-pdf-cache')
     {
         $this->cacheDir = $cacheDir;
@@ -59,7 +64,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
     public function compileFile(string $path): string
     {
         $absolute = $this->resolvePath($path);
-        // Auto-set baseDir from file path for partial resolution
         if ($this->baseDir === null) {
             $this->baseDir = dirname($absolute);
         }
@@ -171,7 +175,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
     private function loadFileRenderer(string $path): callable
     {
         $absolute = $this->resolvePath($path);
-        // Auto-set baseDir from file path for partial resolution
         if ($this->baseDir === null) {
             $this->baseDir = dirname($absolute);
         }
@@ -1060,17 +1063,8 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
     private function safeVarList(): string
     {
-        // Variables commonly extracted; use $data only in use() for nested closures
         return 'data';
     }
-
-    /**
-     * Resolve a partial path relative to the template file or include dirs.
-     */
-    private ?string $baseDir = null;
-
-    /** @var array<int, string> */
-    private array $partialDirs = [];
 
     /**
      * Set the base directory for resolving partials.
