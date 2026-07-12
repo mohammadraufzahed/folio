@@ -1,0 +1,53 @@
+# Composer
+/vendor/
+composer.lock
+
+# Generated PDF files
+*.pdf
+
+# IDE & editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Cache & temp
+.cache/
+.phpunit.cache/
+/tmp/
+*.tmp
+*.temp
+
+# Build artifacts
+dist/
+build/
+*.tgz
+*.zip
+*.tar.gz
+
+# Node (VS Code extension)
+vscode-extension/node_modules/
+vscode-extension/out/
+vscode-extension/*.vsix
+vscode-extension/package-lock.json
+
+# PHPUnit
+.phpunit.result.cache
+
+# Compiled template cache
+folio-cache/
+

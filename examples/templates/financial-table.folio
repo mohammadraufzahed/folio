@@ -1,0 +1,43 @@
+page {
+    column {
+        heading "Financial Report - Q4 2024"
+        table {
+            header {
+                th(colspan=5) "Financial Performance"
+            }
+            header {
+                th(colspan=2) "Revenue"
+                th(colspan=2) "Expenses"
+                th "Net Profit"
+            }
+            header {
+                th "Q4"
+                th "YTD"
+                th "Q4"
+                th "YTD"
+                th "Q4"
+            }
+            tr {
+                td "$1.2M"
+                td "$4.8M"
+                td "$800K"
+                td "$3.2M"
+                td "$400K"
+            }
+            tr {
+                td "$1.5M"
+                td "$6.0M"
+                td "$900K"
+                td "$3.6M"
+                td "$600K"
+            }
+            tr {
+                td "$1.8M"
+                td "$7.2M"
+                td "$1.0M"
+                td "$4.0M"
+                td "$800K"
+            }
+        }
+    }
+}

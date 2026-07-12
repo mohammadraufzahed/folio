@@ -1,0 +1,19 @@
+// Example Folio PDF template
+page {
+    column {
+        heading "Invoice"
+        text "Invoice #001"
+        
+        if showDetails {
+            text "Customer: John Doe"
+            text "Date: 2024-01-15"
+        }
+        
+        foreach items as item {
+            text item
+        }
+    }
+}
+
+@header "Page Header"
+@footer "Page Footer"

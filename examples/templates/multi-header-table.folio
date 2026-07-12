@@ -1,0 +1,32 @@
+page {
+    column {
+        heading "Multi-Header Table Example"
+        table {
+            header {
+                th(colspan=3) "Employee Information"
+                th(colspan=2) "Department"
+            }
+            header {
+                th "Name"
+                th "ID"
+                th "Position"
+                th "Name"
+                th "Location"
+            }
+            tr {
+                td "Alice Williams"
+                td "EMP001"
+                td "Developer"
+                td "Engineering"
+                td "San Francisco"
+            }
+            tr {
+                td "Charlie Brown"
+                td "EMP002"
+                td "Designer"
+                td "Design"
+                td "New York"
+            }
+        }
+    }
+}

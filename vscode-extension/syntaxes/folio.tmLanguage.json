@@ -1,0 +1,58 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Folio PDF",
+  "scopeName": "source.folio-pdf",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#directives" },
+    { "include": "#keywords" },
+    { "include": "#attributes" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.folio",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.folio",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.folio",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "numbers": {
+      "name": "constant.numeric.folio",
+      "match": "\\b[0-9]+(\\.[0-9]+)?\\b"
+    },
+    "directives": {
+      "name": "keyword.control.directive.folio",
+      "match": "@[A-Za-z_][A-Za-z0-9_]*"
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.folio",
+          "match": "\\b(if|else|elseif|endif|foreach|endforeach|as|switch|case|break|default|endswitch)\\b"
+        },
+        {
+          "name": "entity.name.tag.folio",
+          "match": "\\b(page|column|row|text|heading|table|tr|th|td|header|import|layout|slot|component)\\b"
+        }
+      ]
+    },
+    "attributes": {
+      "name": "entity.other.attribute-name.folio",
+      "match": "\\b(colspan|rowspan|padding|margin|width|height)\\b"
+    }
+  }
+}

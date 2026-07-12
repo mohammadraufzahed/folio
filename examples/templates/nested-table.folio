@@ -1,0 +1,49 @@
+page {
+    column {
+        heading "Nested Table Example"
+        table {
+            header {
+                th "Student"
+                th "Grades"
+            }
+            tr {
+                td "John Doe"
+                td {
+                    table {
+                        header {
+                            th "Subject"
+                            th "Score"
+                        }
+                        tr {
+                            td "Math"
+                            td "95"
+                        }
+                        tr {
+                            td "Science"
+                            td "88"
+                        }
+                    }
+                }
+            }
+            tr {
+                td "Jane Smith"
+                td {
+                    table {
+                        header {
+                            th "Subject"
+                            th "Score"
+                        }
+                        tr {
+                            td "Math"
+                            td "92"
+                        }
+                        tr {
+                            td "English"
+                            td "90"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

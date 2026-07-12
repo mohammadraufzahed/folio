@@ -1,0 +1,32 @@
+{
+  "name": "tree-sitter-folio-pdf",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for Folio PDF template language",
+  "main": "bindings/node",
+  "keywords": [
+    "parser",
+    "lexer",
+    "tree-sitter",
+    "folio-pdf"
+  ],
+  "author": "Folio PDF",
+  "license": "MIT",
+  "dependencies": {
+    "tree-sitter-cli": "^0.23.0",
+    "tree-sitter": "^0.23.0"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.folio-pdf",
+      "file-types": [
+        "folio",
+        "pdf-template"
+      ]
+    }
+  ],
+  "scripts": {
+    "test": "tree-sitter test",
+    "generate": "tree-sitter generate",
+    "parse": "tree-sitter parse"
+  }
+}

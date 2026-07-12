@@ -1,0 +1,32 @@
+page {
+    column {
+        heading "Multi-Level Headers with Cell Spans"
+        table {
+            header {
+                th(colspan=4) "Company Overview"
+            }
+            header {
+                th(colspan=2) "Engineering"
+                th(colspan=2) "Sales"
+            }
+            header {
+                th "Team Size"
+                th "Budget"
+                th "Revenue"
+                th "Growth"
+            }
+            tr {
+                td "25"
+                td "$2.5M"
+                td "$10M"
+                td "15%"
+            }
+            tr {
+                td "30"
+                td "$3.0M"
+                td "$15M"
+                td "20%"
+            }
+        }
+    }
+}

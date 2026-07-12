@@ -1,0 +1,27 @@
+page {
+    column {
+        heading "Simple Table Example"
+        table {
+            header {
+                th "Name"
+                th "Age"
+                th "City"
+            }
+            tr {
+                td "John Doe"
+                td "30"
+                td "New York"
+            }
+            tr {
+                td "Jane Smith"
+                td "25"
+                td "Los Angeles"
+            }
+            tr {
+                td "Bob Johnson"
+                td "35"
+                td "Chicago"
+            }
+        }
+    }
+}
