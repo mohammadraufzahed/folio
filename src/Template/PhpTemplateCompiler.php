@@ -356,7 +356,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
         };
     }
 
-    private function generatePageChromeStatement(AstNode $node, string $indent): string
+        private function generatePageChromeStatement(AstNode $node, string $indent): string
     {
         $kind = (string) ($node->attributes['kind'] ?? 'pageheader');
         $attrs = $node->attributes['attributes'] ?? [];
@@ -379,9 +379,106 @@ final class PhpTemplateCompiler implements TemplateCompiler
             }
         }
 
+        // Custom chrome body: children present => layout tree mode
+        if ($node->children !== []) {
+            $layoutExpr = $this->generateChromeNodeList($node->children);
+            $parts[] = "'layout' => " . $layoutExpr;
+            $method = $kind === 'pagefooter' ? 'pageFooter' : 'pageHeader';
+        }
+
         $arrayExpr = '[' . implode(', ', $parts) . ']';
         return $indent . "\$pdf = \$pdf->{$method}({$arrayExpr});\n";
     }
+
+    /**
+     * @param array<int, AstNode> $children
+     */
+    private function generateChromeNodeList(array $children): string
+    {
+        $parts = [];
+        foreach ($children as $child) {
+            $parts[] = $this->generateChromeNode($child);
+        }
+        return '[' . implode(', ', $parts) . ']';
+    }
+
+    private function generateChromeNode(AstNode $node): string
+    {
+        return match ($node->type) {
+            'Element' => $this->generateChromeElement($node),
+            'Block' => $this->generateChromeNodeList($node->children),
+            'StringLiteral' => "['type' => 'text', 'value' => " . $this->generateStringLiteral($node) . ", 'attrs' => [], 'children' => []]",
+            'NumberLiteral' => "['type' => 'text', 'value' => (string)(" . $this->generateNumberLiteral($node) . "), 'attrs' => [], 'children' => []]",
+            'Identifier' => "['type' => 'text', 'value' => (string)(" . $this->generateIdentifier($node) . "), 'attrs' => [], 'children' => []]",
+            'PropertyAccess' => "['type' => 'text', 'value' => (string)(" . $this->generatePropertyAccess($node) . "), 'attrs' => [], 'children' => []]",
+            'If' => $this->generateChromeIf($node),
+            'Foreach' => $this->generateChromeForeach($node),
+            default => "['type' => 'spacer', 'value' => '', 'attrs' => [], 'children' => []]",
+        };
+    }
+
+    private function generateChromeElement(AstNode $node): string
+    {
+        $type = (string) ($node->attributes['type'] ?? 'text');
+        $attrs = $node->attributes['attributes'] ?? [];
+        if (!is_array($attrs)) {
+            $attrs = [];
+        }
+
+        $attrParts = [];
+        foreach ($attrs as $key => $value) {
+            $key = (string) $key;
+            if ($value instanceof AstNode) {
+                $attrParts[] = var_export($key, true) . ' => (string)(' . $this->generateExpression($value) . ')';
+            } elseif (is_string($value) || is_numeric($value)) {
+                if ($value === 'true' || $value === 'false') {
+                    $attrParts[] = var_export($key, true) . ' => ' . ($value === 'true' ? 'true' : 'false');
+                } else {
+                    $attrParts[] = var_export($key, true) . ' => ' . var_export((string) $value, true);
+                }
+            }
+        }
+
+        // Inline value (text "x", monogram "AR", badge foo)
+        $valueExpr = "''";
+        $childNodes = $node->children;
+        if ($childNodes !== [] && in_array($childNodes[0]->type, ['StringLiteral', 'NumberLiteral', 'Identifier', 'PropertyAccess'], true)) {
+            $valueExpr = '(string)(' . $this->generateExpression($childNodes[0]) . ')';
+            $childNodes = array_slice($childNodes, 1);
+        }
+
+        $childrenExpr = $this->generateChromeNodeList($childNodes);
+
+        return sprintf(
+            "['type' => %s, 'value' => %s, 'attrs' => [%s], 'children' => %s]",
+            var_export($type, true),
+            $valueExpr,
+            implode(', ', $attrParts),
+            $childrenExpr
+        );
+    }
+
+    private function generateChromeIf(AstNode $node): string
+    {
+        $condition = $node->attributes['condition'] ?? null;
+        $condExpr = $condition instanceof AstNode ? $this->generateExpression($condition) : 'false';
+        $then = $node->children[0] ?? null;
+        $else = $node->children[1] ?? null;
+        $thenExpr = $then ? $this->generateChromeNodeList($then->type === 'Block' ? $then->children : [$then]) : '[]';
+        $elseExpr = $else ? $this->generateChromeNodeList($else->type === 'Block' ? $else->children : [$else]) : '[]';
+        return "(({$condExpr}) ? {$thenExpr} : {$elseExpr})";
+    }
+
+    private function generateChromeForeach(AstNode $node): string
+    {
+        $collection = $node->attributes['collection'] ?? null;
+        $item = (string) ($node->attributes['item'] ?? 'item');
+        $collExpr = $collection instanceof AstNode ? $this->generateExpression($collection) : '[]';
+        $body = $node->children[0] ?? null;
+        $bodyExpr = $body ? $this->generateChromeNodeList($body->type === 'Block' ? $body->children : [$body]) : '[]';
+        return "(function() use (\$data) { \$__out = []; foreach ((array)({$collExpr}) as \${$item}) { \$__out = array_merge(\$__out, {$bodyExpr}); } return \$__out; })()";
+    }
+
 
     private function generateElement(AstNode $node): string
     {

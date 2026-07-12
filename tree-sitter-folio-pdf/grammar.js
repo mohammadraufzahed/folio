@@ -1,14 +1,40 @@
 module.exports = grammar({
   name: 'folio_pdf',
 
+  extras: $ => [
+    /\s/,
+    $.comment,
+  ],
+
   rules: {
     document: $ => repeat($._statement),
 
     _statement: $ => choice(
+      $.page_chrome,
+      $.var_decl,
+      $.partial,
       $.element,
-      $.directive,
       $.control_structure,
+      $.directive,
       $.comment
+    ),
+
+    page_chrome: $ => seq(
+      field('kind', choice('pageheader', 'pagefooter')),
+      optional($.attributes),
+      optional($.block)
+    ),
+
+    var_decl: $ => seq(
+      choice('var', 'prop'),
+      $.identifier,
+      '=',
+      $._value
+    ),
+
+    partial: $ => seq(
+      'partial',
+      choice($.string, $.identifier)
     ),
 
     element: $ => choice(
@@ -16,62 +42,66 @@ module.exports = grammar({
       $.column_element,
       $.row_element,
       $.text_element,
-      $.heading_element
+      $.heading_element,
+      $.table_element,
+      $.table_row_element,
+      $.table_cell_element,
+      $.chrome_widget
     ),
 
-    page_element: $ => seq(
-      'page',
+    page_element: $ => seq('page', optional($.attributes), optional($.block)),
+    column_element: $ => seq('column', optional($.attributes), optional($.block)),
+    row_element: $ => seq('row', optional($.attributes), optional($.block)),
+    text_element: $ => seq('text', optional($.attributes), optional($._value)),
+    heading_element: $ => seq('heading', optional($.attributes), optional($._value)),
+
+    table_element: $ => seq('table', optional($.attributes), optional($.block)),
+    table_row_element: $ => seq(
+      choice('tr', 'header', 'footer'),
       optional($.attributes),
-      $.block
+      optional($.block)
     ),
-
-    column_element: $ => seq(
-      'column',
+    table_cell_element: $ => seq(
+      choice('th', 'td'),
       optional($.attributes),
-      $.block
+      optional($._value),
+      optional($.block)
     ),
 
-    row_element: $ => seq(
-      'row',
+    chrome_widget: $ => seq(
+      choice('monogram', 'badge', 'spacer', 'rule', 'box', 'pagenum', 'img'),
       optional($.attributes),
-      $.block
+      optional($._value),
+      optional($.block)
     ),
 
-    text_element: $ => seq(
-      'text',
-      optional($.attributes),
-      optional($.string)
-    ),
-
-    heading_element: $ => seq(
-      'heading',
-      optional($.attributes),
-      optional($.string)
-    ),
-
-    block: $ => seq(
-      '{',
-      repeat($._statement),
-      '}'
-    ),
+    block: $ => seq('{', repeat($._statement), '}'),
 
     attributes: $ => seq(
       '(',
-      repeat1($.attribute),
+      optional(seq($.attribute, repeat(seq(',', $.attribute)), optional(','))),
       ')'
     ),
 
     attribute: $ => seq(
-      $.identifier,
+      field('name', $.identifier),
       '=',
-      choice($.string, $.number, $.identifier)
+      field('value', $._value)
     ),
 
-    directive: $ => seq(
-      '@',
-      $.identifier,
-      optional(choice($.string, $.number, $.identifier))
+    _value: $ => choice(
+      $.string,
+      $.number,
+      $.property_access,
+      $.identifier
     ),
+
+    property_access: $ => prec.left(seq(
+      $.identifier,
+      repeat1(seq('.', $.identifier))
+    )),
+
+    directive: $ => seq('@', $.identifier, optional($._value)),
 
     control_structure: $ => choice(
       $.if_statement,
@@ -80,45 +110,22 @@ module.exports = grammar({
 
     if_statement: $ => seq(
       'if',
-      $.expression,
+      $._value,
       $.block,
       optional(seq('else', $.block))
     ),
 
     foreach_statement: $ => seq(
       'foreach',
-      $.identifier,
+      choice($.property_access, $.identifier),
       'as',
       $.identifier,
       $.block
     ),
 
-    expression: $ => choice(
-      $.identifier,
-      $.string,
-      $.number,
-      $.comparison,
-      $.logical_expression
-    ),
-
-    comparison: $ => seq(
-      $.expression,
-      choice('==', '!=', '<', '<=', '>', '>='),
-      $.expression
-    ),
-
-    logical_expression: $ => seq(
-      $.expression,
-      choice('&&', '||'),
-      $.expression
-    ),
-
-    string: $ => /"[^"]*"/,
-
+    string: $ => /"([^"\\]|\\.)*"/,
     number: $ => /\d+(\.\d+)?/,
-
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
-
-    comment: $ => /\/\/[^\n]*/
+    comment: $ => token(seq('//', /[^\n]*/)),
   }
 });

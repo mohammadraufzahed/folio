@@ -130,6 +130,7 @@ final class Lexer
             'import', 'layout', 'slot', 'endslot' => TokenType::Keyword,
             'component', 'endcomponent' => TokenType::Keyword,
             'var', 'prop', 'partial', 'pageheader', 'pagefooter' => TokenType::Keyword,
+            'monogram', 'badge', 'spacer', 'rule', 'box', 'pagenum', 'img' => TokenType::Keyword,
             default => TokenType::Identifier,
         };
     }

@@ -175,17 +175,458 @@ final class Document
         $x = self::MARGIN_X;
         $contentWidth = $pageWidth - (self::MARGIN_X * 2);
 
-        if ($this->pageHeader !== null) {
-            $this->drawHeaderChrome($g, $t, $pageWidth, $pageHeight, $x, $contentWidth);
+        if ($this->pageHeader !== null && $this->chromeVisible($this->pageHeader, $pageNo, $totalPages)) {
+            if (isset($this->pageHeader['layout']) && is_array($this->pageHeader['layout'])) {
+                $this->drawLayoutChrome(
+                    $g,
+                    $t,
+                    $this->pageHeader,
+                    true,
+                    $pageWidth,
+                    $pageHeight,
+                    $x,
+                    $contentWidth,
+                    $pageNo,
+                    $totalPages
+                );
+            } else {
+                $this->drawHeaderChrome($g, $t, $pageWidth, $pageHeight, $x, $contentWidth);
+            }
         }
 
-        if ($this->pageFooter !== null) {
-            $this->drawFooterChrome($g, $t, $pageWidth, $pageHeight, $x, $contentWidth, $pageNo, $totalPages);
+        if ($this->pageFooter !== null && $this->chromeVisible($this->pageFooter, $pageNo, $totalPages)) {
+            if (isset($this->pageFooter['layout']) && is_array($this->pageFooter['layout'])) {
+                $this->drawLayoutChrome(
+                    $g,
+                    $t,
+                    $this->pageFooter,
+                    false,
+                    $pageWidth,
+                    $pageHeight,
+                    $x,
+                    $contentWidth,
+                    $pageNo,
+                    $totalPages
+                );
+            } else {
+                $this->drawFooterChrome($g, $t, $pageWidth, $pageHeight, $x, $contentWidth, $pageNo, $totalPages);
+            }
         }
 
         $t[] = "ET\n";
         return implode('', $g) . implode('', $t);
     }
+
+    /**
+     * @param array<string, mixed> $chrome
+     */
+    private function chromeVisible(array $chrome, int $pageNo, int $totalPages): bool
+    {
+        $only = strtolower((string) ($chrome['only'] ?? 'all'));
+        return match ($only) {
+            'first' => $pageNo === 1,
+            'notfirst', 'rest' => $pageNo > 1,
+            'last' => $pageNo === $totalPages,
+            default => true,
+        };
+    }
+
+    /**
+     * Paint custom chrome layout tree (Mode B).
+     *
+     * @param list<string> $g
+     * @param list<string> $t
+     * @param array<string, mixed> $chrome
+     */
+    private function drawLayoutChrome(
+        array &$g,
+        array &$t,
+        array $chrome,
+        bool $isHeader,
+        float $pageWidth,
+        float $pageHeight,
+        float $x,
+        float $contentWidth,
+        int $pageNo,
+        int $totalPages
+    ): void {
+        $themeName = (string) ($chrome['theme'] ?? 'navy');
+        $theme = $this->resolveChromeTheme($themeName, $chrome);
+        $height = (float) ($chrome['height'] ?? ($isHeader ? self::HEADER_BAND - 14.0 : self::FOOTER_BAND));
+        $height = max(28.0, min(160.0, $height));
+
+        if ($isHeader) {
+            $bandTop = $pageHeight - 10.0;
+            $bandBottom = $bandTop - $height;
+            // Background band
+            $g[] = $this->pdfFillRect(0.0, $bandBottom, $pageWidth, $height, $theme['bg']);
+            $g[] = $this->pdfFillRect(0.0, $bandBottom - 3.0, $pageWidth, 3.0, $theme['accent']);
+            $originY = $bandTop;
+            $areaBottom = $bandBottom;
+        } else {
+            $bandBottom = 8.0;
+            $bandTop = $bandBottom + $height;
+            $g[] = $this->pdfFillRect(0.0, 0.0, $pageWidth, $bandTop + 4.0, $theme['wash']);
+            $g[] = $this->pdfFillRect(0.0, $bandTop, $pageWidth, 2.0, $theme['accent']);
+            $originY = $bandTop - 4.0;
+            $areaBottom = $bandBottom;
+        }
+
+        $layout = $chrome['layout'] ?? [];
+        if (!is_array($layout)) {
+            $layout = [];
+        }
+        // Flatten accidental nested arrays from if/foreach merges
+        $layout = $this->flattenChromeNodes($layout);
+
+        $ctx = [
+            'pageNo' => $pageNo,
+            'totalPages' => $totalPages,
+            'theme' => $theme,
+            'isHeader' => $isHeader,
+            'defaultColor' => $isHeader ? $theme['textLight'] : $theme['mutedDark'],
+            'mutedColor' => $isHeader ? $theme['mutedLight'] : $theme['mutedDark'],
+        ];
+
+        $this->paintChromeNodes(
+            $g,
+            $t,
+            $layout,
+            $x,
+            $originY,
+            $contentWidth,
+            max(20.0, $originY - $areaBottom),
+            $ctx
+        );
+
+        $t[] = "0 0 0 rg\n/F1 12 Tf\n";
+    }
+
+    /**
+     * @param array<int, mixed> $nodes
+     * @return array<int, array<string, mixed>>
+     */
+    private function flattenChromeNodes(array $nodes): array
+    {
+        $out = [];
+        foreach ($nodes as $n) {
+            if (!is_array($n)) {
+                continue;
+            }
+            // if/foreach may return list of nodes without type key
+            if (isset($n['type'])) {
+                $out[] = $n;
+            } else {
+                // numeric list
+                $isList = array_keys($n) === range(0, count($n) - 1);
+                if ($isList) {
+                    foreach ($this->flattenChromeNodes($n) as $child) {
+                        $out[] = $child;
+                    }
+                }
+            }
+        }
+        return $out;
+    }
+
+    /**
+     * @param list<string> $g
+     * @param list<string> $t
+     * @param array<int, array<string, mixed>> $nodes
+     * @param array<string, mixed> $ctx
+     */
+    private function paintChromeNodes(
+        array &$g,
+        array &$t,
+        array $nodes,
+        float $x,
+        float $topY,
+        float $width,
+        float $height,
+        array $ctx
+    ): void {
+        if ($nodes === []) {
+            return;
+        }
+
+        // Default: stack vertically if multiple roots, or paint single root
+        if (count($nodes) === 1) {
+            $this->paintChromeNode($g, $t, $nodes[0], $x, $topY, $width, $height, $ctx);
+            return;
+        }
+
+        $y = $topY;
+        $remaining = $height;
+        foreach ($nodes as $node) {
+            $h = min($remaining, $this->estimateChromeHeight($node, $width, $ctx));
+            $this->paintChromeNode($g, $t, $node, $x, $y, $width, $h, $ctx);
+            $y -= $h;
+            $remaining -= $h;
+            if ($remaining <= 0) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * @param list<string> $g
+     * @param list<string> $t
+     * @param array<string, mixed> $node
+     * @param array<string, mixed> $ctx
+     */
+    private function paintChromeNode(
+        array &$g,
+        array &$t,
+        array $node,
+        float $x,
+        float $topY,
+        float $width,
+        float $height,
+        array $ctx
+    ): void {
+        $type = (string) ($node['type'] ?? 'text');
+        $attrs = is_array($node['attrs'] ?? null) ? $node['attrs'] : [];
+        $value = (string) ($node['value'] ?? '');
+        $children = $this->flattenChromeNodes(is_array($node['children'] ?? null) ? $node['children'] : []);
+        /** @var array{bg: array{0:float,1:float,2:float}, accent: array{0:float,1:float,2:float}, accentSoft: array{0:float,1:float,2:float}, textLight: array{0:float,1:float,2:float}, textDark: array{0:float,1:float,2:float}, mutedLight: array{0:float,1:float,2:float}, mutedDark: array{0:float,1:float,2:float}} $theme */
+        $theme = $ctx['theme'];
+
+        $pad = (float) ($attrs['pad'] ?? 0);
+        $padX = (float) ($attrs['padX'] ?? $pad);
+        $padY = (float) ($attrs['padY'] ?? $pad);
+        $gap = (float) ($attrs['gap'] ?? 8);
+        $innerX = $x + $padX;
+        $innerW = max(10.0, $width - $padX * 2);
+        $innerTop = $topY - $padY;
+        $innerH = max(8.0, $height - $padY * 2);
+
+        // Optional box background
+        if ($type === 'box' || isset($attrs['bg'])) {
+            $bg = $this->resolveColorAttr((string) ($attrs['bg'] ?? ''), $theme, $theme['bg']);
+            $g[] = $this->pdfFillRect($x, $topY - $height, $width, $height, $bg);
+        }
+
+        if ($type === 'row') {
+            $align = (string) ($attrs['align'] ?? 'center');
+            $n = max(1, count($children));
+            // Compute grow units
+            $grows = [];
+            $fixed = 0.0;
+            foreach ($children as $i => $child) {
+                $ca = is_array($child['attrs'] ?? null) ? $child['attrs'] : [];
+                $grow = (float) ($ca['grow'] ?? 0);
+                if ($grow > 0) {
+                    $grows[$i] = $grow;
+                } else {
+                    $w = (float) ($ca['width'] ?? 0);
+                    if ($w <= 0) {
+                        $w = $innerW / $n;
+                    }
+                    $fixed += $w;
+                    $grows[$i] = 0.0;
+                }
+            }
+            $growTotal = array_sum($grows);
+            $free = max(0.0, $innerW - $fixed - $gap * max(0, $n - 1));
+            $cursor = $innerX;
+            foreach ($children as $i => $child) {
+                $ca = is_array($child['attrs'] ?? null) ? $child['attrs'] : [];
+                if ($grows[$i] > 0 && $growTotal > 0) {
+                    $cw = $free * ($grows[$i] / $growTotal);
+                } else {
+                    $cw = (float) ($ca['width'] ?? ($innerW / $n));
+                }
+                $cw = max(12.0, $cw);
+                $this->paintChromeNode($g, $t, $child, $cursor, $innerTop, $cw, $innerH, $ctx);
+                $cursor += $cw + $gap;
+            }
+            return;
+        }
+
+        if ($type === 'column') {
+            $y = $innerTop;
+            $remaining = $innerH;
+            foreach ($children as $child) {
+                $h = min($remaining, $this->estimateChromeHeight($child, $innerW, $ctx));
+                $this->paintChromeNode($g, $t, $child, $innerX, $y, $innerW, $h, $ctx);
+                $y -= $h + $gap * 0.35;
+                $remaining -= $h + $gap * 0.35;
+                if ($remaining <= 0) {
+                    break;
+                }
+            }
+            return;
+        }
+
+        if ($type === 'spacer') {
+            return;
+        }
+
+        if ($type === 'rule') {
+            $color = $this->resolveColorAttr((string) ($attrs['color'] ?? 'accent'), $theme, $theme['accent']);
+            $y = $topY - $height / 2.0;
+            $g[] = sprintf(
+                "%.3f %.3f %.3f RG\n1 w\n%.2f %.2f m\n%.2f %.2f l\nS\n0 0 0 RG\n",
+                $color[0], $color[1], $color[2],
+                $x, $y, $x + $width, $y
+            );
+            return;
+        }
+
+        if ($type === 'monogram') {
+            $label = strtoupper(substr($value !== '' ? $value : 'AR', 0, 3));
+            $tile = min($height - 4.0, 30.0);
+            $tile = max(20.0, $tile);
+            $ty = $topY - $tile - max(0.0, ($height - $tile) / 2.0);
+            $g[] = $this->pdfFillRect($x, $ty, $tile, $tile, $theme['accent']);
+            $g[] = $this->pdfFillRect($x + 1.5, $ty + 1.5, $tile - 3.0, $tile - 3.0, $theme['accentSoft']);
+            $t[] = $this->pdfSetRgb($theme['textLight']);
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 11 Tf\n(%s) Tj\n",
+                $x + 6.0,
+                $ty + 9.0,
+                $this->escapePdfString($label)
+            );
+            return;
+        }
+
+        if ($type === 'badge') {
+            $label = strtoupper($value !== '' ? $value : 'BADGE');
+            $bw = max(48.0, strlen($label) * 5.2 + 16.0);
+            $bh = 13.0;
+            $by = $topY - $bh - max(0.0, ($height - $bh) / 2.0);
+            $align = (string) ($attrs['align'] ?? 'end');
+            $bx = match ($align) {
+                'start', 'left' => $x,
+                'center' => $x + ($width - $bw) / 2.0,
+                default => $x + max(0.0, $width - $bw),
+            };
+            $g[] = $this->pdfFillRect($bx, $by, $bw, $bh, $theme['accent']);
+            $t[] = $this->pdfSetRgb($theme['textLight']);
+            $t[] = sprintf(
+                "1 0 0 1 %.2f %.2f Tm\n/F1 7 Tf\n(%s) Tj\n",
+                $bx + 8.0,
+                $by + 3.2,
+                $this->escapePdfString($label)
+            );
+            return;
+        }
+
+        if ($type === 'pagenum') {
+            $format = (string) ($attrs['format'] ?? 'Page {page} of {pages}');
+            $value = str_replace(
+                ['{page}', '{pages}', '{PAGE}', '{PAGES}'],
+                [(string) $ctx['pageNo'], (string) $ctx['totalPages'], (string) $ctx['pageNo'], (string) $ctx['totalPages']],
+                $format
+            );
+            $type = 'text';
+        }
+
+        // text / heading / default
+        $size = (int) ($attrs['size'] ?? ($type === 'heading' ? 14 : 10));
+        $size = max(6, min(28, $size));
+        $weight = (string) ($attrs['weight'] ?? ($type === 'heading' ? 'bold' : 'normal'));
+        $colorKey = (string) ($attrs['color'] ?? '');
+        $color = $this->resolveColorAttr(
+            $colorKey,
+            $theme,
+            $colorKey === '' ? $ctx['defaultColor'] : $theme['textLight']
+        );
+        if ($colorKey === 'muted') {
+            $color = $ctx['mutedColor'];
+        }
+
+        $align = (string) ($attrs['align'] ?? 'start');
+        $label = $this->truncateText($value, $width, $size);
+        $textW = strlen($label) * $size * 0.48;
+        $tx = match ($align) {
+            'center' => $x + max(0.0, ($width - $textW) / 2.0),
+            'end', 'right' => $x + max(0.0, $width - $textW),
+            default => $x,
+        };
+        $ty = $topY - max($size + 2.0, $height * 0.55);
+
+        $t[] = $this->pdfSetRgb($color);
+        $t[] = sprintf(
+            "1 0 0 1 %.2f %.2f Tm\n/F1 %d Tf\n(%s) Tj\n",
+            $tx,
+            $ty,
+            $size,
+            $this->escapePdfString($label)
+        );
+
+        // paint nested children below text if any
+        if ($children !== []) {
+            $this->paintChromeNodes($g, $t, $children, $x, $topY - $size - 4.0, $width, max(8.0, $height - $size - 4.0), $ctx);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $node
+     * @param array<string, mixed> $ctx
+     */
+    private function estimateChromeHeight(array $node, float $width, array $ctx): float
+    {
+        $type = (string) ($node['type'] ?? 'text');
+        $attrs = is_array($node['attrs'] ?? null) ? $node['attrs'] : [];
+        return match ($type) {
+            'row', 'box' => (float) ($attrs['height'] ?? 36.0),
+            'column' => (float) ($attrs['height'] ?? 48.0),
+            'monogram' => 32.0,
+            'badge' => 16.0,
+            'rule' => 8.0,
+            'spacer' => (float) ($attrs['height'] ?? 8.0),
+            'heading' => (float) ($attrs['size'] ?? 14) + 8.0,
+            default => (float) ($attrs['size'] ?? 10) + 6.0,
+        };
+    }
+
+    /**
+     * @param array{bg: array{0:float,1:float,2:float}, accent: array{0:float,1:float,2:float}, accentSoft: array{0:float,1:float,2:float}, textLight: array{0:float,1:float,2:float}, textDark: array{0:float,1:float,2:float}, mutedLight: array{0:float,1:float,2:float}, mutedDark: array{0:float,1:float,2:float}} $theme
+     * @return array{0:float,1:float,2:float}
+     */
+    private function resolveColorAttr(string $value, array $theme, array $fallback): array
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return $fallback;
+        }
+        $named = match (strtolower($value)) {
+            'text', 'textlight' => $theme['textLight'],
+            'textdark' => $theme['textDark'],
+            'muted', 'mutedlight' => $theme['mutedLight'],
+            'muteddark' => $theme['mutedDark'],
+            'accent' => $theme['accent'],
+            'accentsoft' => $theme['accentSoft'],
+            'bg' => $theme['bg'],
+            'white' => [1.0, 1.0, 1.0],
+            'black' => [0.0, 0.0, 0.0],
+            default => null,
+        };
+        if ($named !== null) {
+            return $named;
+        }
+        $hex = $this->parseHexColor($value);
+        return $hex ?? $fallback;
+    }
+
+    /** @return array{0:float,1:float,2:float}|null */
+    private function parseHexColor(string $value): ?array
+    {
+        $value = ltrim(trim($value), '#');
+        if (preg_match('/^[0-9a-fA-F]{3}$/', $value)) {
+            $value = $value[0].$value[0].$value[1].$value[1].$value[2].$value[2];
+        }
+        if (!preg_match('/^[0-9a-fA-F]{6}$/', $value)) {
+            return null;
+        }
+        return [
+            hexdec(substr($value, 0, 2)) / 255.0,
+            hexdec(substr($value, 2, 2)) / 255.0,
+            hexdec(substr($value, 4, 2)) / 255.0,
+        ];
+    }
+
 
     /**
      * @param list<string> $g
@@ -194,7 +635,7 @@ final class Document
     private function drawHeaderChrome(array &$g, array &$t, float $pageWidth, float $pageHeight, float $x, float $contentWidth): void
     {
         $h = $this->pageHeader ?? [];
-        $theme = $this->resolveChromeTheme((string) ($h['theme'] ?? 'navy'));
+        $theme = $this->resolveChromeTheme((string) ($h['theme'] ?? 'navy'), $h);
         $style = strtolower((string) ($h['style'] ?? 'bar'));
         $title = (string) ($h['title'] ?? '');
         $subtitle = (string) ($h['subtitle'] ?? '');
@@ -342,7 +783,7 @@ final class Document
     ): void {
         $f = $this->pageFooter ?? [];
         $themeName = (string) ($f['theme'] ?? ($this->pageHeader['theme'] ?? 'navy'));
-        $theme = $this->resolveChromeTheme($themeName);
+        $theme = $this->resolveChromeTheme($themeName, $f);
         $style = strtolower((string) ($f['style'] ?? 'rule'));
         $left = (string) ($f['left'] ?? '');
         $center = (string) ($f['center'] ?? '');
@@ -435,7 +876,10 @@ final class Document
      *   rule: array{0:float,1:float,2:float}
      * }
      */
-    private function resolveChromeTheme(string $name): array
+    /**
+     * @param array<string, mixed> $overrides
+     */
+    private function resolveChromeTheme(string $name, array $overrides = []): array
     {
         $themes = [
             'navy' => [
@@ -482,12 +926,24 @@ final class Document
             ],
         ];
 
-        $base = $themes[$name] ?? $themes['navy'];
+        $base = $themes[$name] ?? ($name === 'custom' ? $themes['navy'] : $themes['navy']);
         $base['textLight'] = [1.0, 1.0, 1.0];
         $base['textDark'] = [0.12, 0.14, 0.18];
         $base['mutedLight'] = [0.78, 0.84, 0.92];
         $base['mutedDark'] = [0.38, 0.42, 0.48];
         $base['rule'] = [0.72, 0.74, 0.78];
+
+        // Custom hex overrides: bg, bgAlt, accent, accentSoft, wash
+        foreach (['bg', 'bgAlt', 'accent', 'accentSoft', 'wash'] as $key) {
+            if (!isset($overrides[$key])) {
+                continue;
+            }
+            $parsed = $this->parseHexColor((string) $overrides[$key]);
+            if ($parsed !== null) {
+                $base[$key] = $parsed;
+            }
+        }
+
         return $base;
     }
 

@@ -31,26 +31,30 @@ var reportTitle = "Annual Operations Report"
 // Repeating chrome on every page (themeable + layout variants)
 // header styles: bar | band | minimal | split
 // themes: navy | teal | slate | emerald | crimson | violet
-pageheader(
-title=company.name,
-subtitle=report.title,
-rightTitle=report.period,
-rightSubtitle=report.generatedAt,
-badge="CONFIDENTIAL",
-monogram="AR",
-theme=navy,
-style=bar,
-showMonogram=true
-)
-pagefooter(
-left=company.name,
-center="Internal Use Only",
-right="Acme Robotics",
-showPageNumber=true,
-pageFormat="Page {page} of {pages}",
-style=rule,
-theme=navy
-)
+// Custom chrome layout (Mode B) + theme overrides
+pageheader(height=64, theme=navy, only=all) {
+    row(align=center, gap=10, pad=12) {
+        monogram "AR"
+        column(grow=1) {
+            text(size=15, weight=bold, color=text) company.name
+            text(size=9, color=muted) report.title
+        }
+        column(align=end, width=150) {
+            text(size=10, color=text, align=end) report.period
+            text(size=8, color=muted, align=end) report.generatedAt
+            badge(align=end) "CONFIDENTIAL"
+        }
+    }
+}
+pagefooter(height=40, theme=navy) {
+    row(align=center, gap=8, pad=10) {
+        text(size=8, color=muted) company.name
+        spacer
+        text(size=8, color=muted) "Internal Use Only"
+        spacer
+        pagenum(format="Page {page} of {pages}", size=8, color=muted, align=end)
+    }
+}
 
 // --- Page 1: Branded header + Executive Summary + Departments ---
 page {

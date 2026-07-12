@@ -76,7 +76,8 @@ final class Parser
 
         return match ($keyword) {
             'page', 'column', 'row', 'text', 'heading',
-            'table', 'tr', 'th', 'td', 'header', 'footer' => $this->parseElement($keyword),
+            'table', 'tr', 'th', 'td', 'header', 'footer',
+            'monogram', 'badge', 'spacer', 'rule', 'box', 'pagenum', 'img' => $this->parseElement($keyword),
             'pageheader', 'pagefooter' => $this->parsePageChrome($keyword),
             'if' => $this->parseIf(),
             'foreach' => $this->parseForeach(),
@@ -164,15 +165,62 @@ final class Parser
     }
 
     /**
-     * Parse page chrome: pageheader(title=..., subtitle=..., ...) or pagefooter(...)
+     * Parse page chrome: pageheader(...) { chrome layout } or attribute-only preset.
      */
     private function parsePageChrome(string $keyword): AstNode
     {
         $attributes = $this->parseAttributes();
-        return new AstNode('PageChrome', [], [
+        $children = [];
+
+        if ($this->match(TokenType::LeftBrace)) {
+            while (!$this->check(TokenType::RightBrace) && !$this->isAtEnd()) {
+                $child = $this->parseChromeStatement();
+                if ($child !== null) {
+                    $children[] = $child;
+                }
+            }
+            $this->consume(TokenType::RightBrace, "Expected '}' after {$keyword} block");
+        }
+
+        return new AstNode('PageChrome', $children, [
             'kind' => $keyword,
             'attributes' => $attributes,
         ]);
+    }
+
+    /**
+     * Statements allowed inside pageheader/pagefooter blocks.
+     */
+    private function parseChromeStatement(): ?AstNode
+    {
+        if ($this->isAtEnd()) {
+            return null;
+        }
+
+        $token = $this->peek();
+        if ($token->type === TokenType::Keyword) {
+            $kw = $token->value;
+            // Disallow body-only constructs inside chrome
+            if (in_array($kw, ['page', 'table', 'tr', 'th', 'td', 'header', 'footer', 'pageheader', 'pagefooter'], true)) {
+                throw new \RuntimeException("Element '{$kw}' is not allowed inside page chrome");
+            }
+            return $this->parseKeyword();
+        }
+
+        if ($token->type === TokenType::LeftBrace) {
+            return $this->parseBlock();
+        }
+
+        if (
+            $token->type === TokenType::String
+            || $token->type === TokenType::Identifier
+            || $token->type === TokenType::Number
+        ) {
+            return $this->parseExpression();
+        }
+
+        $this->advance();
+        return null;
     }
 
     /**
