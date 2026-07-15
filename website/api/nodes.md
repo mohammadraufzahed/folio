@@ -1,145 +1,138 @@
 # Document Nodes
 
-## PHP Builder API
+All document nodes are immutable value objects that extend `AbstractNode`. Every node has an optional `Style` and zero or more children. Use the factory methods to build documents, and `withStyle()` / `withChildren()` to create modified copies.
 
-### Page
+## Page
 
-Document pages with presets (A4, Letter, A3).
+`Page` represents a physical page. It supports common presets and custom sizes.
 
 ```php
 use Folio\Pdf\Nodes\Page;
 
-Page::a4()
-Page::letter()
-Page::a3()
-Page::custom(600, 800)  // width, height in points
+Page::a4();
+Page::letter();
+Page::a3();
+Page::make(600, 800); // width, height in points
 ```
 
-With content:
+Add content with `withContent()`:
 
 ```php
-Page::a4()->withContent($content);
+$page = Page::a4()->withContent($column);
 ```
 
-### Column
+## Column
 
-Vertical container for stacking content.
+A vertical container that stacks its children.
 
 ```php
 use Folio\Pdf\Nodes\Column;
 
-Column::make()
-    ->addChildren([$node1, $node2, $node3]);
+$column = Column::make(null, [
+    $heading,
+    $textBlock,
+    $table,
+]);
 ```
 
-With style:
+Use `withStyle()` to add spacing or background:
 
 ```php
-Column::make()->withStyle($style);
+$column = Column::make(null, $children)->withStyle($style);
 ```
 
-### Row
+## Row
 
-Horizontal container for side-by-side content.
+A horizontal container that lays out children side by side.
 
 ```php
 use Folio\Pdf\Nodes\Row;
 
-Row::make()
-    ->addChildren([$node1, $node2]);
+$row = Row::make(null, [
+    Text::make('Left'),
+    Text::make('Center'),
+    Text::make('Right'),
+]);
 ```
 
-### Text
+## Text
 
-Text content.
+A text content node.
 
 ```php
 use Folio\Pdf\Nodes\Text;
 
-Text::make('Hello, World!');
+$text = Text::make('Hello, world');
+$text = Text::make('Styled text')->withStyle($style);
 ```
 
-With style:
+## Heading
 
-```php
-Text::make('Hello')->withStyle($style);
-```
-
-### Heading
-
-Headings (H1-H6).
+Headings support six levels.
 
 ```php
 use Folio\Pdf\Nodes\Heading;
 
-Heading::h1('Title')
-Heading::h2('Subtitle')
-Heading::h3('Section')
-Heading::h4('Subsection')
-Heading::h5('Detail')
-Heading::h6('Note')
+Heading::h1('Title');
+Heading::h2('Subtitle');
+Heading::h3('Section');
+Heading::h4('Subsection');
+Heading::h5('Detail');
+Heading::h6('Note');
 ```
 
-With style:
+Alternatively, use `Heading::make(string $text, int $level = 1, ?Style $style = null)`:
 
 ```php
-Heading::h1('Title')->withStyle($style);
+Heading::make('Custom Heading', 2);
 ```
 
-## Template Language
+## Table
 
-### Page
+Tables are composed of `TableRow` and `TableCell` nodes. The `Table` node accepts a list of rows and optional column widths.
 
-```folio
-page {
-  heading "Title"
-  text "Content"
-}
+```php
+use Folio\Pdf\Nodes\Table;
+use Folio\Pdf\Nodes\TableCell;
+use Folio\Pdf\Nodes\TableRow;
 
-page(size=a3) {
-  heading "Large Page"
-}
-
-page(size=letter, orientation=landscape) {
-  heading "Landscape Letter"
-}
-
-page(size="600x800") {
-  heading "Custom Size"
-}
+$table = Table::make([
+    TableRow::make([
+        TableCell::make(Text::make('Name')),
+        TableCell::make(Text::make('Quantity')),
+    ]),
+    TableRow::make([
+        TableCell::make(Text::make('Widget')),
+        TableCell::make(Text::make('12')),
+    ]),
+], [200.0, 80.0]);
 ```
 
-### Column
+Show borders:
 
-```folio
-column {
-  heading "Section"
-  text "Content"
-  text "More content"
-}
+```php
+$table = Table::make($rows, [200.0, 80.0], style: null, showBorders: true);
 ```
 
-### Row
+Mark a row as a header:
 
-```folio
-row {
-  text "Left"
-  text "Center"
-  text "Right"
-}
+```php
+$header = TableRow::make($cells, showHeaders: true);
 ```
 
-### Text
+## Page Header and Footer
 
-```folio
-text "Hello, world!"
-text name  // Variable interpolation
-```
+`PageHeader` and `PageFooter` are nodes that define repeated page chrome. In templates, use `pageheader` and `pagefooter` elements.
 
-### Heading
+## Common Methods
 
-```folio
-heading "Main Title"
-heading "Subtitle"
-heading "Section"
-```
+All nodes expose:
+
+- `style(): ?Style` — get the node's style.
+- `children(): array` — get child nodes.
+- `hasChildren(): bool` — check for children.
+- `type(): string` — node class identifier.
+- `withStyle(?Style $style): static` — return a copy with the given style.
+- `withChildren(array $children): static` — return a copy with the given children.
+
+Because these methods return new instances, you can safely compose documents from smaller pieces and reuse nodes without mutation.

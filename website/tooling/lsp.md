@@ -1,67 +1,53 @@
-# Language Server Protocol (LSP)
+# Language Server
 
-A Language Server Protocol implementation for the Folio PDF template language, providing IDE features like autocomplete, diagnostics, and hover information.
+The Folio Language Server provides IDE features for `.folio` templates. It runs as a standalone PHP process and communicates over the Language Server Protocol.
 
 ## Features
 
-- **Syntax Validation**: Real-time syntax checking
-- **Autocomplete**: Intelligent code completion for elements, directives, and keywords
-- **Hover Information**: Documentation on hover
-- **Diagnostics**: Error and warning reporting
-- **LSP Compliant**: Full LSP 3.0 support
+- Syntax validation
+- Autocomplete for elements, attributes, and variables
+- Error diagnostics
+- Hover information for built-in elements
 
-## Installation
+## Running the Server
 
-The LSP server is included with the Folio PDF library.
-
-## Usage
-
-### Standalone Server
+Start the server from the repository root:
 
 ```bash
 php lsp/lsp.php
 ```
 
-### VS Code Integration
+The server reads JSON-RPC messages from `stdin` and writes responses to `stdout`.
 
-The [VS Code extension](./vscode.md) includes LSP integration.
+## Editor Configuration
 
-### Manual Configuration
+### VS Code
 
-Add to your `settings.json`:
+The [VS Code extension](./vscode.md) starts the LSP automatically when you open a `.folio` file.
 
-```json
-{
-  "languageserver": {
-    "folio-pdf": {
-      "command": "php",
-      "args": ["/path/to/folio/lsp/lsp.php"],
-      "filetypes": ["folio", "pdf-template"],
-      "rootPatterns": [".git"],
-      "settings": {}
-    }
-  }
+### Neovim / Vim
+
+Configure a language server client to launch:
+
+```lua
+require('lspconfig').folio.setup {
+  cmd = { 'php', 'lsp/lsp.php' },
+  filetypes = { 'folio' },
+  root_dir = require('lspconfig').util.root_pattern('.git'),
 }
 ```
 
-## Features
+### Generic LSP Client
 
-### Autocomplete
+```json
+{
+  "command": "php",
+  "args": ["/path/to/folio/lsp/lsp.php"],
+  "filetypes": ["folio", "pdf-template"],
+  "rootPatterns": [".git"]
+}
+```
 
-- Element names (page, column, row, text, heading)
-- Directives (@header, @footer, @import)
-- Keywords (var, prop, if, foreach)
-- Variable names from scope
+## Logs
 
-### Diagnostics
-
-- Syntax errors
-- Unknown elements
-- Missing required attributes
-- Type mismatches (where applicable)
-
-### Hover
-
-- Element documentation
-- Directive descriptions
-- Attribute information
+The server writes errors to `stderr`. In VS Code, open the Output panel and select the "Folio PDF LSP" channel.

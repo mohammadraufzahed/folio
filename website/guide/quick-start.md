@@ -1,8 +1,10 @@
 # Quick Start
 
+The fastest way to understand Folio is to generate a document. You can use the PHP builder API, a `.folio` template, or both in the same project.
+
 ## PHP Builder API
 
-### Basic Example
+Describe the document structure directly in PHP:
 
 ```php
 use Folio\Pdf\Document\Pdf;
@@ -14,20 +16,19 @@ use Folio\Pdf\Nodes\Text;
 Pdf::make()
     ->page(
         Page::a4()->withContent(
-            Column::make()
-                ->addChildren([
-                    Heading::h1('Invoice'),
-                    Text::make('Customer: John Doe'),
-                    Text::make('Amount: $100.00'),
-                ])
+            Column::make(null, [
+                Heading::h1('Invoice'),
+                Text::make('Customer: John Doe'),
+                Text::make('Amount: $100.00'),
+            ])
         )
     )
     ->save('invoice.pdf');
 ```
 
-## Template Language
+Every node is immutable. `Column::make(null, [...])` creates a column with a list of children and no style. `Page::a4()->withContent(...)` builds an A4 page. `Pdf::make()` is the fluent entry point.
 
-### Basic Template
+## Template Language
 
 Create `invoice.folio`:
 
@@ -37,70 +38,77 @@ var amount = "100.00"
 
 page {
   heading "Invoice"
-  text "Customer: {customer}"
-  text "Amount: ${amount}"
+  text "Customer:"
+  text customer
+  text "Amount:"
+  text amount
 }
 ```
 
-Compile and render:
+Compile and render it from PHP:
 
 ```php
-use Folio\Template\PhpTemplateCompiler;
+use Folio\Pdf\Template\PhpTemplateCompiler;
 
 $compiler = new PhpTemplateCompiler();
-$template = $compiler->compile(file_get_contents('invoice.folio'));
 
-$pdf = $template([
+$pdf = $compiler->render(file_get_contents('invoice.folio'), [
     'customer' => 'Jane Smith',
-    'amount' => '250.00'
+    'amount' => '250.00',
 ]);
+
 $pdf->save('invoice.pdf');
 ```
 
-### Template with Control Flow
+`render()` compiles the template to a PHP closure, merges the provided data, and returns a `Pdf` instance ready to save.
+
+## Templates with Control Flow
 
 ```folio
 var title = "Monthly Report"
-var items = []
 
 page {
   heading title
-  foreach items as item {
+  foreach products as product {
     column {
-      heading item.name
-      text item.description
-      text "Price: ${item.price}"
+      heading product.name
+      text product.description
+      text product.price
     }
   }
 }
 ```
 
-Render with data:
-
 ```php
-$template([
+$pdf = $compiler->render(file_get_contents('report.folio'), [
     'title' => 'Q4 Sales Report',
-    'items' => [
+    'products' => [
         ['name' => 'Product A', 'description' => 'Premium widget', 'price' => '99.00'],
         ['name' => 'Product B', 'description' => 'Standard widget', 'price' => '49.00'],
-    ]
+    ],
 ]);
+
+$pdf->save('report.pdf');
 ```
 
-### Template with Directives
+## Page Chrome
+
+Headers and footers are defined as `pageheader` and `pagefooter` blocks. They are rendered on every page unless you scope them with `only`.
 
 ```folio
-@header {
+pageheader(height=40) {
   text "Acme Corporation"
+  text "123 Business Street"
 }
 
-@footer {
-  text "Page 1"
+pagefooter(height=30) {
+  text "Page:"
+  pagenum(format="{page} / {pages}", size=8)
 }
 
 page {
-  heading "Invoice"
-  text "Customer: {customer}"
+  heading "Document"
+  text "Content begins here."
 }
 ```
 

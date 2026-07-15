@@ -1,50 +1,51 @@
 # Formatter
 
-A standalone formatter for the Folio PDF template language, providing consistent code formatting and style enforcement.
+The Folio formatter normalizes `.folio` files so your templates stay consistent regardless of who edits them. It handles indentation, attribute spacing, and nested block layout.
 
 ## Features
 
-- **Consistent Indentation**: Configurable indentation size and character
-- **Block Formatting**: Proper formatting of nested blocks
-- **Comment Preservation**: Maintains comments in formatted output
-- **Attribute Formatting**: Consistent attribute formatting
-- **Control Structure Formatting**: Proper if/foreach formatting
-- **Check Mode**: Verify if files need formatting without modifying them
-
-## Installation
-
-The formatter is included with the Folio PDF library.
+- Configurable indentation size
+- Tab or space indentation
+- Consistent attribute formatting
+- Check mode for CI
+- Preserves comments
 
 ## CLI Usage
 
-### Format a File
+Format a single file:
 
 ```bash
 php bin/format.php --file=template.folio
 ```
 
-### Custom Indentation
+Format with two-space indentation:
 
 ```bash
 php bin/format.php --file=template.folio --indent=2
 ```
 
-### Check Mode
-
-Check if a file needs formatting without modifying it:
+Check whether a file needs formatting without writing to disk:
 
 ```bash
 php bin/format.php --file=template.folio --check
 ```
 
-### Format Directory
-
-Format all `.folio` files in a directory:
+Format every `.folio` file in a directory:
 
 ```bash
 php bin/format.php --dir=templates
 ```
 
+## CI Integration
+
+Run the formatter in check mode as part of your test suite:
+
+```bash
+php bin/format.php --dir=templates --check
+```
+
+If any file is not formatted, the command exits with a non-zero status.
+
 ## VS Code Integration
 
-The [VS Code extension](./vscode.md) includes formatter integration. Use `Shift+Alt+F` to format the current document.
+The [VS Code extension](./vscode.md) formats `.folio` files on save and on demand with `Shift+Alt+F`.

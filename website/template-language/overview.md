@@ -1,42 +1,46 @@
 # Template Language Overview
 
-The Folio template language is a declarative DSL for generating PDF documents. Templates are compiled to PHP closures that accept a data array and return a `Pdf` instance.
+Folio's template language gives you a clean way to describe documents without mixing design with application logic. Templates are compiled to PHP closures, then rendered with a plain data array.
 
-## Why a Template Language?
+## Why Use Templates?
 
-While the PHP builder API provides full programmatic control, the template language offers:
+- **Separation of concerns** — designers own the `.folio` file; developers own the data.
+- **No runtime interpreter** — templates compile to native PHP, so performance is the same as using the builder API directly.
+- **Static analysis friendly** — generated code is type-checked by PHP and can be cached on disk.
+- **First-class tooling** — the formatter, LSP, VS Code extension, and Tree-sitter grammar all understand the same grammar.
 
-- **Declarative syntax** - Describe what you want, not how to build it
-- **Separation of concerns** - Keep templates separate from business logic
-- **Reusability** - Share templates across projects
-- **IDE support** - Syntax highlighting, autocomplete, and diagnostics
-
-## Syntax Overview
-
-A simple template:
+## A Minimal Template
 
 ```folio
-var title = "Default Title"
+var title = "Quarterly Report"
 
 page {
-  heading "My Document"
-  text "Hello, world!"
+  heading title
+  text "Prepared for internal review."
 }
 ```
 
-## Compilation
-
-Templates are compiled to PHP:
-
 ```php
-use Folio\Template\PhpTemplateCompiler;
+use Folio\Pdf\Template\PhpTemplateCompiler;
 
 $compiler = new PhpTemplateCompiler();
-$template = $compiler->compile(file_get_contents('template.folio'));
+$pdf = $compiler->render(file_get_contents('report.folio'), [
+    'title' => 'Q4 2024',
+]);
 
-$pdf = $template(['title' => 'Custom Title']);
-$pdf->save('output.pdf');
+$pdf->save('report.pdf');
 ```
+
+`render()` returns a `Folio\Pdf\Document\Pdf` instance. You can call `save()`, `toString()`, or `toBytes()` on it.
+
+## How It Works
+
+1. **Lexer** reads the `.folio` source and produces tokens.
+2. **Parser** builds an AST from those tokens.
+3. **Compiler** walks the AST and emits a PHP closure.
+4. **Runtime** executes the closure with your data and returns a `Pdf`.
+
+The compiled output is plain PHP. You can inspect it, commit it, or cache it alongside your templates.
 
 ## Next Steps
 
