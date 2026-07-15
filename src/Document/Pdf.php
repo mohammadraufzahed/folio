@@ -8,18 +8,14 @@ use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Contracts\PdfWriter;
 use Folio\Pdf\Nodes\Page;
 
-/**
- * Fluent builder for creating PDF documents.
- */
 final class Pdf
 {
     private ?Document $document = null;
+
     private ?string $theme = null;
 
-    /** @var array{title?: string, subtitle?: string, badge?: string, rightTitle?: string, rightSubtitle?: string}|null */
     private ?array $pageHeader = null;
 
-    /** @var array{left?: string, center?: string, right?: string, showPageNumber?: bool}|null */
     private ?array $pageFooter = null;
 
     private function __construct()
@@ -31,117 +27,126 @@ final class Pdf
         return new self();
     }
 
-    /**
-     * Set the theme for this document.
-     */
     public function theme(string $name): self
     {
         $newInstance = clone $this;
         $newInstance->theme = $name;
+        $newInstance->pageHeader = $this->chromeWithTheme($newInstance->pageHeader, $name);
+        $newInstance->pageFooter = $this->chromeWithTheme($newInstance->pageFooter, $name);
+
+        if ($newInstance->document !== null) {
+            $document = $newInstance->document;
+            if ($newInstance->pageHeader !== null) {
+                $document = $document->withPageHeader($newInstance->pageHeader);
+            }
+            if ($newInstance->pageFooter !== null) {
+                $document = $document->withPageFooter($newInstance->pageFooter);
+            }
+            $newInstance->document = $document;
+        }
+
         return $newInstance;
     }
 
     /**
-     * Set repeating page header chrome (drawn on every page).
-     *
      * @param array{title?: string, subtitle?: string, badge?: string, rightTitle?: string, rightSubtitle?: string} $header
      */
     public function pageHeader(array $header): self
     {
         $newInstance = clone $this;
-        $newInstance->pageHeader = $header;
+        $newInstance->pageHeader = $this->chromeWithTheme($header, $this->theme);
         if ($newInstance->document !== null) {
-            $newInstance->document = $newInstance->document->withPageHeader($header);
+            $newInstance->document = $newInstance->document->withPageHeader($newInstance->pageHeader);
         }
+
         return $newInstance;
     }
 
     /**
-     * Set repeating page footer chrome (drawn on every page).
-     *
      * @param array{left?: string, center?: string, right?: string, showPageNumber?: bool} $footer
      */
     public function pageFooter(array $footer): self
     {
         $newInstance = clone $this;
-        $newInstance->pageFooter = $footer;
+        $newInstance->pageFooter = $this->chromeWithTheme($footer, $this->theme);
         if ($newInstance->document !== null) {
-            $newInstance->document = $newInstance->document->withPageFooter($footer);
+            $newInstance->document = $newInstance->document->withPageFooter($newInstance->pageFooter);
         }
+
         return $newInstance;
     }
 
-    /**
-     * Add a page to the document.
-     */
     public function page(Page $page): self
     {
         $newInstance = clone $this;
         $document = $newInstance->document ?? Document::make();
-        if ($newInstance->pageHeader !== null) {
-            $document = $document->withPageHeader($newInstance->pageHeader);
-        }
-        if ($newInstance->pageFooter !== null) {
-            $document = $document->withPageFooter($newInstance->pageFooter);
-        }
+        $document = $this->applyChrome($document, $newInstance);
         $newInstance->document = $document->addPage($page);
+
         return $newInstance;
     }
 
-    /**
-     * Set the document content.
-     */
     public function content(Node $node): self
     {
         $newInstance = clone $this;
         $document = $newInstance->document ?? Document::make();
-        if ($newInstance->pageHeader !== null) {
-            $document = $document->withPageHeader($newInstance->pageHeader);
-        }
-        if ($newInstance->pageFooter !== null) {
-            $document = $document->withPageFooter($newInstance->pageFooter);
-        }
+        $document = $this->applyChrome($document, $newInstance);
         $page = Page::make()->withContent($node);
         $newInstance->document = $document->addPage($page);
+
         return $newInstance;
     }
 
-    /**
-     * Generate and save the PDF to a file.
-     */
     public function save(string $path): void
     {
         $this->generate()->save($path);
     }
 
-    /**
-     * Generate and return the PDF as a string.
-     */
     public function toString(): string
     {
         return $this->generate()->toString();
     }
 
-    /**
-     * Generate and return the PDF as bytes.
-     */
     public function toBytes(): string
     {
         return $this->generate()->toBytes();
     }
 
-    /**
-     * Generate the PDF.
-     */
     private function generate(): PdfWriter
     {
         $document = $this->document ?? Document::make();
-        if ($this->pageHeader !== null) {
-            $document = $document->withPageHeader($this->pageHeader);
-        }
-        if ($this->pageFooter !== null) {
-            $document = $document->withPageFooter($this->pageFooter);
-        }
+        $document = $this->applyChrome($document, $this);
+
         return $document->generate();
+    }
+
+    private function applyChrome(Document $document, self $instance): Document
+    {
+        if ($instance->pageHeader !== null) {
+            $document = $document->withPageHeader($instance->pageHeader);
+        }
+        if ($instance->pageFooter !== null) {
+            $document = $document->withPageFooter($instance->pageFooter);
+        }
+
+        return $document;
+    }
+
+    /**
+     * @param array<string, mixed>|null $chrome
+     *
+     * @return array<string, mixed>|null
+     */
+    private function chromeWithTheme(?array $chrome, ?string $theme): ?array
+    {
+        if ($chrome === null) {
+            return null;
+        }
+
+        if ($theme !== null && !isset($chrome['theme'])) {
+            $chrome['theme'] = $theme;
+        }
+
+        return $chrome;
     }
 }

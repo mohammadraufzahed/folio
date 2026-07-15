@@ -43,7 +43,7 @@ final class PageTest extends TestCase
     {
         $text = Text::make('Hello');
         $page = Page::make()->withContent($text);
-        
+
         $this->assertSame($text, $page->content());
     }
 
@@ -58,7 +58,7 @@ final class PageTest extends TestCase
     {
         $page1 = Page::make();
         $page2 = $page1->withContent(Text::make('Hello'));
-        
+
         $this->assertNotSame($page1, $page2);
         $this->assertNull($page1->content());
         $this->assertNotNull($page2->content());

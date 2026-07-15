@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
-/**
- * Token type enumeration.
- */
 enum TokenType: string
 {
     case String = 'string';

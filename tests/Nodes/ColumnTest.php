@@ -24,7 +24,7 @@ final class ColumnTest extends TestCase
             Text::make('First'),
             Text::make('Second'),
         ]);
-        
+
         $this->assertTrue($column->hasChildren());
         $this->assertCount(2, $column->children());
     }
@@ -33,7 +33,7 @@ final class ColumnTest extends TestCase
     {
         $style = Style::make()->withPadding(10.0);
         $column = Column::make()->withStyle($style);
-        
+
         $this->assertSame($style, $column->style());
     }
 
@@ -41,7 +41,7 @@ final class ColumnTest extends TestCase
     {
         $column1 = Column::make();
         $column2 = $column1->addChildren([Text::make('Test')]);
-        
+
         $this->assertNotSame($column1, $column2);
         $this->assertFalse($column1->hasChildren());
         $this->assertTrue($column2->hasChildren());
@@ -53,7 +53,7 @@ final class ColumnTest extends TestCase
         $column = Column::make()
             ->withStyle($style)
             ->addChildren([Text::make('Test')]);
-        
+
         $this->assertSame($style, $column->style());
         $this->assertTrue($column->hasChildren());
     }

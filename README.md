@@ -85,13 +85,13 @@ $pdf->save('invoice.pdf');
 
 ## Documentation
 
-Full documentation is available at [docs.folio-pdf.dev](https://docs.folio-pdf.dev)
+Full documentation is available at [mohammadraufzahed.github.io/folio](https://mohammadraufzahed.github.io/folio)
 
-- [Getting Started](https://docs.folio-pdf.dev/guide/getting-started) - Installation and basic usage
-- [API Reference](https://docs.folio-pdf.dev/api/pdf) - Complete API documentation
-- [Template Language](https://docs.folio-pdf.dev/template-language/overview) - Template syntax and features
-- [Examples](https://docs.folio-pdf.dev/examples) - Real-world usage examples
-- [Tooling](https://docs.folio-pdf.dev/tooling/formatter) - LSP, formatter, and VS Code extension
+- [Getting Started](https://mohammadraufzahed.github.io/folio/guide/getting-started) - Installation and basic usage
+- [API Reference](https://mohammadraufzahed.github.io/folio/api/pdf) - Complete API documentation
+- [Template Language](https://mohammadraufzahed.github.io/folio/template-language/overview) - Template syntax and features
+- [Examples](https://mohammadraufzahed.github.io/folio/examples) - Real-world usage examples
+- [Tooling](https://mohammadraufzahed.github.io/folio/tooling/formatter) - LSP, formatter, and VS Code extension
 
 ## Architecture
 
@@ -173,9 +173,9 @@ Follow PSR-12 coding standards. Use strict types and type hints throughout.
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-- Report bugs via [GitHub Issues](https://github.com/folio/pdf/issues)
+- Report bugs via [GitHub Issues](https://github.com/mohammadraufzahed/folio/issues)
 - Submit pull requests for improvements
-- Discuss features in [GitHub Discussions](https://github.com/folio/pdf/discussions)
+- Discuss features in [GitHub Discussions](https://github.com/mohammadraufzahed/folio/discussions)
 
 ## Security
 
@@ -193,7 +193,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Links
 
-- [Documentation](https://docs.folio-pdf.dev)
-- [GitHub Repository](https://github.com/folio/pdf)
+- [Documentation](https://mohammadraufzahed.github.io/folio)
+- [GitHub Repository](https://github.com/mohammadraufzahed/folio)
 - [Packagist](https://packagist.org/packages/folio/pdf)
-- [Report Issues](https://github.com/folio/pdf/issues)
+- [Report Issues](https://github.com/mohammadraufzahed/folio/issues)

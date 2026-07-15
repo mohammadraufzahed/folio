@@ -1,17 +1,8 @@
 // Multi-Page Document Template
-// Demonstrates multiple pages with headers and footers
+// Demonstrates multiple pages with content
 
 var reportTitle = "Annual Report"
 var companyName = "Acme Corporation"
-
-@header {
-  text companyName
-  text reportTitle
-}
-
-@footer {
-  text "Page 1"
-}
 
 page {
   column {
@@ -21,19 +12,11 @@ page {
   }
 }
 
-@footer {
-  text "Page 2"
-}
-
 page {
   column {
     heading "Financial Overview"
     text "This is the second page of the report."
   }
-}
-
-@footer {
-  text "Page 3"
 }
 
 page {

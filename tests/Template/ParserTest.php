@@ -86,7 +86,7 @@ final class ParserTest extends TestCase
         $cond = $ast->children[0]->attributes['condition'];
         $this->assertEquals('BinaryOp', $cond->type);
         $this->assertEquals('and', $cond->attributes['op']);
-        // Left side should be a grouped or
+
         $left = $cond->children[0];
         $this->assertEquals('BinaryOp', $left->type);
         $this->assertEquals('or', $left->attributes['op']);
@@ -98,11 +98,11 @@ final class ParserTest extends TestCase
 
         $ifNode = $ast->children[0];
         $this->assertEquals('If', $ifNode->type);
-        // child[0] = then block, child[1] = nested If (which contains its own else)
+
         $this->assertCount(2, $ifNode->children);
         $this->assertEquals('Block', $ifNode->children[0]->type);
         $this->assertEquals('If', $ifNode->children[1]->type);
-        // The nested If has its own then + else
+
         $nestedIf = $ifNode->children[1];
         $this->assertCount(2, $nestedIf->children);
         $this->assertEquals('Block', $nestedIf->children[0]->type);
@@ -115,7 +115,7 @@ final class ParserTest extends TestCase
 
         $ifNode = $ast->children[0];
         $this->assertEquals('If', $ifNode->type);
-        // child[0] = then block, child[1] = nested If (which contains its own else)
+
         $this->assertCount(2, $ifNode->children);
         $this->assertEquals('If', $ifNode->children[1]->type);
     }
@@ -178,11 +178,7 @@ final class ParserTest extends TestCase
     public function testThrowsOnUnknownKeyword(): void
     {
         $this->expectException(TemplateError::class);
-        // 'endif' was removed from keywords, so it'll be an Identifier
-        // 'switch' was removed too — let's test with a truly unknown keyword scenario
-        // Actually, removed keywords are now Identifiers, not Keywords.
-        // Let's test something that IS a keyword but not handled.
-        // Actually all keywords are handled in the match. Let's test unexpected token instead.
+
         $this->parse('page { ] }');
     }
 

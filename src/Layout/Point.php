@@ -6,9 +6,6 @@ namespace Folio\Pdf\Layout;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Immutable point representation.
- */
 final class Point
 {
     use Immutable;

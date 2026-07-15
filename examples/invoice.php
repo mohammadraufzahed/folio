@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Folio\Pdf\Document\Pdf;
@@ -8,9 +10,6 @@ use Folio\Pdf\Nodes\Heading;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Row;
 use Folio\Pdf\Nodes\Text;
-use Folio\Pdf\Styling\Color;
-use Folio\Pdf\Styling\FontWeight;
-use Folio\Pdf\Styling\Style;
 
 Pdf::make()
     ->page(
@@ -20,12 +19,12 @@ Pdf::make()
                     Heading::h1('INVOICE'),
                     Text::make('Invoice #: INV-001'),
                     Text::make('Date: ' . date('Y-m-d')),
-                    
+
                     Heading::h2('Bill To:'),
                     Text::make('John Doe'),
                     Text::make('123 Main Street'),
                     Text::make('City, State 12345'),
-                    
+
                     Heading::h2('Items:'),
                     Column::make()
                         ->addChildren([
@@ -42,7 +41,7 @@ Pdf::make()
                                     Text::make('Service C - $75.00'),
                                 ]),
                         ]),
-                    
+
                     Heading::h2('Total: $325.00'),
                     Text::make('Thank you for your business!'),
                 ])
@@ -50,4 +49,4 @@ Pdf::make()
     )
     ->save(__DIR__ . '/invoice.pdf');
 
-echo "Invoice PDF generated: " . __DIR__ . '/invoice.pdf' . "\n";
+echo 'Invoice PDF generated: ' . __DIR__ . '/invoice.pdf' . "\n";

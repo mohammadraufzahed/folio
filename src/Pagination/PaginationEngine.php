@@ -4,16 +4,13 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Pagination;
 
+use Folio\Pdf\Contracts\HasChildren;
 use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Document\Document;
 use Folio\Pdf\Layout\LayoutContext;
 use Folio\Pdf\Layout\LayoutEngine;
-use Folio\Pdf\Layout\Size;
 use Folio\Pdf\Nodes\Page;
 
-/**
- * Pagination engine for automatic page breaking.
- */
 final class PaginationEngine
 {
     private readonly float $pageWidth;
@@ -36,9 +33,6 @@ final class PaginationEngine
         $this->footerHeight = $footerHeight;
     }
 
-    /**
-     * Paginate a document by breaking content across multiple pages.
-     */
     public function paginate(Node $content): Document
     {
         $document = Document::make();
@@ -59,8 +53,6 @@ final class PaginationEngine
     }
 
     /**
-     * Recursively paginate a node.
-     *
      * @return array<int, Node>
      */
     private function paginateNode(
@@ -80,8 +72,6 @@ final class PaginationEngine
     }
 
     /**
-     * Split content across multiple pages.
-     *
      * @return array<int, Node>
      */
     private function splitContent(
@@ -109,47 +99,27 @@ final class PaginationEngine
                 $currentHeight += $childBox->height();
             } else {
                 if (!empty($currentPageChildren)) {
-                    $pages[] = $this->createPageFromChildren($currentPageChildren);
+                    $pages[] = $this->createPageFromChildren($node, $currentPageChildren);
                 }
                 $currentPageChildren = [$child];
                 $currentHeight = $childBox->height();
             }
         }
 
-        if (!empty($currentPageChildren)) {
-            $pages[] = $this->createPageFromChildren($currentPageChildren);
-        }
+        $pages[] = $this->createPageFromChildren($node, $currentPageChildren);
 
         return $pages;
     }
 
     /**
-     * Create a page node from children.
+     * @param array<int, Node> $children
      */
-    private function createPageFromChildren(array $children): Node
+    private function createPageFromChildren(Node $parent, array $children): Node
     {
-        $node = $children[0];
-
-        if (method_exists($node, 'withChildren')) {
-            return $node->withChildren($children);
+        if ($parent instanceof HasChildren) {
+            return $parent->withChildren($children);
         }
 
         return $children[0];
-    }
-
-    /**
-     * Check if a node should be kept with the next node (widow/orphan control).
-     */
-    private function shouldKeepWithNext(Node $node): bool
-    {
-        return false;
-    }
-
-    /**
-     * Check if a node should be kept together (not split across pages).
-     */
-    private function shouldKeepTogether(Node $node): bool
-    {
-        return false;
     }
 }

@@ -5,12 +5,8 @@ declare(strict_types=1);
 namespace Folio\Pdf\Nodes;
 
 use Folio\Pdf\Contracts\Node;
-use Folio\Pdf\Styling\Length;
 use Folio\Pdf\Styling\Style;
 
-/**
- * Represents a page in the document.
- */
 final class Page extends AbstractNode
 {
     private readonly float $width;
@@ -75,5 +71,10 @@ final class Page extends AbstractNode
     public function withSize(float $width, float $height): self
     {
         return new self($width, $height, $this->style, $this->content);
+    }
+
+    protected function copy(?Style $style, array $children): static
+    {
+        return new self($this->width, $this->height, $style, $this->content);
     }
 }

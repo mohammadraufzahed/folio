@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace Folio\Pdf\Tests\Document;
 
 use Folio\Pdf\Document\Pdf;
-use Folio\Pdf\Nodes\Column;
-use Folio\Pdf\Nodes\Heading;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Text;
 use PHPUnit\Framework\TestCase;

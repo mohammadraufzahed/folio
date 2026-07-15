@@ -6,9 +6,6 @@ namespace Folio\Pdf\Layout;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Represents a layout box with position and size.
- */
 final class LayoutBox
 {
     use Immutable;

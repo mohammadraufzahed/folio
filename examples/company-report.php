@@ -7,8 +7,6 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use Folio\Pdf\Template\PhpTemplateCompiler;
 
 /**
- * Build sample report data that will be injected into the .folio template.
- *
  * @return array<string, mixed>
  */
 function buildReportData(): array
@@ -38,7 +36,7 @@ function buildReportData(): array
             ['name' => 'Operations', 'head' => 'L. Costa', 'headcount' => '74', 'budget' => '$8.5M'],
         ],
         'employees' => array_map(
-            static fn(int $i): array => [
+            static fn (int $i): array => [
                 'id' => sprintf('E%04d', 1000 + $i),
                 'name' => ['Alex Reed', 'Jordan Lee', 'Sam Ortiz', 'Taylor Quinn', 'Casey Bloom', 'Riley Chen', 'Morgan Diaz', 'Avery Fox'][$i % 8],
                 'role' => ['Engineer', 'Account Exec', 'Support', 'Designer', 'Analyst'][$i % 5],
@@ -194,10 +192,9 @@ echo "Compiling template with data binding...\n";
 $t0 = microtime(true);
 $php = $compiler->compileFile($templatePath);
 $tCompile = microtime(true) - $t0;
-echo "Compiled bytes: " . strlen($php) . "\n";
+echo 'Compiled bytes: ' . strlen($php) . "\n";
 echo sprintf("Compile time: %.2f ms\n", $tCompile * 1000);
 
-// Show a snippet of generated PHP proving data binding
 if (str_contains($php, 'function (array $data')) {
     echo "OK: compiled template accepts array \$data\n";
 }
@@ -205,7 +202,6 @@ if (str_contains($php, 'foreach')) {
     echo "OK: foreach loops present in compiled output\n";
 }
 
-// Test cached compile (should be near-instant)
 $t1 = microtime(true);
 $compiler->compileFile($templatePath);
 $tCached = microtime(true) - $t1;

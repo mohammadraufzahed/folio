@@ -6,9 +6,6 @@ namespace Folio\Pdf\Styling;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Immutable border representation.
- */
 final class Border
 {
     use Immutable;
@@ -45,9 +42,6 @@ final class Border
     }
 }
 
-/**
- * Border style enumeration.
- */
 enum BorderStyle: string
 {
     case Solid = 'solid';

@@ -5,14 +5,8 @@ declare(strict_types=1);
 namespace Folio\Pdf\Layout;
 
 use Folio\Pdf\Contracts\Node;
-use Folio\Pdf\Nodes\Column;
-use Folio\Pdf\Nodes\Row;
 use Folio\Pdf\Styling\Flex;
-use Folio\Pdf\Styling\Style;
 
-/**
- * Flex layout engine implementing CSS-like flexbox behavior.
- */
 final class FlexLayout
 {
     public function layout(Node $node, LayoutContext $context): LayoutBox

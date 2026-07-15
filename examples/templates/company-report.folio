@@ -67,12 +67,12 @@ page {
                 th "Change"
                 th "Trend"
             }
-            foreach summary as row {
+            foreach summary as item {
                 tr {
-                    td row.label
-                    td row.value
-                    td row.change
-                    td(variant=success) row.trend
+                    td item.label
+                    td item.value
+                    td item.change
+                    td(variant=success) item.trend
                 }
             }
             footer {

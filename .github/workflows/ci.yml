@@ -10,15 +10,15 @@ jobs:
   test:
     name: Test PHP ${{ matrix.php-version }}
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         php-version: ['8.3', '8.4']
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -26,46 +26,54 @@ jobs:
           extensions: mbstring
           coverage: xdebug
           tools: composer:v2
-      
+
       - name: Get Composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-      
+
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: ${{ runner.os }}-composer-
-      
+
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
-      
+        run: composer install --prefer-dist --no-progress
+
       - name: Run tests
         run: composer test
-      
+
       - name: Run static analysis
         run: composer analyze
 
   code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           tools: composer:v2
-      
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
-      
+        run: composer install --prefer-dist --no-progress
+
       - name: Check code style
-        run: composer cs-check || true
-      
-      - name: Run PHPStan
-        run: composer analyze
+        run: composer cs-check

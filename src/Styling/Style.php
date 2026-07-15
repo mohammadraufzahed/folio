@@ -6,9 +6,6 @@ namespace Folio\Pdf\Styling;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Immutable style object for document nodes.
- */
 final class Style
 {
     use Immutable;

@@ -6,9 +6,6 @@ namespace Folio\Pdf\Nodes;
 
 use Folio\Pdf\Styling\Style;
 
-/**
- * Represents a text node.
- */
 final class Text extends AbstractNode
 {
     private readonly string $text;
@@ -34,7 +31,7 @@ final class Text extends AbstractNode
         return new self($text, $this->style);
     }
 
-    public function withStyle(?Style $style): static
+    protected function copy(?Style $style, array $children): static
     {
         return new self($this->text, $style);
     }

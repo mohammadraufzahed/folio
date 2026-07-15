@@ -7,9 +7,6 @@ namespace Folio\Pdf\Nodes;
 use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Styling\Style;
 
-/**
- * Table cell node.
- */
 final readonly class TableCell implements Node
 {
     private readonly ?Style $style;

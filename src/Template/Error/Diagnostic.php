@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template\Error;
 
-/**
- * A diagnostic message with source location.
- *
- * Used for multi-error collection during parsing and LSP publishing.
- */
 final readonly class Diagnostic
 {
     public function __construct(
@@ -18,7 +13,8 @@ final readonly class Diagnostic
         public int $column = 1,
         public int $length = 1,
         public ?string $file = null,
-    ) {}
+    ) {
+    }
 
     public function toString(): string
     {

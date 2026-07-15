@@ -12,12 +12,8 @@ use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Row;
 use Folio\Pdf\Nodes\Table;
 use Folio\Pdf\Nodes\TableCell;
-use Folio\Pdf\Nodes\TableRow;
 use Folio\Pdf\Nodes\Text;
 
-/**
- * PDF document with flow layout, page breaks, and efficient rendering.
- */
 final class Document
 {
     private const float MARGIN_X = 40.0;
@@ -35,15 +31,12 @@ final class Document
 
     private readonly array $pages;
 
-    /** @var array{title?: string, subtitle?: string, badge?: string, rightTitle?: string, rightSubtitle?: string}|null */
     private readonly ?array $pageHeader;
 
-    /** @var array{left?: string, center?: string, right?: string, showPageNumber?: bool}|null */
     private readonly ?array $pageFooter;
 
-    /** @var list<string> */
     private array $gBuf = [];
-    /** @var list<string> */
+
     private array $tBuf = [];
     private int $tableStyleIndex = 0;
 
@@ -85,7 +78,6 @@ final class Document
         return new self($this->pages, $this->pageHeader, $footer);
     }
 
-    /** @return array<int, Page> */
     public function pages(): array
     {
         return $this->pages;
@@ -142,7 +134,6 @@ final class Document
         return $writer;
     }
 
-    /** @param array<int, Node> $blocks */
     private function collectBlocks(Node $node, array &$blocks): void
     {
         if ($node instanceof Column) {
@@ -155,19 +146,6 @@ final class Document
         $blocks[] = $node;
     }
 
-    /**
-     * Draw branded header + footer chrome on every page.
-     *
-     * Header options:
-     *  title, subtitle, badge, rightTitle, rightSubtitle, monogram,
-     *  theme (navy|teal|slate|emerald|crimson|violet),
-     *  style (bar|band|minimal|split),
-     *  showMonogram (true|false), accent (hex or named)
-     *
-     * Footer options:
-     *  left, center, right, showPageNumber, pageFormat ("Page {page} of {pages}"),
-     *  style (rule|band|minimal), theme
-     */
     private function renderPageChrome(float $pageWidth, float $pageHeight, int $pageNo, int $totalPages): string
     {
         $g = [];
@@ -232,8 +210,6 @@ final class Document
     }
 
     /**
-     * Paint custom chrome layout tree (Mode B).
-     *
      * @param list<string> $g
      * @param list<string> $t
      * @param array<string, mixed> $chrome
@@ -383,7 +359,7 @@ final class Document
         $attrs = is_array($node['attrs'] ?? null) ? $node['attrs'] : [];
         $value = (string) ($node['value'] ?? '');
         $children = $this->flattenChromeNodes(is_array($node['children'] ?? null) ? $node['children'] : []);
-        /** @var array{bg: array{0:float,1:float,2:float}, accent: array{0:float,1:float,2:float}, accentSoft: array{0:float,1:float,2:float}, textLight: array{0:float,1:float,2:float}, textDark: array{0:float,1:float,2:float}, mutedLight: array{0:float,1:float,2:float}, mutedDark: array{0:float,1:float,2:float}} $theme */
+
         $theme = $ctx['theme'];
 
         $pad = (float) ($attrs['pad'] ?? 0);
@@ -606,7 +582,6 @@ final class Document
         return $hex ?? $fallback;
     }
 
-    /** @return array{0:float,1:float,2:float}|null */
     private function parseHexColor(string $value): ?array
     {
         $value = ltrim(trim($value), '#');
@@ -622,7 +597,6 @@ final class Document
             hexdec(substr($value, 4, 2)) / 255.0,
         ];
     }
-
 
     /**
      * @param list<string> $g
@@ -849,17 +823,6 @@ final class Document
 
     /**
      * @return array{
-     *   bg: array{0:float,1:float,2:float},
-     *   bgAlt: array{0:float,1:float,2:float},
-     *   accent: array{0:float,1:float,2:float},
-     *   accentSoft: array{0:float,1:float,2:float},
-     *   wash: array{0:float,1:float,2:float},
-     *   textLight: array{0:float,1:float,2:float},
-     *   textDark: array{0:float,1:float,2:float},
-     *   mutedLight: array{0:float,1:float,2:float},
-     *   mutedDark: array{0:float,1:float,2:float},
-     *   rule: array{0:float,1:float,2:float}
-     * }
      */
     /**
      * @param array<string, mixed> $overrides
@@ -931,7 +894,6 @@ final class Document
         return $base;
     }
 
-    /** @param array{0:float,1:float,2:float} $rgb */
     private function pdfFillRect(float $x, float $y, float $w, float $h, array $rgb): string
     {
         return sprintf(
@@ -946,7 +908,6 @@ final class Document
         );
     }
 
-    /** @param array{0:float,1:float,2:float} $rgb */
     private function pdfSetRgb(array $rgb): string
     {
         return sprintf("%.3f %.3f %.3f rg\n", $rgb[0], $rgb[1], $rgb[2]);
@@ -1340,7 +1301,6 @@ final class Document
         }
     }
 
-    /** @param array<int, float> $columnWidths @return array<int, float> */
     private function measureRowHeights(Table $table, array $columnWidths): array
     {
         $heights = [];
@@ -1390,7 +1350,6 @@ final class Document
         return $max;
     }
 
-    /** @return array<int, float> */
     private function resolveColumnWidths(Table $table, int $columnCount, float $availableWidth): array
     {
         $configured = $table->columnWidths();
@@ -1398,13 +1357,12 @@ final class Document
             $sum = array_sum($configured);
             if ($sum > 0) {
                 $scale = $availableWidth / $sum;
-                return array_map(static fn(float $w): float => $w * $scale, array_map('floatval', $configured));
+                return array_map(static fn (float $w): float => $w * $scale, array_map('floatval', $configured));
             }
         }
         return array_fill(0, $columnCount, $availableWidth / max(1, $columnCount));
     }
 
-    /** @param array<int, float> $columnWidths */
     private function sumColumnWidths(array $columnWidths, int $start, int $span): float
     {
         $total = 0.0;

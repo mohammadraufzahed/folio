@@ -52,6 +52,7 @@ website/.vitepress/dist/
 
 # PHPUnit
 .phpunit.result.cache
+.php-cs-fixer.cache
 
 # Compiled template cache
 folio-cache/

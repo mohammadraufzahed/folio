@@ -248,7 +248,7 @@ Releases are managed by maintainers:
 - Check existing documentation
 - Search GitHub issues
 - Ask questions in GitHub Discussions
-- Check the website: https://docs.folio-pdf.dev
+- Check the website: https://mohammadraufzahed.github.io/folio
 
 ## Recognition
 

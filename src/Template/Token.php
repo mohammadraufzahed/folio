@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
-/**
- * Token produced by the lexer.
- *
- * Carries byte offset plus 1-based line and column for diagnostics.
- */
 final readonly class Token
 {
     public function __construct(

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Styling;
 
-/**
- * Font weight enumeration.
- */
 enum FontWeight: int
 {
     case Thin = 100;

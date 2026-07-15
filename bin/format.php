@@ -30,14 +30,12 @@ if (!file_exists($filePath)) {
     exit(1);
 }
 
-// Create formatter
 if ($useTabs) {
     $formatter = FormatterFactory::withTabs($indentSize);
 } else {
     $formatter = FormatterFactory::withIndent($indentSize);
 }
 
-// Format or check
 if ($checkOnly) {
     if ($formatter->needsFormatting($filePath)) {
         echo "File needs formatting: $filePath\n";

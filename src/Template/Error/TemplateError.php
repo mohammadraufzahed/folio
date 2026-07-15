@@ -6,12 +6,6 @@ namespace Folio\Pdf\Template\Error;
 
 use Exception;
 
-/**
- * Thrown when the template cannot be parsed or compiled.
- *
- * Carries a source span (line, column, length) so LSP and CLI can
- * point at the exact location of the problem.
- */
 class TemplateError extends Exception
 {
     public function __construct(

@@ -1,20 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Template\PhpTemplateCompiler;
+use Folio\Pdf\Template\PhpTemplateCompiler;
 
-// Compile the template
 $compiler = new PhpTemplateCompiler();
-$template = $compiler->compile(file_get_contents(__DIR__ . '/templates/styled-document.folio'));
 
-// Render with data
-$pdf = $template([
+$pdf = $compiler->render(file_get_contents(__DIR__ . '/templates/styled-document.folio'), [
     'title' => 'Styled Document Example',
-    'content' => 'This demonstrates the @style directive in templates.'
+    'content' => 'This demonstrates styling in templates.',
 ]);
 
-// Save the PDF
 $pdf->save(__DIR__ . '/styled-document-template.pdf');
 
-echo "PDF generated: " . __DIR__ . '/styled-document-template.pdf' . "\n";
+echo 'PDF generated: ' . __DIR__ . '/styled-document-template.pdf' . "\n";

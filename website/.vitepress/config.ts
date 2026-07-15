@@ -1,8 +1,11 @@
 import { defineConfig } from 'vitepress'
 
+const base = process.env.VITEPRESS_BASE || '/folio/'
+
 export default defineConfig({
   title: 'Folio PDF',
   description: 'Composable PDF generation for PHP 8.3+',
+  base,
 
   themeConfig: {
     nav: [
@@ -61,7 +64,7 @@ export default defineConfig({
     },
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/folio/pdf' }
+      { icon: 'github', link: 'https://github.com/mohammadraufzahed/folio' }
     ],
 
     search: {

@@ -10,16 +10,6 @@ use Folio\Pdf\Styling\FontWeight;
 use Folio\Pdf\Styling\Length;
 use Folio\Pdf\Styling\Style;
 
-/**
- * Maps template attributes (key-value pairs) to Style objects.
- *
- * Recognized attributes:
- *   color, background, fontSize, fontWeight, font,
- *   padding, margin, align, lineHeight, letterSpacing,
- *   opacity, width, height, radius, border
- *
- * Unknown attributes are silently ignored (they may be used by specific node types).
- */
 final class AttributeMapper
 {
     /**
@@ -213,16 +203,13 @@ final class AttributeMapper
                 'cm' => Length::cm($val),
                 'mm' => Length::mm($val),
                 '%' => Length::percent($val),
-                default => null,
+
             };
         }
 
         return null;
     }
 
-    /**
-     * Parse a named color (red, blue, green, etc.).
-     */
     private static function namedColor(string $name): ?Color
     {
         $colors = [
