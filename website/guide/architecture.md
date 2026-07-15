@@ -1,15 +1,13 @@
 # Architecture
 
-## Overview
+Folio is split into six layers. Each layer has a single responsibility, and data flows from your application code to a PDF file in one direction.
 
-Folio PDF is a modern PHP 8.3+ PDF generation library that implements its own document model, layout engine, templating engine, and PDF renderer. It follows a composable, immutable design inspired by Flutter/SwiftUI/Jetpack Compose.
-
-## Architecture Pipeline
+## Document Pipeline
 
 ```
 Application
     ↓
-Fluent Builder
+PHP Builder / .folio Template
     ↓
 Document AST
     ↓
@@ -24,60 +22,47 @@ PDF Writer
 PDF File
 ```
 
-## Core Components
+## 1. Document AST
 
-### 1. Document Model (AST)
+The document model is an immutable tree of nodes. Every node implements the `Node` contract and exposes a `Style` and zero or more children.
 
-The Document Model represents the PDF document as an immutable Abstract Syntax Tree (AST).
+- `Page` — a physical page with a size and content node.
+- `Column` — vertical container.
+- `Row` — horizontal container.
+- `Text` — text content.
+- `Heading` — heading levels 1 through 6.
+- `Table`, `TableRow`, `TableCell` — tabular data.
 
-**Key Classes:**
-- `AbstractNode` - Base class for all document nodes
-- `Page` - Document pages with presets (A4, Letter, A3)
-- `Column` - Vertical container
-- `Row` - Horizontal container
-- `Text` - Text content
-- `Heading` - Headings (H1-H6)
+Because the tree is immutable, you can build documents as pure functions, cache intermediate states, and test layouts without side effects.
 
-**Features:**
-- Immutable value objects
-- Fluent builder pattern
-- Strongly typed properties
-- Composition over inheritance
+## 2. Builder API
 
-### 2. Styling System
+`Folio\Pdf\Document\Pdf` is the fluent entry point. `Page::a4()->withContent(...)` and `Column::make(...)` create nodes. The builder never mutates state; it returns new `Pdf` and `Node` instances.
 
-The styling system provides strongly typed properties inspired by Flutter.
+## 3. Template Compiler
 
-**Key Classes:**
-- `Style` - Style container
-- `Color` - Color representation
-- `FontWeight` - Font weight constants
-- `Alignment` - Text alignment constants
+`.folio` files are tokenized by the `Lexer`, parsed into an AST by the `Parser`, and compiled to a PHP closure by the `PhpTemplateCompiler`. The generated closure accepts a data array and returns a `Pdf` instance.
 
-### 3. Layout Engine
+This keeps templates separate from business logic while still producing native PHP code with no runtime template interpreter.
 
-The layout engine is responsible for:
-- Calculating node positions and sizes
-- Handling auto-layout properties
-- Managing constraints
+## 4. Layout Engine
 
-### 4. Pagination Engine
+The layout engine walks the AST and computes sizes and positions. It handles:
 
-The pagination engine handles:
-- Page breaking
-- Content flow across pages
-- Header/footer placement
+- Available width and height constraints
+- Padding and margins
+- Row and column flex behavior
+- Table cell sizing and spanning
+- Font metrics for text
 
-### 5. Paint Engine
+The result is a `LayoutBox` tree that the paint engine can render.
 
-The paint engine renders:
-- Text with proper metrics
-- Shapes and borders
-- Background colors
+## 5. Pagination Engine
 
-### 6. PDF Writer
+When a node exceeds the available page height, the pagination engine splits it into multiple pages. It respects header and footer blocks and carries the parent container's style across pages.
 
-The PDF writer generates the final PDF file with:
-- Proper PDF structure
-- Font embedding
-- Compression
+## 6. Paint Engine & PDF Writer
+
+The paint engine converts `LayoutBox` objects into PDF drawing instructions. The `PdfFileWriter` then emits a PDF 1.7 file with the correct object structure, cross-reference table, and trailer.
+
+No browser, no DOM, no external renderer. What you describe is what gets drawn.

@@ -1,22 +1,41 @@
 # Installation
 
-## Composer
+Folio requires PHP 8.3 or later and Composer. It has no runtime dependencies beyond PHP itself.
 
-Install Folio PDF via Composer:
+## Install via Composer
 
 ```bash
-composer require folio/pdf
+composer require mohammadraufzahed/folio
 ```
 
 ## Requirements
 
-- PHP 8.3 or higher
-- No runtime dependencies (pure PHP)
+- PHP >= 8.3
+- `mbstring` extension recommended for proper text metrics
+- Composer 2.x
 
-## Development Tools
+No additional extensions, libraries, or binaries are required.
 
-For the best development experience, you can also install:
+## Development Dependencies
 
-- [VS Code Extension](../tooling/vscode.md) - Syntax highlighting, formatting, and LSP support
-- [Formatter](../tooling/formatter.md) - Standalone CLI formatter
-- [Language Server](../tooling/lsp.md) - For IDE integration
+When contributing or running the test suite, install dev dependencies:
+
+```bash
+composer install
+```
+
+Then verify the installation:
+
+```bash
+composer test      # PHPUnit
+composer analyze   # PHPStan
+composer cs-check  # PHP-CS-Fixer dry run
+```
+
+## Optional Tooling
+
+For the best editing experience, install the companion tools:
+
+- [VS Code Extension](../tooling/vscode.md) — syntax highlighting, formatting, and LSP support
+- [Formatter](../tooling/formatter.md) — standalone CLI formatter for `.folio` files
+- [Language Server](../tooling/lsp.md) — autocomplete, diagnostics, and hover information

@@ -1,40 +1,82 @@
-# Pdf API
+# Pdf
 
-Main builder class for creating PDF documents.
+`Folio\Pdf\Document\Pdf` is the entry point for every document. It accumulates pages, applies page headers and footers, and writes the final file.
 
-## PHP Builder API
+## Methods
 
-### Methods
+### `make(): self`
 
-#### `make(): self`
-
-Create a new Pdf instance.
+Create a new `Pdf` instance.
 
 ```php
 $pdf = Pdf::make();
 ```
 
-#### `page(Page $page): self`
+### `page(Page $page): self`
 
 Add a page to the document.
 
 ```php
-Pdf::make()
-    ->page(Page::a4()->withContent(...))
-    ->page(Page::a4()->withContent(...));
+use Folio\Pdf\Nodes\Page;
+
+$pdf = Pdf::make()
+    ->page(Page::a4()->withContent($content))
+    ->page(Page::letter()->withContent($moreContent));
 ```
 
-#### `save(string $path): void`
+### `pageHeader(array $header): self`
 
-Generate and save the PDF.
+Define a header for every page, or scope it with `only`.
 
 ```php
-Pdf::make()
-    ->page(Page::a4()->withContent(...))
-    ->save('document.pdf');
+$pdf = Pdf::make()
+    ->pageHeader([
+        'title' => 'Acme Corporation',
+        'subtitle' => 'Annual Report',
+        'only' => 'all',
+    ]);
 ```
 
-## Example
+For a fully custom header, use the `pageheader` element inside a `.folio` template.
+
+### `pageFooter(array $footer): self`
+
+Define a footer for every page.
+
+```php
+$pdf = Pdf::make()
+    ->pageFooter([
+        'left' => 'Confidential',
+        'center' => 'Acme Corporation',
+        'showPageNumber' => true,
+    ]);
+```
+
+### `theme(string $name): self`
+
+Apply a named theme to page headers and footers. Themes control color and spacing defaults.
+
+```php
+$pdf = Pdf::make()->theme('navy');
+```
+
+### `save(string $path): void`
+
+Generate and save the PDF to disk.
+
+```php
+$pdf->save('document.pdf');
+```
+
+### `toString(): string`
+
+Return the PDF content as a string.
+
+### `toBytes(): string`
+
+Return the PDF content as raw bytes.
+
+## Complete Example
 
 ```php
 use Folio\Pdf\Document\Pdf;
@@ -44,38 +86,50 @@ use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Text;
 
 Pdf::make()
+    ->pageHeader([
+        'title' => 'Acme Corporation',
+        'subtitle' => 'Quarterly Report',
+    ])
+    ->pageFooter([
+        'center' => 'Internal Use Only',
+        'showPageNumber' => true,
+    ])
     ->page(
         Page::a4()->withContent(
-            Column::make()->addChildren([
-                Heading::h1('Hello World'),
-                Text::make('This is a PDF document'),
+            Column::make(null, [
+                Heading::h1('Quarterly Report'),
+                Text::make('Prepared for internal review.'),
             ])
         )
     )
-    ->save('output.pdf');
+    ->save('report.pdf');
 ```
 
-## Template Language Equivalent
-
-For template-based PDF generation, use the template compiler:
-
-```php
-use Folio\Template\PhpTemplateCompiler;
-
-$compiler = new PhpTemplateCompiler();
-$template = $compiler->compile(file_get_contents('document.folio'));
-
-$pdf = $template(['title' => 'Hello World']);
-$pdf->save('output.pdf');
-```
-
-Template file (`document.folio`):
+## Template Equivalent
 
 ```folio
-var title = "Default Title"
+pageheader {
+  text "Acme Corporation"
+  text "Quarterly Report"
+}
+
+pagefooter {
+  text "Internal Use Only"
+  pagenum(format="Page {page} of {pages}", size=8)
+}
 
 page {
-  heading title
-  text "This is a PDF document"
+  heading "Quarterly Report"
+  text "Prepared for internal review."
 }
+```
+
+Compile and render:
+
+```php
+use Folio\Pdf\Template\PhpTemplateCompiler;
+
+$compiler = new PhpTemplateCompiler();
+$pdf = $compiler->render(file_get_contents('report.folio'));
+$pdf->save('report.pdf');
 ```

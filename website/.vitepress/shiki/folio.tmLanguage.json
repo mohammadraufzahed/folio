@@ -1,0 +1,59 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "folio",
+  "scopeName": "source.folio",
+  "fileTypes": [".folio"],
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#keyword" },
+    { "include": "#number" },
+    { "include": "#directive" },
+    { "include": "#attribute" }
+  ],
+  "repository": {
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.folio",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "string": {
+      "name": "string.quoted.double.folio",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.folio",
+          "match": "\\\\."
+        }
+      ]
+    },
+    "keyword": {
+      "patterns": [
+        {
+          "name": "keyword.control.folio",
+          "match": "\\b(var|prop|if|else|elseif|foreach|as|pageheader|pagefooter|pagenum|page|spacer)\\b"
+        },
+        {
+          "name": "entity.name.type.folio",
+          "match": "\\b(page|column|row|text|heading|table|header|tr|th|td)\\b"
+        }
+      ]
+    },
+    "number": {
+      "name": "constant.numeric.folio",
+      "match": "\\b\\d+(\\.\\d+)?(pt|px|cm|mm|%)?\\b"
+    },
+    "directive": {
+      "name": "meta.directive.folio",
+      "match": "@[a-zA-Z]+"
+    },
+    "attribute": {
+      "name": "variable.parameter.folio",
+      "match": "[a-zA-Z]+(?=\\s*=)"
+    }
+  }
+}

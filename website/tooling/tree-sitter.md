@@ -1,57 +1,54 @@
 # Tree-sitter Grammar
 
-This is the Tree-sitter grammar for the Folio PDF template language, providing syntax highlighting and parsing for editor support.
+The `tree-sitter-folio-pdf` package provides a [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) grammar for the Folio template language. It powers accurate syntax highlighting and parsing in editors that support Tree-sitter.
 
-## Installation
+## Setup
 
 ```bash
 cd tree-sitter-folio-pdf
 npm install
 ```
 
-## Usage
+## Commands
 
-### Generate the Parser
+Generate the parser from `grammar.js`:
 
 ```bash
 npm run generate
 ```
 
-### Test the Grammar
+Run the grammar test suite:
 
 ```bash
 npm run test
 ```
 
-### Parse a File
+Parse a template file:
 
 ```bash
 npm run parse example.folio
 ```
 
-## Grammar Features
+## Grammar Coverage
 
-- **Elements**: page, column, row, text, heading
-- **Control Structures**: if/else, foreach
-- **Directives**: @header, @footer, @import
-- **Attributes**: Named attributes for elements
-- **Comments**: Single-line comments with //
-- **Strings**: Double-quoted strings
-- **Numbers**: Integer and floating-point numbers
-- **Expressions**: Comparisons and logical operations
+- Elements: `page`, `column`, `row`, `text`, `heading`, `table`, `tr`, `td`, `th`
+- Page chrome: `pageheader`, `pagefooter`, `pagenum`
+- Control flow: `if` / `else` / `elseif`, `foreach`
+- Declarations: `var`, `prop`
+- Expressions: comparison, logical operators, dot notation
+- Comments: single-line `//`
 
-## Integration
+## Who Uses It
 
 The grammar is used by:
-- [VS Code Extension](./vscode.md) for syntax highlighting
-- [LSP](./lsp.md) for parsing and analysis
-- Other editors that support Tree-sitter
 
-## Development
+- The [VS Code extension](./vscode.md) for syntax highlighting
+- The [Language Server](./lsp.md) for parsing and analysis
+- Any editor with Tree-sitter support
 
-To modify the grammar:
+## Updating the Grammar
 
-1. Edit `grammar.js`
-2. Run `npm run generate` to regenerate the parser
-3. Run `npm run test` to verify changes
-4. Update the VS Code extension with the new grammar
+1. Edit `grammar.js`.
+2. Run `npm run generate`.
+3. Run `npm run test`.
+4. Update the VS Code extension and LSP with the generated parser.

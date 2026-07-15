@@ -1,13 +1,34 @@
 import { defineConfig } from 'vitepress'
+import { readFileSync } from 'node:fs'
 
 const base = process.env.VITEPRESS_BASE || '/folio/'
+const folioGrammar = JSON.parse(
+  readFileSync(new URL('./shiki/folio.tmLanguage.json', import.meta.url), 'utf-8')
+)
+const folioLanguage = {
+  id: 'folio',
+  scopeName: folioGrammar.scopeName,
+  grammar: folioGrammar,
+  aliases: ['pdf-template'],
+}
 
 export default defineConfig({
-  title: 'Folio PDF',
-  description: 'Composable PDF generation for PHP 8.3+',
+  title: 'Folio',
+  titleTemplate: ':title — PDF generation for PHP',
+  description: 'A deliberate PDF engine for PHP 8.3+. No HTML-to-PDF wrappers, no runtime dependencies.',
   base,
+  cleanUrls: true,
+  lastUpdated: true,
+
+  head: [
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+  ],
 
   themeConfig: {
+    logo: { src: '/logo.svg', width: 24, height: 24 },
+    siteTitle: 'Folio',
+
     nav: [
       { text: 'Guide', link: '/guide/getting-started' },
       { text: 'API', link: '/api/pdf' },
@@ -69,6 +90,24 @@ export default defineConfig({
 
     search: {
       provider: 'local'
-    }
-  }
+    },
+
+    outline: {
+      level: 'deep',
+      label: 'On this page',
+    },
+
+    footer: {
+      message: 'Engineered for teams that care about predictable PDF output.',
+      copyright: 'Copyright © Mohammad Raufzahed. Released under the MIT License.',
+    },
+  },
+
+  markdown: {
+    languages: [folioGrammar],
+    theme: {
+      light: 'github-light',
+      dark: 'github-dark',
+    },
+  },
 })
