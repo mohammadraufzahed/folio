@@ -11,6 +11,17 @@
         "report"
     ],
     "license": "MIT",
+    "homepage": "https://mohammadraufzahed.github.io/folio/",
+    "authors": [
+        {
+            "name": "Mohammad Raufzahed",
+            "email": "mohammadraufzahed@protonmail.com"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/mohammadraufzahed/folio/issues",
+        "source": "https://github.com/mohammadraufzahed/folio"
+    },
     "require": {
         "php": ">=8.3"
     },
