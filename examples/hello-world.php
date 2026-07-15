@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Folio\Pdf\Document\Pdf;
@@ -7,10 +9,7 @@ use Folio\Pdf\Nodes\Column;
 use Folio\Pdf\Nodes\Heading;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Text;
-use Folio\Pdf\Styling\Color;
-use Folio\Pdf\Styling\Style;
 
-// Create a simple PDF document
 Pdf::make()
     ->page(
         Page::a4()->withContent(
@@ -24,4 +23,4 @@ Pdf::make()
     )
     ->save(__DIR__ . '/hello-world.pdf');
 
-echo "PDF generated: " . __DIR__ . '/hello-world.pdf' . "\n";
+echo 'PDF generated: ' . __DIR__ . '/hello-world.pdf' . "\n";

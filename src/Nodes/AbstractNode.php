@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Nodes;
 
+use Folio\Pdf\Contracts\HasChildren;
 use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Styling\Style;
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Base class for all immutable document nodes.
- */
-abstract class AbstractNode implements Node
+abstract class AbstractNode implements HasChildren
 {
     use Immutable;
 
@@ -23,6 +21,8 @@ abstract class AbstractNode implements Node
     ) {
         $this->children = array_values($children);
     }
+
+    abstract protected function copy(?Style $style, array $children): static;
 
     public function style(): ?Style
     {
@@ -45,20 +45,15 @@ abstract class AbstractNode implements Node
     }
 
     /**
-     * Create a new instance with the given children.
-     *
      * @param array<int, Node> $children
      */
-    protected function withChildren(array $children): static
+    public function withChildren(array $children): static
     {
-        return new static($this->style, $children);
+        return $this->copy($this->style, $children);
     }
 
-    /**
-     * Create a new instance with the given style.
-     */
     public function withStyle(?Style $style): static
     {
-        return new static($style, $this->children);
+        return $this->copy($style, $this->children);
     }
 }

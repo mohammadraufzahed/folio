@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Tests\Template;
 
-use Folio\Pdf\Template\Lexer;
-use Folio\Pdf\Template\Parser;
 use Folio\Pdf\Template\PhpTemplateCompiler;
 use PHPUnit\Framework\TestCase;
 
@@ -53,7 +51,6 @@ final class CompilerTest extends TestCase
     {
         $php = $this->compile('if x > 5 { text "big" } else if x > 0 { text "small" } else { text "zero" }');
 
-        // Should produce nested ternary
         $this->assertStringContainsString('?', $php);
         $this->assertStringContainsString('big', $php);
         $this->assertStringContainsString('small', $php);

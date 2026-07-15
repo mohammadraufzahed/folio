@@ -6,9 +6,6 @@ namespace Folio\Pdf\Layout;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Immutable size representation.
- */
 final class Size
 {
     use Immutable;

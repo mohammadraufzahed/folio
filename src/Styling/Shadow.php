@@ -6,9 +6,6 @@ namespace Folio\Pdf\Styling;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Immutable shadow representation.
- */
 final class Shadow
 {
     use Immutable;

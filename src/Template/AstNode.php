@@ -4,20 +4,30 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
-/**
- * AST node for the template language.
- */
 final readonly class AstNode
 {
+    /**
+     * @var array<int, AstNode>
+     */
+    public array $children;
+
+    /**
+     * @var array<string, mixed>
+     */
+    public array $attributes;
+
     /**
      * @param array<int, AstNode> $children
      * @param array<string, mixed> $attributes
      */
     public function __construct(
         public string $type,
-        public array $children = [],
-        public array $attributes = []
-    ) {}
+        array $children = [],
+        array $attributes = []
+    ) {
+        $this->children = array_values($children);
+        $this->attributes = $attributes;
+    }
 
     public function getChild(int $index): ?AstNode
     {

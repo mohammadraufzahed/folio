@@ -1,37 +1,52 @@
 // Invoice Template
-// Demonstrates variables, control flow, and directives
+// Demonstrates variables, control flow, and page chrome
 
 var customerName = "John Doe"
 var customerEmail = "john@example.com"
 var invoiceNumber = "INV-001"
 var invoiceDate = "2024-01-15"
-var items = []
+var items = ""
 
-@header {
+pageheader(height=40) {
   text "Acme Corporation"
   text "123 Business Street"
 }
 
-@footer {
-  text "Thank you for your business!"
+pagefooter(height=30) {
+  row(align=center) {
+    text "Thank you for your business!"
+    spacer
+    pagenum(format="Page {page} of {pages}", size=8)
+  }
 }
 
 page {
   column {
     heading "Invoice"
-    text "Invoice #: {invoiceNumber}"
-    text "Date: {invoiceDate}"
-    
+    text "Invoice #:"
+    text invoiceNumber
+    text "Date:"
+    text invoiceDate
+
     heading "Customer"
-    text "Name: {customerName}"
-    text "Email: {customerEmail}"
-    
+    text "Name:"
+    text customerName
+    text "Email:"
+    text customerEmail
+
     heading "Items"
-    foreach items as item {
-      column {
-        text item.name
-        text "Quantity: {item.quantity}"
-        text "Price: ${item.price}"
+    table {
+      header {
+        th "Name"
+        th "Quantity"
+        th "Price"
+      }
+      foreach items as item {
+        tr {
+          td item.name
+          td item.quantity
+          td item.price
+        }
       }
     }
   }

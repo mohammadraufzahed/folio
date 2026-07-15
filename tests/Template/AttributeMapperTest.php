@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Folio\Pdf\Tests\Template;
 
 use Folio\Pdf\Styling\Alignment;
-use Folio\Pdf\Styling\Color;
 use Folio\Pdf\Styling\FontWeight;
-use Folio\Pdf\Styling\Length;
 use Folio\Pdf\Template\AttributeMapper;
 use PHPUnit\Framework\TestCase;
 

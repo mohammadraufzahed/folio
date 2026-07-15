@@ -86,19 +86,18 @@ final class LexerTest extends TestCase
         $lexer = new Lexer("page {\n  text \"hi\"\n}");
         $tokens = $lexer->tokenize();
 
-        // page (1:1)
         $this->assertEquals(1, $tokens[0]->line);
         $this->assertEquals(1, $tokens[0]->column);
-        // { (1:6)
+
         $this->assertEquals(1, $tokens[1]->line);
         $this->assertEquals(6, $tokens[1]->column);
-        // text (2:3)
+
         $this->assertEquals(2, $tokens[2]->line);
         $this->assertEquals(3, $tokens[2]->column);
-        // "hi" (2:8)
+
         $this->assertEquals(2, $tokens[3]->line);
         $this->assertEquals(8, $tokens[3]->column);
-        // } (3:1)
+
         $this->assertEquals(3, $tokens[4]->line);
         $this->assertEquals(1, $tokens[4]->column);
     }

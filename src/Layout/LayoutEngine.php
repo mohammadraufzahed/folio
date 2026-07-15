@@ -4,18 +4,14 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Layout;
 
-use Folio\Pdf\Contracts\Layoutable;
 use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Document\Document;
 use Folio\Pdf\Nodes\Column;
+use Folio\Pdf\Nodes\Heading;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Row;
 use Folio\Pdf\Nodes\Text;
-use Folio\Pdf\Nodes\Heading;
 
-/**
- * Main layout engine that orchestrates layout calculations.
- */
 final class LayoutEngine
 {
     public function layout(Document $document): LayoutResult

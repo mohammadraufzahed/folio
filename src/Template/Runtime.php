@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
-/** Runtime helpers for compiled templates. */
 final class Runtime
 {
     /**

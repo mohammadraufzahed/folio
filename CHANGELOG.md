@@ -67,5 +67,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tooling documentation
 - Example templates and PHP code
 
-[Unreleased]: https://github.com/folio/pdf/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/folio/pdf/releases/tag/v0.1.0
+[Unreleased]: https://github.com/mohammadraufzahed/folio/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/mohammadraufzahed/folio/releases/tag/v0.1.0

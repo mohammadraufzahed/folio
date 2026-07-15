@@ -6,9 +6,6 @@ namespace Folio\Pdf\Styling;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Immutable length representation.
- */
 final class Length
 {
     use Immutable;
@@ -79,9 +76,6 @@ final class Length
     }
 }
 
-/**
- * Length unit enumeration.
- */
 enum LengthUnit: string
 {
     case Px = 'px';

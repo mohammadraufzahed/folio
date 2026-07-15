@@ -6,12 +6,6 @@ namespace Folio\Pdf\Template;
 
 use Folio\Pdf\Template\Error\TemplateError;
 
-/**
- * Lexer for the Folio template language.
- *
- * Produces tokens with 1-based line and column for diagnostics.
- * Throws TemplateError on unterminated strings and unknown characters.
- */
 final class Lexer
 {
     private int $position = 0;
@@ -27,8 +21,6 @@ final class Lexer
     }
 
     /**
-     * Tokenize the input string.
-     *
      * @return array<int, Token>
      */
     public function tokenize(): array

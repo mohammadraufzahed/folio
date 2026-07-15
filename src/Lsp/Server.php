@@ -8,13 +8,8 @@ use Folio\Pdf\Template\Lexer;
 use Folio\Pdf\Template\Parser;
 use Folio\Pdf\Template\TokenType;
 
-/**
- * Language Server Protocol implementation for Folio PDF templates.
- * Speaks LSP over stdio using Content-Length framing.
- */
 final class Server
 {
-    /** @var array<string, string> */
     private array $documents = [];
 
     private bool $shutdownRequested = false;
@@ -228,14 +223,14 @@ final class Server
             'pagefooter' => "**pagefooter** — Repeating page footer chrome\n\n```folio\npagefooter(height=40, theme=navy) {\n  row { text company.name spacer pagenum }\n}\n```",
             'monogram' => "**monogram** — Logo tile in chrome\n\n```folio\nmonogram \"AR\"\n```",
             'badge' => "**badge** — Accent pill label\n\n```folio\nbadge \"CONFIDENTIAL\"\n```",
-            'spacer' => "**spacer** — Flexible space in chrome row",
-            'rule' => "**rule** — Horizontal rule in chrome",
-            'box' => "**box** — Background panel in chrome",
+            'spacer' => '**spacer** — Flexible space in chrome row',
+            'rule' => '**rule** — Horizontal rule in chrome',
+            'box' => '**box** — Background panel in chrome',
             'pagenum' => "**pagenum** — Page counter\n\n```folio\npagenum(format=\"Page {page} of {pages}\")\n```",
-            'var' => "**var** — Local template variable with default",
-            'prop' => "**prop** — Declared data property (IDE recommendations)",
-            'partial' => "**partial** — Include another .folio template",
-            'theme' => "**theme** — navy|teal|slate|emerald|crimson|violet|custom (+ hex overrides bg/accent)",
+            'var' => '**var** — Local template variable with default',
+            'prop' => '**prop** — Declared data property (IDE recommendations)',
+            'partial' => '**partial** — Include another .folio template',
+            'theme' => '**theme** — navy|teal|slate|emerald|crimson|violet|custom (+ hex overrides bg/accent)',
             default => $word === '' ? null : "No documentation for `{$word}`",
         };
 

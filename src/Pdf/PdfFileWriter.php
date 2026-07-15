@@ -6,32 +6,22 @@ namespace Folio\Pdf\Pdf;
 
 use Folio\Pdf\Contracts\PdfWriter as PdfWriterInterface;
 
-/**
- * Basic PDF writer implementation.
- */
 final class PdfFileWriter implements PdfWriterInterface
 {
-    private string $buffer = '';
     private int $objectId = 0;
+
+    /**
+     * @var array<int, string>
+     */
     private array $objects = [];
+
+    /**
+     * @var array<int, array{id: int, width: float, height: float, content: string}>
+     */
     private array $pages = [];
+
     private ?int $rootObject = null;
     private ?int $infoObject = null;
-
-    public function __construct()
-    {
-        $this->initialize();
-    }
-
-    private function initialize(): void
-    {
-        $this->buffer = '';
-        $this->objectId = 0;
-        $this->objects = [];
-        $this->pages = [];
-        $this->rootObject = null;
-        $this->infoObject = null;
-    }
 
     public function save(string $path): void
     {
@@ -52,9 +42,6 @@ final class PdfFileWriter implements PdfWriterInterface
         return $this->toString();
     }
 
-    /**
-     * Add a page to the PDF.
-     */
     public function addPage(float $width, float $height, string $content = ''): self
     {
         $pageId = $this->createObject();
@@ -67,9 +54,6 @@ final class PdfFileWriter implements PdfWriterInterface
         return $this;
     }
 
-    /**
-     * Create a new PDF object.
-     */
     private function createObject(): int
     {
         $this->objectId++;
@@ -77,9 +61,6 @@ final class PdfFileWriter implements PdfWriterInterface
         return $this->objectId;
     }
 
-    /**
-     * Generate the complete PDF document.
-     */
     private function generatePdf(): string
     {
         $pdf = "%PDF-1.7\n";
@@ -102,7 +83,7 @@ final class PdfFileWriter implements PdfWriterInterface
                 "  /Length %d\n" .
                 ">>\n" .
                 "stream\n" .
-                "%s" .
+                '%s' .
                 "\nendstream\n",
                 $contentLength,
                 $content
@@ -127,7 +108,7 @@ final class PdfFileWriter implements PdfWriterInterface
                 0
             );
 
-            $kids[] = sprintf("%d 0 R", $pageObjId);
+            $kids[] = sprintf('%d 0 R', $pageObjId);
         }
 
         $pagesObjectId = $this->createObject();
@@ -208,9 +189,6 @@ final class PdfFileWriter implements PdfWriterInterface
         return $pdf;
     }
 
-    /**
-     * Generate the info object.
-     */
     private function generateInfoObject(): string
     {
         $date = date('YmdHis');

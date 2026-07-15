@@ -4,22 +4,10 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
-/**
- * Runtime scope for compiled templates.
- *
- * Replaces extract() with an explicit, safe variable lookup mechanism.
- * Supports nested scopes for foreach loops and if branches.
- *
- * In strict mode (enabled via strict=true), accessing an undefined
- * variable or property path throws a TemplateError instead of silently
- * returning an empty string.
- */
 final class Scope
 {
-    /** @var array<string, mixed> */
     private array $data;
 
-    /** @var array<string, mixed> */
     private array $locals;
 
     private ?self $parent;
@@ -39,8 +27,6 @@ final class Scope
     }
 
     /**
-     * Create a child scope with additional locals (e.g. foreach item).
-     *
      * @param array<string, mixed> $locals
      */
     public function child(array $locals = []): self
@@ -48,9 +34,6 @@ final class Scope
         return new self($this->data, $locals, $this);
     }
 
-    /**
-     * Get a variable by name, checking locals first, then data.
-     */
     public function getVar(string $name): mixed
     {
         if (array_key_exists($name, $this->locals)) {
@@ -73,8 +56,6 @@ final class Scope
     }
 
     /**
-     * Resolve a dotted property path like company.name.
-     *
      * @param array<int, string> $path
      */
     public function getPath(array $path): mixed
@@ -119,8 +100,6 @@ final class Scope
     }
 
     /**
-     * Get the underlying data array.
-     *
      * @return array<string, mixed>
      */
     public function getData(): array
@@ -129,8 +108,6 @@ final class Scope
     }
 
     /**
-     * Get the locals for get_defined_vars() compatibility.
-     *
      * @return array<string, mixed>
      */
     public function getLocals(): array

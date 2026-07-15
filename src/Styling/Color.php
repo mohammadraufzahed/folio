@@ -6,9 +6,6 @@ namespace Folio\Pdf\Styling;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Immutable color representation.
- */
 final class Color
 {
     use Immutable;

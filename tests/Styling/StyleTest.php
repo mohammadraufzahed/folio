@@ -52,7 +52,7 @@ final class StyleTest extends TestCase
     {
         $style1 = Style::make();
         $style2 = $style1->withPadding(10.0);
-        
+
         $this->assertNotSame($style1, $style2);
         $this->assertNull($style1->padding());
         $this->assertEquals(10.0, $style2->padding());
@@ -65,7 +65,7 @@ final class StyleTest extends TestCase
             ->withMargin(20.0)
             ->withColor(Color::black())
             ->withFontSize(14.0);
-        
+
         $this->assertEquals(10.0, $style->padding());
         $this->assertEquals(20.0, $style->margin());
         $this->assertEquals(14.0, $style->fontSize());

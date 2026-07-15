@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Folio\Pdf\Document\Pdf;
@@ -18,7 +20,7 @@ Pdf::make()
             Column::make()
                 ->addChildren([
                     Heading::h1('Styling Demo'),
-                    
+
                     Text::make('This text has custom styling')
                         ->withStyle(
                             Style::make()
@@ -26,7 +28,7 @@ Pdf::make()
                                 ->withFontSize(16.0)
                                 ->withFontWeight(FontWeight::Bold)
                         ),
-                    
+
                     Text::make('Centered text with blue color')
                         ->withStyle(
                             Style::make()
@@ -34,7 +36,7 @@ Pdf::make()
                                 ->withAlignment(Alignment::Center)
                                 ->withFontSize(14.0)
                         ),
-                    
+
                     Text::make('Text with padding and margin')
                         ->withStyle(
                             Style::make()
@@ -47,4 +49,4 @@ Pdf::make()
     )
     ->save(__DIR__ . '/styling.pdf');
 
-echo "Styling demo PDF generated: " . __DIR__ . '/styling.pdf' . "\n";
+echo 'Styling demo PDF generated: ' . __DIR__ . '/styling.pdf' . "\n";

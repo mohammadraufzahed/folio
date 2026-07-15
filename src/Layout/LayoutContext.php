@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Layout;
 
-/**
- * Context for layout calculations.
- */
 final class LayoutContext
 {
     private readonly float $availableWidth;

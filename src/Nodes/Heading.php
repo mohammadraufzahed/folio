@@ -7,9 +7,6 @@ namespace Folio\Pdf\Nodes;
 use Folio\Pdf\Styling\FontWeight;
 use Folio\Pdf\Styling\Style;
 
-/**
- * Represents a heading node.
- */
 final class Heading extends AbstractNode
 {
     private readonly string $text;
@@ -86,5 +83,10 @@ final class Heading extends AbstractNode
     public function withText(string $text): self
     {
         return new self($text, $this->level, $this->style);
+    }
+
+    protected function copy(?Style $style, array $children): static
+    {
+        return new self($this->text, $this->level, $style);
     }
 }

@@ -7,9 +7,6 @@ namespace Folio\Pdf\Nodes;
 use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Styling\Style;
 
-/**
- * Table row node.
- */
 final readonly class TableRow implements Node
 {
     private readonly array $cells;
@@ -19,7 +16,7 @@ final readonly class TableRow implements Node
 
     public function __construct(array $cells, ?Style $style = null, bool $isHeader = false, bool $isFooter = false)
     {
-        $this->cells = array_values(array_filter($cells, fn($cell) => $cell instanceof TableCell));
+        $this->cells = array_values(array_filter($cells, fn ($cell) => $cell instanceof TableCell));
         $this->style = $style;
         $this->isHeader = $isHeader;
         $this->isFooter = $isFooter;

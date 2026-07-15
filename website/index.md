@@ -11,7 +11,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/folio/pdf
+      link: https://github.com/mohammadraufzahed/folio
 
 features:
   - icon: ⚡

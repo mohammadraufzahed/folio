@@ -7,25 +7,16 @@ namespace Folio\Pdf\Template;
 use Folio\Pdf\Contracts\TemplateCompiler;
 use Folio\Pdf\Document\Pdf;
 
-/**
- * Compiler that converts Folio templates to PHP code with data binding.
- *
- * Compiled templates return a callable: fn(array $data): Pdf
- *
- * File templates use mtime-based disk cache + in-memory renderer cache.
- */
 final class PhpTemplateCompiler implements TemplateCompiler
 {
     private readonly string $cacheDir;
 
     private bool $strict = false;
 
-    /** @var array<string, callable(array<string, mixed>): Pdf> */
     private array $runtimeCache = [];
 
     private ?string $baseDir = null;
 
-    /** @var array<int, string> */
     private array $partialDirs = [];
 
     public function __construct(string $cacheDir = '/tmp/folio-pdf-cache')
@@ -37,9 +28,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         }
     }
 
-    /**
-     * Enable strict mode: throw on undefined data keys at render time.
-     */
     public function setStrict(bool $strict = true): void
     {
         $this->strict = $strict;
@@ -93,9 +81,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
     }
 
     /**
-     * Compile and render a template file with data.
-     * Uses mtime disk cache and in-process renderer cache.
-     *
      * @param array<string, mixed> $data
      */
     public function renderFile(string $path, array $data = []): Pdf
@@ -111,8 +96,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
     }
 
     /**
-     * Compile and render a template string with data.
-     *
      * @param array<string, mixed> $data
      */
     public function render(string $template, array $data = []): Pdf
@@ -125,7 +108,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
                 file_put_contents($cachePath, $this->compileFresh($template));
             }
 
-            /** @var mixed $renderer */
             $renderer = require $cachePath;
             if (!is_callable($renderer)) {
                 throw new \RuntimeException('Compiled template did not return a callable');
@@ -142,17 +124,11 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return $pdf;
     }
 
-    /**
-     * Clear in-memory renderer cache (disk cache kept).
-     */
     public function clearRuntimeCache(): void
     {
         $this->runtimeCache = [];
     }
 
-    /**
-     * Force recompile of a template file, ignoring mtime cache.
-     */
     public function recompileFile(string $path): string
     {
         $absolute = $this->resolvePath($path);
@@ -195,7 +171,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             $this->writeFileCache($absolute, $cachePath, $this->compileFresh($template));
         }
 
-        /** @var mixed $renderer */
         $renderer = require $cachePath;
         if (!is_callable($renderer)) {
             throw new \RuntimeException('Compiled template did not return a callable');
@@ -252,7 +227,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
             return false;
         }
 
-        /** @var array{mtime?: int|float, size?: int}|null $meta */
         $meta = json_decode($metaRaw, true);
         if (!is_array($meta)) {
             return false;
@@ -339,13 +313,15 @@ final class PhpTemplateCompiler implements TemplateCompiler
                 continue;
             }
 
-            $expr = $this->generateExpression($child);
             if ($child->type === 'Element' && ($child->attributes['type'] ?? '') === 'page') {
-                $php .= "    \$pdf = \$pdf->{$expr};\n";
+                $php .= "    \$pdf = \$pdf->{$this->generateExpression($child)};\n";
             } elseif ($child->type === 'Foreach') {
                 $php .= $this->generateForeachStatement($child, '    ', true);
+            } elseif ($child->type === 'Directive') {
+                continue;
             } else {
-                $php .= "    \$pdf = \$pdf->page(Page::a4()->withContent({$expr}));\n";
+                $content = $this->generateAsContent($child);
+                $php .= "    \$pdf = \$pdf->page(Page::a4()->withContent({$content}));\n";
             }
         }
 
@@ -353,6 +329,19 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $php .= "};\n";
 
         return $php;
+    }
+
+    private function generateAsContent(AstNode $node): string
+    {
+        if ($node->type === 'Block') {
+            return 'Column::make(null, ' . $this->generateNodeList($node->children) . ')';
+        }
+
+        if ($node->type === 'If') {
+            return 'Column::make(null, ' . $this->generateIfExpression($node) . ')';
+        }
+
+        return $this->generateExpression($node);
     }
 
     private function generateExpression(AstNode $node): string
@@ -553,7 +542,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return "(function(\Folio\Pdf\Template\Scope \$scope) { \$__out = []; \$__saved = \$scope; {$foreachHead} { \$scope = \$__saved->child([{$localsInit}]); \$__out = array_merge(\$__out, {$bodyExpr}); } \$scope = \$__saved;{$emptyCheck} return \$__out; })(\$scope)";
     }
 
-
     private function generateElement(AstNode $node): string
     {
         $type = $node->attributes['type'] ?? 'unknown';
@@ -581,10 +569,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return 'page(' . $pageExpr . '->withContent(' . $content . '))';
     }
 
-    /**
-     * Generate a Page constructor expression from node attributes.
-     * Supports: size (a4, letter, a3, or WxH), orientation (portrait/landscape).
-     */
     private function generatePageExpr(AstNode $node): string
     {
         $attrs = $node->attributes['attributes'] ?? [];
@@ -653,10 +637,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return 'Table::simple(' . $this->generateChildrenArray($node) . ')';
     }
 
-    /**
-     * Generate a PHP expression that builds a Style from template attributes.
-     * Returns 'null' if no style-related attributes are present.
-     */
     private function generateStyleExpr(AstNode $node): string
     {
         $attrs = $node->attributes['attributes'] ?? [];
@@ -723,9 +703,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
     private function generateVarDecl(AstNode $node): string
     {
-        // var/prop declarations produce no output at render time;
-        // they are metadata for IDE + defaults applied at compile time.
-        // The default is injected into $data before extract().
+
         return 'null';
     }
 
@@ -825,9 +803,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return 'Column::make(null, ' . $this->generateChildrenArray($node) . ')';
     }
 
-    /**
-     * Build a PHP array expression of child nodes, expanding foreach/if.
-     */
     private function generateChildrenArray(AstNode $node): string
     {
         return $this->generateNodeList($node->children);
@@ -840,7 +815,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
     {
         $children = array_values(array_filter(
             $children,
-            static fn(AstNode $c): bool => $c->type !== 'VarDecl'
+            static fn (AstNode $c): bool => $c->type !== 'VarDecl'
         ));
 
         if ($children === []) {
@@ -856,7 +831,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
         }
 
         if (!$needsMerge) {
-            $parts = array_map(fn(AstNode $c) => $this->generateExpression($c), $children);
+            $parts = array_map(fn (AstNode $c) => $this->generateExpression($c), $children);
             return '[' . implode(', ', $parts) . ']';
         }
 
@@ -905,10 +880,9 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return '$scope->getVar(' . var_export($name, true) . ')';
     }
 
-
     private function generatePropertyAccess(AstNode $node): string
     {
-        /** @var array<int, string> $path */
+
         $path = $node->attributes['path'] ?? [];
         if ($path === []) {
             return '""';
@@ -921,7 +895,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
         return '$scope->getPath([' . implode(', ', $parts) . '])';
     }
-
 
     private function generateIfExpression(AstNode $node): string
     {
@@ -963,8 +936,8 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $emptyArray = $emptyBody ? $this->blockToArray($emptyBody) : '[]';
 
         $foreachHead = $index !== null
-            ? "foreach (\$__source as \$__key => \$__val)"
-            : "foreach (\$__source as \$__val)";
+            ? 'foreach ($__source as $__key => $__val)'
+            : 'foreach ($__source as $__val)';
 
         $localsInit = $index !== null
             ? "'" . $index . "' => \$__key, '" . $item . "' => \$__val"
@@ -992,10 +965,9 @@ final class PhpTemplateCompiler implements TemplateCompiler
         })($scope)';
     }
 
-
     private function generateForeachStatement(AstNode $node, string $indent, bool $documentLevel): string
     {
-        // Document-level foreach that may create pages
+
         $collection = $node->attributes['collection'] ?? null;
         $item = (string) ($node->attributes['item'] ?? 'item');
         $index = $node->attributes['index'] ?? null;
@@ -1012,14 +984,16 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
         $php = $indent . "\$__savedScope = \$scope;\n";
         $php .= $indent . $foreachHead . " {\n";
-        $php .= $indent . "    \$scope = \$__savedScope->child([" . $localsInit . "]);\n";
+        $php .= $indent . '    $scope = $__savedScope->child([' . $localsInit . "]);\n";
         if ($body) {
             foreach ($body->children as $child) {
-                $expr = $this->generateExpression($child);
                 if ($child->type === 'Element' && ($child->attributes['type'] ?? '') === 'page') {
-                    $php .= $indent . "    \$pdf = \$pdf->{$expr};\n";
+                    $php .= $indent . "    \$pdf = \$pdf->{$this->generateExpression($child)};\n";
+                } elseif ($child->type === 'Directive') {
+                    continue;
                 } else {
-                    $php .= $indent . "    \$pdf = \$pdf->page(Page::a4()->withContent({$expr}));\n";
+                    $content = $this->generateAsContent($child);
+                    $php .= $indent . "    \$pdf = \$pdf->page(Page::a4()->withContent({$content}));\n";
                 }
             }
         }
@@ -1038,22 +1012,11 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return '[' . $this->generateExpression($block) . ']';
     }
 
-    private function safeVarList(): string
-    {
-        return 'data';
-    }
-
-    /**
-     * Set the base directory for resolving partials.
-     */
     public function setBaseDir(string $dir): void
     {
         $this->baseDir = $dir;
     }
 
-    /**
-     * Add a directory to search for partials.
-     */
     public function addPartialDir(string $dir): void
     {
         $this->partialDirs[] = $dir;
@@ -1097,8 +1060,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
     }
 
     /**
-     * Extract var/prop declarations from the AST for IDE metadata.
-     *
      * @return array<int, array{name: string, keyword: string, default: mixed}>
      */
     public function extractDeclarations(string $template): array
@@ -1114,7 +1075,6 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return $decls;
     }
 
-    /** @param array<int, array{name: string, keyword: string, default: mixed}> $decls */
     private function collectDecls(AstNode $node, array &$decls): void
     {
         if ($node->type === 'VarDecl') {

@@ -4,15 +4,8 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Support;
 
-/**
- * Trait to make classes immutable.
- * Prevents modification of properties after construction.
- */
 trait Immutable
 {
-    /**
-     * Prevent setting undeclared properties.
-     */
     public function __set(string $name, mixed $value): void
     {
         throw new \RuntimeException(sprintf(
@@ -22,9 +15,6 @@ trait Immutable
         ));
     }
 
-    /**
-     * Prevent unsetting properties.
-     */
     public function __unset(string $name): void
     {
         throw new \RuntimeException(sprintf(
@@ -34,9 +24,6 @@ trait Immutable
         ));
     }
 
-    /**
-     * Clone should return the same instance since objects are immutable.
-     */
     public function __clone()
     {
         throw new \RuntimeException(sprintf(

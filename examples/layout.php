@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Folio\Pdf\Document\Pdf;
@@ -8,8 +10,6 @@ use Folio\Pdf\Nodes\Heading;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Row;
 use Folio\Pdf\Nodes\Text;
-use Folio\Pdf\Styling\Flex;
-use Folio\Pdf\Styling\Style;
 
 Pdf::make()
     ->page(
@@ -17,7 +17,7 @@ Pdf::make()
             Column::make()
                 ->addChildren([
                     Heading::h1('Layout Demo'),
-                    
+
                     Heading::h2('Column Layout (Vertical)'),
                     Column::make()
                         ->addChildren([
@@ -25,7 +25,7 @@ Pdf::make()
                             Text::make('Second item'),
                             Text::make('Third item'),
                         ]),
-                    
+
                     Heading::h2('Row Layout (Horizontal)'),
                     Row::make()
                         ->addChildren([
@@ -33,7 +33,7 @@ Pdf::make()
                             Text::make('Item 2'),
                             Text::make('Item 3'),
                         ]),
-                    
+
                     Heading::h2('Nested Layouts'),
                     Row::make()
                         ->addChildren([
@@ -53,4 +53,4 @@ Pdf::make()
     )
     ->save(__DIR__ . '/layout.pdf');
 
-echo "Layout demo PDF generated: " . __DIR__ . '/layout.pdf' . "\n";
+echo 'Layout demo PDF generated: ' . __DIR__ . '/layout.pdf' . "\n";

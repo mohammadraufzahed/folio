@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Nodes;
 
+use Folio\Pdf\Contracts\HasChildren;
 use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Styling\Style;
 
-/**
- * Table node with support for simple, nested, multi-header, and multi-level tables.
- */
-final readonly class Table implements Node
+final readonly class Table implements HasChildren
 {
     private readonly array $rows;
     private readonly ?Style $style;
@@ -25,7 +23,7 @@ final readonly class Table implements Node
         bool $showBorders = true,
         bool $showHeaders = true
     ) {
-        $this->rows = array_values(array_filter($rows, fn($row) => $row instanceof TableRow));
+        $this->rows = array_values(array_filter($rows, fn ($row) => $row instanceof TableRow));
         $this->style = $style;
         $this->columnWidths = $columnWidths ?? [];
         $this->showBorders = $showBorders;
@@ -97,6 +95,14 @@ final readonly class Table implements Node
         return new self($this->rows, $style, $this->columnWidths, $this->showBorders, $this->showHeaders);
     }
 
+    /**
+     * @param array<int, Node> $children
+     */
+    public function withChildren(array $children): self
+    {
+        return new self($children, $this->style, $this->columnWidths, $this->showBorders, $this->showHeaders);
+    }
+
     public function addRow(TableRow $row): self
     {
         return new self([...$this->rows, $row], $this->style, $this->columnWidths, $this->showBorders, $this->showHeaders);
@@ -112,6 +118,6 @@ final readonly class Table implements Node
         if (empty($this->rows)) {
             return 0;
         }
-        return max(array_map(fn($row) => count($row->cells()), $this->rows));
+        return max(array_map(fn ($row) => count($row->cells()), $this->rows));
     }
 }

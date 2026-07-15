@@ -5,11 +5,7 @@ declare(strict_types=1);
 namespace Folio\Pdf\Layout;
 
 use Folio\Pdf\Contracts\Node;
-use Folio\Pdf\Styling\Style;
 
-/**
- * Grid layout engine for 2D grid layouts.
- */
 final class GridLayout
 {
     private readonly int $columns;

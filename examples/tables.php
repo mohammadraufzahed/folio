@@ -1,11 +1,6 @@
 <?php
 
-/**
- * Table examples via Folio template language (.folio files).
- *
- * Templates live in examples/templates/
- * Run: php examples/tables.php
- */
+declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 

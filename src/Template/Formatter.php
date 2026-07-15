@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
-/**
- * Formatter for Folio PDF template language.
- */
 final class Formatter
 {
     private readonly int $indentSize;
@@ -23,9 +20,6 @@ final class Formatter
         $this->insertFinalNewline = $insertFinalNewline;
     }
 
-    /**
-     * Format a template string.
-     */
     public function format(string $template): string
     {
         $lines = explode("\n", $template);
@@ -81,9 +75,6 @@ final class Formatter
         return $result;
     }
 
-    /**
-     * Format a single line.
-     */
     private function formatLine(string $line, int $indentLevel): string
     {
         $indent = $this->indent($indentLevel);
@@ -103,16 +94,13 @@ final class Formatter
         return $indent . $line;
     }
 
-    /**
-     * Format an element declaration.
-     */
     private function formatElement(string $line, string $indent): string
     {
         if (preg_match('/^(\w+)(?:\s*\(([^)]*)\))?\s*(\{)?(.*)$/', $line, $matches)) {
             $element = $matches[1];
-            $attributes = $matches[2] ?? '';
+            $attributes = $matches[2];
             $hasBrace = $matches[3] === '{';
-            $content = trim($matches[4] ?? '');
+            $content = trim($matches[4]);
 
             $result = $indent . $element;
 
@@ -135,9 +123,6 @@ final class Formatter
         return $indent . $line;
     }
 
-    /**
-     * Format control structure.
-     */
     private function formatControlStructure(string $line, string $indent): string
     {
         if (preg_match('/^(if|foreach|else|elseif)\s+(.*)$/', $line, $matches)) {
@@ -158,9 +143,6 @@ final class Formatter
         return $indent . $line;
     }
 
-    /**
-     * Format attributes.
-     */
     private function formatAttributes(string $attributes): string
     {
         $parts = explode(',', $attributes);
@@ -173,17 +155,11 @@ final class Formatter
         return implode(', ', $formatted);
     }
 
-    /**
-     * Generate indentation string.
-     */
     private function indent(int $level): string
     {
         return str_repeat($this->indentCharacter, $level * $this->indentSize);
     }
 
-    /**
-     * Format a file.
-     */
     public function formatFile(string $path): string
     {
         $content = file_get_contents($path);
@@ -192,9 +168,6 @@ final class Formatter
         return $formatted;
     }
 
-    /**
-     * Check if a file needs formatting.
-     */
     public function needsFormatting(string $path): bool
     {
         $content = file_get_contents($path);
@@ -202,9 +175,6 @@ final class Formatter
         return $content !== $formatted;
     }
 
-    /**
-     * Format and save if needed.
-     */
     public function formatIfChanged(string $path): bool
     {
         if ($this->needsFormatting($path)) {

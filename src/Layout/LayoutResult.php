@@ -6,9 +6,6 @@ namespace Folio\Pdf\Layout;
 
 use Folio\Pdf\Support\Immutable;
 
-/**
- * Result of layout calculations containing all layout boxes.
- */
 final class LayoutResult
 {
     use Immutable;
