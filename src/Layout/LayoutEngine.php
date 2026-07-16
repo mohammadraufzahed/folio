@@ -6,14 +6,35 @@ namespace Folio\Pdf\Layout;
 
 use Folio\Pdf\Contracts\Node;
 use Folio\Pdf\Document\Document;
+use Folio\Pdf\Font\Core14FontMetrics;
+use Folio\Pdf\Font\Font;
 use Folio\Pdf\Nodes\Column;
 use Folio\Pdf\Nodes\Heading;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Row;
 use Folio\Pdf\Nodes\Text;
+use Folio\Pdf\Nodes\TextRun;
+use Folio\Pdf\Ports\FontMetricsPort;
+use Folio\Pdf\Styling\Style;
 
 final class LayoutEngine
 {
+    private readonly ?FontMetricsPort $fontMetrics;
+
+    public function __construct(?FontMetricsPort $fontMetrics = null)
+    {
+        $this->fontMetrics = $fontMetrics;
+    }
+
+    private function fontMetrics(): FontMetricsPort
+    {
+        return $this->fontMetrics ?? Core14FontMetrics::default();
+    }
+
+    private function textWrapper(): TextWrapper
+    {
+        return new TextWrapper($this->fontMetrics());
+    }
     public function layout(Document $document): LayoutResult
     {
         $layoutBoxes = [];
@@ -46,6 +67,10 @@ final class LayoutEngine
 
         if ($node instanceof Heading) {
             return $this->layoutHeading($node, $context);
+        }
+
+        if ($node instanceof TextRun) {
+            return $this->layoutTextRun($node, $context);
         }
 
         return $this->layoutDefault($node, $context);
@@ -138,37 +163,55 @@ final class LayoutEngine
 
     private function layoutText(Text $text, LayoutContext $context): LayoutBox
     {
-        $style = $text->style();
-        $fontSize = $style?->fontSize() ?? 12.0;
-        $lineHeight = $style?->lineHeight() ?? 1.5;
-
-        $charWidth = $fontSize * 0.6;
-        $textWidth = strlen($text->text()) * $charWidth;
-        $textHeight = $fontSize * $lineHeight;
-
-        $textWidth = min($textWidth, $context->availableWidth());
+        $wrapped = $this->wrapNodeText($text->text(), $text->style(), $context->availableWidth());
 
         return LayoutBox::make(
             Point::origin(),
-            Size::make($textWidth, $textHeight)
+            Size::make($wrapped->width, $wrapped->height)
         );
+    }
+
+    private function layoutTextRun(TextRun $textRun, LayoutContext $context): LayoutBox
+    {
+        $wrapped = $this->wrapNodeText($textRun->text(), $textRun->style(), $context->availableWidth());
+
+        return LayoutBox::make(
+            Point::origin(),
+            Size::make($wrapped->width, $wrapped->height)
+        );
+    }
+
+    private function wrapNodeText(string $text, ?Style $style, float $availableWidth): TextWrapResult
+    {
+        $fontSize = $style?->fontSize() ?? 12.0;
+        $lineHeightMultiplier = $style?->lineHeight() ?? 1.2;
+        $fontName = $style?->font() ?? 'Helvetica';
+
+        $font = Font::make($fontName, size: $fontSize);
+
+        return $this->textWrapper()->wrap($text, $font, $fontSize, $availableWidth, $lineHeightMultiplier);
     }
 
     private function layoutHeading(Heading $heading, LayoutContext $context): LayoutBox
     {
         $style = $heading->style();
         $fontSize = $style?->fontSize() ?? (32.0 - ($heading->level() * 4));
-        $lineHeight = $style?->lineHeight() ?? 1.2;
+        $lineHeightMultiplier = $style?->lineHeight() ?? 1.2;
+        $fontName = $style?->font() ?? 'Helvetica';
 
-        $charWidth = $fontSize * 0.6;
-        $textWidth = strlen($heading->text()) * $charWidth;
-        $textHeight = $fontSize * $lineHeight;
+        $font = Font::make($fontName, size: $fontSize);
 
-        $textWidth = min($textWidth, $context->availableWidth());
+        $wrapped = $this->textWrapper()->wrap(
+            $heading->text(),
+            $font,
+            $fontSize,
+            $context->availableWidth(),
+            $lineHeightMultiplier,
+        );
 
         return LayoutBox::make(
             Point::origin(),
-            Size::make($textWidth, $textHeight)
+            Size::make($wrapped->width, $wrapped->height)
         );
     }
 
