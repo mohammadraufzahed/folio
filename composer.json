@@ -37,7 +37,8 @@
         }
     },
     "bin": [
-        "bin/format.php"
+        "bin/format.php",
+        "bin/folio.php"
     ],
     "autoload-dev": {
         "psr-4": {
