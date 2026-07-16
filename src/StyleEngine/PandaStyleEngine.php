@@ -44,6 +44,7 @@ final readonly class PandaStyleEngine implements StyleEngine
         $builder->withColor($inherited->text->color, false);
         $builder->withFont($inherited->text->font, false);
         $builder->withFontSize($inherited->text->fontSize, false);
+        $builder->withFontWeight($inherited->text->fontWeight, false);
         $builder->withLineHeight($inherited->text->lineHeight, false);
         $builder->withAlignment($inherited->text->alignment, false);
     }

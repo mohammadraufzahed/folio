@@ -23,6 +23,9 @@ use Folio\Pdf\StyleEngine\PandaStyleEngine;
 use Folio\Pdf\StyleEngine\StyleContext;
 use Folio\Pdf\StyleEngine\StyleEngine;
 use Folio\Pdf\StyleEngine\Theme;
+use Folio\Pdf\Styling\FontWeight;
+use Folio\Pdf\Styling\Length;
+use Folio\Pdf\Styling\LengthUnit;
 use Folio\Pdf\Template\Component;
 use Folio\Pdf\Template\PartialRegistry;
 
@@ -162,7 +165,10 @@ final class LayoutEngine
         $paddingRight = $style->box->paddingRight ?? $style->box->padding ?? 0.0;
         $gap = $style->layout->gap ?? 0.0;
 
-        $availableWidth = max(0.0, $context->availableWidth() - $paddingLeft - $paddingRight);
+        $explicitWidth = $this->resolveLength($style->layout->width ?? $style->box->width ?? null, $context->availableWidth());
+        $baseWidth = $explicitWidth ?? $context->availableWidth();
+
+        $availableWidth = max(0.0, $baseWidth - $paddingLeft - $paddingRight);
         $availableHeight = max(0.0, $context->availableHeight() - $paddingTop - $paddingBottom);
 
         $y = $paddingTop;
@@ -183,7 +189,7 @@ final class LayoutEngine
             $maxWidth = max($maxWidth, $childBox->width());
         }
 
-        $totalWidth = $maxWidth + $paddingLeft + $paddingRight;
+        $totalWidth = max($explicitWidth ?? 0.0, $maxWidth + $paddingLeft + $paddingRight);
         $totalHeight = $y + $paddingBottom;
 
         return LayoutBox::make(
@@ -203,7 +209,10 @@ final class LayoutEngine
         $paddingRight = $style->box->paddingRight ?? $style->box->padding ?? 0.0;
         $gap = $style->layout->gap ?? 0.0;
 
-        $availableWidth = max(0.0, $context->availableWidth() - $paddingLeft - $paddingRight);
+        $explicitWidth = $this->resolveLength($style->layout->width ?? $style->box->width ?? null, $context->availableWidth());
+        $baseWidth = $explicitWidth ?? $context->availableWidth();
+
+        $availableWidth = max(0.0, $baseWidth - $paddingLeft - $paddingRight);
         $availableHeight = max(0.0, $context->availableHeight() - $paddingTop - $paddingBottom);
 
         $children = $row->children();
@@ -250,7 +259,7 @@ final class LayoutEngine
             $maxHeight = max($maxHeight, $childBox->height());
         }
 
-        $totalWidth = $x + $paddingRight;
+        $totalWidth = max($explicitWidth ?? 0.0, $x + $paddingRight);
         $totalHeight = $maxHeight + $paddingTop + $paddingBottom;
 
         return LayoutBox::make(
@@ -292,7 +301,7 @@ final class LayoutEngine
     {
         $fontSize = $style->text->fontSize ?? (32.0 - ($heading->level() * 4));
         $lineHeightMultiplier = $style->text->lineHeight ?? 1.2;
-        $fontName = $style->text->font ?? 'Helvetica';
+        $fontName = $this->resolveFontName($style->text->font ?? 'Helvetica', $style->text->fontWeight);
 
         $font = Font::make($fontName, size: $fontSize);
 
@@ -333,7 +342,7 @@ final class LayoutEngine
 
         foreach ($rows as $row) {
             $rowContext = LayoutContext::make($availableWidth, max(0.0, $availableHeight - $y));
-            $rowBox = $this->layoutTableRowWithCells($row, $rowContext, $style, $columnWidths, $paddingLeft);
+            $rowBox = $this->layoutTableRowWithCells($row, $rowContext, $style, $columnWidths, 0.0);
             $rowBox = $rowBox->withPosition(Point::make($paddingLeft, $y));
 
             $rowBoxes[] = $rowBox;
@@ -363,9 +372,16 @@ final class LayoutEngine
         $cellBoxes = [];
         $cells = $row->cells();
         $rowStyle = $this->resolveStyle($row, $style);
+        $columnIndex = 0;
 
-        foreach ($cells as $index => $cell) {
-            $cellWidth = $columnWidths[$index] ?? 0.0;
+        foreach ($cells as $cell) {
+            $colSpan = max(1, $cell->colSpan());
+            $cellWidth = 0.0;
+
+            for ($i = 0; $i < $colSpan; $i++) {
+                $cellWidth += $columnWidths[$columnIndex + $i] ?? 0.0;
+            }
+
             $cellContext = LayoutContext::make(max(0.0, $cellWidth), $context->availableHeight());
             $cellBox = $this->layoutTableCell($cell, $cellContext, $rowStyle);
             $cellBox = $cellBox
@@ -375,6 +391,7 @@ final class LayoutEngine
             $cellBoxes[] = $cellBox;
             $x += $cellBox->width();
             $maxHeight = max($maxHeight, $cellBox->height());
+            $columnIndex += $colSpan;
         }
 
         return LayoutBox::make(
@@ -392,6 +409,24 @@ final class LayoutEngine
         $columnWidths = $this->resolveTableColumnWidthsFromCells($row->cells(), $context->availableWidth(), $columnCount);
 
         return $this->layoutTableRowWithCells($row, $context, $style, $columnWidths, 0.0);
+    }
+
+    /**
+     * @param array<int, TableCell> $cells
+     * @return array<int, float>
+     */
+    private function resolveTableColumnWidthsFromCells(array $cells, float $availableWidth, int $columnCount): array
+    {
+        $totalSpan = 0;
+
+        foreach ($cells as $cell) {
+            $totalSpan += max(1, $cell->colSpan());
+        }
+
+        $count = max(1, $columnCount, $totalSpan);
+        $base = $availableWidth / $count;
+
+        return array_fill(0, $count, $base);
     }
 
     private function layoutTableCell(TableCell $cell, LayoutContext $context, ComputedStyle $style): LayoutBox
@@ -413,37 +448,67 @@ final class LayoutEngine
         $explicit = $table->columnWidths();
 
         if ($explicit !== []) {
-            $total = array_sum($explicit);
+            $widths = array_values($explicit);
+            $count = max($columnCount, count($widths));
+            $widths = array_pad($widths, $count, 0.0);
+            $total = array_sum($widths);
 
-            return array_map(fn (float $w) => $total > 0 ? ($w / $total) * $availableWidth : 0.0, $explicit);
+            if ($total > 0) {
+                return array_map(fn (float $w) => ($w / $total) * $availableWidth, $widths);
+            }
         }
 
-        $firstRow = $table->rows()[0] ?? null;
-        $cells = $firstRow !== null ? $firstRow->cells() : [];
-
-        return $this->resolveTableColumnWidthsFromCells($cells, $availableWidth, $columnCount);
-    }
-
-    /**
-     * @param array<int, TableCell> $cells
-     * @return array<int, float>
-     */
-    private function resolveTableColumnWidthsFromCells(array $cells, float $availableWidth, int $columnCount): array
-    {
         $count = max(1, $columnCount);
         $base = $availableWidth / $count;
-        $widths = [];
 
-        foreach ($cells as $index => $cell) {
-            $colSpan = $cell->colSpan();
-            $widths[$index] = $base * $colSpan;
+        return array_fill(0, $count, $base);
+    }
+
+    private function resolveLength(?Length $length, float $base): ?float
+    {
+        if ($length === null) {
+            return null;
         }
 
-        for ($i = count($widths); $i < $count; $i++) {
-            $widths[$i] = $base;
+        if ($length->unit() === LengthUnit::Percent) {
+            return $base * ($length->value() / 100.0);
         }
 
-        return $widths;
+        if ($length->unit() === LengthUnit::Fr || $length->unit() === LengthUnit::Auto) {
+            return null;
+        }
+
+        return $length->toPixels();
+    }
+
+    private function resolveFontName(string $name, ?FontWeight $weight): string
+    {
+        $lower = strtolower($name);
+
+        $family = match (true) {
+            str_contains($lower, 'courier') => 'Courier',
+            str_contains($lower, 'times') => 'Times',
+            default => 'Helvetica',
+        };
+
+        $isBold = str_contains($lower, 'bold');
+        $isItalic = str_contains($lower, 'italic') || str_contains($lower, 'oblique');
+        $wantBold = ($weight !== null && $weight->value >= FontWeight::Bold->value) || $isBold;
+
+        return match ([$family, $wantBold, $isItalic]) {
+            ['Helvetica', false, false] => 'Helvetica',
+            ['Helvetica', true, false] => 'Helvetica-Bold',
+            ['Helvetica', false, true] => 'Helvetica-Oblique',
+            ['Helvetica', true, true] => 'Helvetica-BoldOblique',
+            ['Times', false, false] => 'Times-Roman',
+            ['Times', true, false] => 'Times-Bold',
+            ['Times', false, true] => 'Times-Italic',
+            ['Times', true, true] => 'Times-BoldItalic',
+            ['Courier', false, false] => 'Courier',
+            ['Courier', true, false] => 'Courier-Bold',
+            ['Courier', false, true] => 'Courier-Oblique',
+            ['Courier', true, true] => 'Courier-BoldOblique',
+        };
     }
 
     private function layoutComponent(Component $component, LayoutContext $context, ComputedStyle $style): LayoutBox
@@ -465,7 +530,7 @@ final class LayoutEngine
     {
         $fontSize = $style->text->fontSize ?? 12.0;
         $lineHeightMultiplier = $style->text->lineHeight ?? 1.2;
-        $fontName = $style->text->font ?? 'Helvetica';
+        $fontName = $this->resolveFontName($style->text->font ?? 'Helvetica', $style->text->fontWeight);
 
         $font = Font::make($fontName, size: $fontSize);
 

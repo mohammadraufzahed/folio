@@ -22,9 +22,9 @@ final readonly class TableRow implements Node
         $this->isFooter = $isFooter;
     }
 
-    public static function make(array $cells): self
+    public static function make(array $cells, ?Style $style = null): self
     {
-        return new self($cells);
+        return new self($cells, $style);
     }
 
     public static function header(array $cells, ?Style $style = null): self

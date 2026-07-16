@@ -890,8 +890,44 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
     private function generateStringLiteral(AstNode $node): string
     {
-        $value = addslashes((string) ($node->attributes['value'] ?? ''));
-        return '"' . $value . '"';
+        $value = (string) ($node->attributes['value'] ?? '');
+
+        if (!str_contains($value, '{')) {
+            return '"' . addslashes($value) . '"';
+        }
+
+        $parts = [];
+        $offset = 0;
+        $pattern = '/\{([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*)\}/';
+
+        while (preg_match($pattern, $value, $m, PREG_OFFSET_CAPTURE, $offset)) {
+            $start = $m[0][1];
+            $before = substr($value, $offset, $start - $offset);
+
+            if ($before !== '') {
+                $parts[] = '"' . addslashes($before) . '"';
+            }
+
+            $expr = $m[1][0];
+
+            if (str_contains($expr, '.')) {
+                $path = explode('.', $expr);
+                $phpPath = '[' . implode(', ', array_map(fn (string $p) => var_export($p, true), $path)) . ']';
+                $parts[] = '(string)($scope->getPath(' . $phpPath . '))';
+            } else {
+                $parts[] = '(string)($scope->getVar(' . var_export($expr, true) . '))';
+            }
+
+            $offset = $start + strlen($m[0][0]);
+        }
+
+        $rest = substr($value, $offset);
+
+        if ($rest !== '') {
+            $parts[] = '"' . addslashes($rest) . '"';
+        }
+
+        return 'implode(\'\', [' . implode(', ', $parts) . '])';
     }
 
     private function generateNumberLiteral(AstNode $node): string

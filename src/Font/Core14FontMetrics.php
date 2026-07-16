@@ -73,11 +73,32 @@ final class Core14FontMetrics implements FontMetricsPort
             return $this->courierWidths();
         }
 
+        $isBold = str_contains($lower, 'bold');
+
         if (str_contains($lower, 'times')) {
-            return $this->timesWidths();
+            $widths = $this->timesWidths();
+
+            return $isBold ? $this->scaleWidths($widths, 1.03) : $widths;
         }
 
-        return $this->helveticaWidths();
+        $widths = $this->helveticaWidths();
+
+        return $isBold ? $this->scaleWidths($widths, 1.06) : $widths;
+    }
+
+    /**
+     * @param array<int, int> $widths
+     * @return array<int, int>
+     */
+    private function scaleWidths(array $widths, float $factor): array
+    {
+        $scaled = [];
+
+        foreach ($widths as $codepoint => $width) {
+            $scaled[$codepoint] = (int) ($width * $factor);
+        }
+
+        return $scaled;
     }
 
     /**

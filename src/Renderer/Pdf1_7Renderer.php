@@ -16,6 +16,7 @@ use Folio\Pdf\Nodes\TextRun;
 use Folio\Pdf\Ports\FontMetricsPort;
 use Folio\Pdf\Ports\RendererPort;
 use Folio\Pdf\Styling\Color;
+use Folio\Pdf\Styling\FontWeight;
 
 final class Pdf1_7Renderer implements RendererPort
 {
@@ -139,14 +140,14 @@ final class Pdf1_7Renderer implements RendererPort
         $style = $box->computedStyle();
         $fontSize = $style?->text->fontSize ?? 12.0;
         $lineHeightMultiplier = $style?->text->lineHeight ?? 1.2;
-        $fontName = $style?->text->font ?? 'Helvetica';
+        $fontName = $this->resolveFontName($style?->text->font ?? 'Helvetica', $style?->text->fontWeight);
         $color = $style?->text->color ?? Color::black();
 
         $font = Font::make($fontName, size: $fontSize);
         $wrapper = new TextWrapper($this->fontMetrics);
         $wrapped = $wrapper->wrap($text, $font, $fontSize, min($box->width(), $availableWidth), $lineHeightMultiplier);
 
-        $pdfFontName = $this->mapFontName($fontName);
+        $pdfFontName = $this->fontObjectName($fontName);
         $this->ensureFont($pdfFontName);
 
         $stream = sprintf("BT\n/%s %.2f Tf\n", $pdfFontName, $fontSize);
@@ -185,8 +186,17 @@ final class Pdf1_7Renderer implements RendererPort
         $id = $this->createObject();
         $baseFont = match ($pdfName) {
             'F1' => 'Helvetica',
+            'F1B' => 'Helvetica-Bold',
+            'F1I' => 'Helvetica-Oblique',
+            'F1BI' => 'Helvetica-BoldOblique',
             'F2' => 'Times-Roman',
+            'F2B' => 'Times-Bold',
+            'F2I' => 'Times-Italic',
+            'F2BI' => 'Times-BoldItalic',
             'F3' => 'Courier',
+            'F3B' => 'Courier-Bold',
+            'F3I' => 'Courier-Oblique',
+            'F3BI' => 'Courier-BoldOblique',
             default => 'Helvetica',
         };
 
@@ -203,19 +213,54 @@ final class Pdf1_7Renderer implements RendererPort
         return $id;
     }
 
-    private function mapFontName(string $name): string
+    private function resolveFontName(string $name, ?FontWeight $weight): string
     {
         $lower = strtolower($name);
 
-        if (str_contains($lower, 'times')) {
-            return 'F2';
+        $family = match (true) {
+            str_contains($lower, 'courier') => 'Courier',
+            str_contains($lower, 'times') => 'Times',
+            default => 'Helvetica',
+        };
+
+        $isBold = str_contains($lower, 'bold');
+        $isItalic = str_contains($lower, 'italic') || str_contains($lower, 'oblique');
+        $wantBold = ($weight !== null && $weight->value >= FontWeight::Bold->value) || $isBold;
+
+        return match ([$family, $wantBold, $isItalic]) {
+            ['Helvetica', false, false] => 'Helvetica',
+            ['Helvetica', true, false] => 'Helvetica-Bold',
+            ['Helvetica', false, true] => 'Helvetica-Oblique',
+            ['Helvetica', true, true] => 'Helvetica-BoldOblique',
+            ['Times', false, false] => 'Times-Roman',
+            ['Times', true, false] => 'Times-Bold',
+            ['Times', false, true] => 'Times-Italic',
+            ['Times', true, true] => 'Times-BoldItalic',
+            ['Courier', false, false] => 'Courier',
+            ['Courier', true, false] => 'Courier-Bold',
+            ['Courier', false, true] => 'Courier-Oblique',
+            ['Courier', true, true] => 'Courier-BoldOblique',
+        };
+    }
+
+    private function fontObjectName(string $name): string
+    {
+        $lower = strtolower($name);
+        $family = match (true) {
+            str_contains($lower, 'courier') => 'F3',
+            str_contains($lower, 'times') => 'F2',
+            default => 'F1',
+        };
+
+        $suffix = '';
+        if (str_contains($lower, 'bold')) {
+            $suffix .= 'B';
+        }
+        if (str_contains($lower, 'italic') || str_contains($lower, 'oblique')) {
+            $suffix .= 'I';
         }
 
-        if (str_contains($lower, 'courier')) {
-            return 'F3';
-        }
-
-        return 'F1';
+        return $suffix !== '' ? $family . $suffix : $family;
     }
 
     private function escapePdfString(string $text): string

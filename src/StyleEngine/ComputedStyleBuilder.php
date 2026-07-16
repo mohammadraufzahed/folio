@@ -195,9 +195,11 @@ final class ComputedStyleBuilder
         }
         return $this;
     }
-    public function withFontWeight(?FontWeight $value): self
+    public function withFontWeight(?FontWeight $value, bool $force = true): self
     {
-        $this->text['fontWeight'] = $value;
+        if ($force || ($this->text['fontWeight'] ?? null) === null) {
+            $this->text['fontWeight'] = $value;
+        }
         return $this;
     }
     public function withFont(?string $value, bool $force = true): self
