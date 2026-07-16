@@ -45,7 +45,7 @@ jobs:
 
       - name: Install extension dependencies
         working-directory: vscode-extension
-        run: npm ci
+        run: npm install
 
       - name: Package VSIX
         working-directory: vscode-extension
