@@ -4,36 +4,88 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
-    name: Create Release
+  validate:
+    name: Validate
     runs-on: ubuntu-latest
-    
+    strategy:
+      fail-fast: true
+      matrix:
+        php-version: ['8.3', '8.4']
+
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring
           tools: composer:v2
-      
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
-      
+        run: composer install --prefer-dist --no-progress
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
       - name: Run tests
         run: composer test
-      
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+
+      - name: Run static analysis
+        run: composer analyze
+
+      - name: Check code style
+        if: matrix.php-version == '8.3'
+        run: composer cs-check
+
+  github-release:
+    name: Create GitHub Release
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
         with:
-          draft: false
-          prerelease: false
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          make_latest: true
+
+  packagist:
+    name: Update Packagist
+    needs: github-release
+    runs-on: ubuntu-latest
+    env:
+      PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+      PACKAGIST_API_TOKEN: ${{ secrets.PACKAGIST_API_TOKEN }}
+
+    steps:
+      - name: Notify Packagist
+        if: env.PACKAGIST_USERNAME != '' && env.PACKAGIST_API_TOKEN != ''
+        run: |
+          curl -fsS -X POST \
+            -H 'content-type: application/json' \
+            "https://packagist.org/api/update-package?username=${PACKAGIST_USERNAME}&apiToken=${PACKAGIST_API_TOKEN}" \
+            -d '{"repository":{"url":"https://github.com/${{ github.repository }}"}}'
