@@ -123,7 +123,7 @@ final class Core14FontMetrics implements FontMetricsPort
     }
 
     /**
-     * @return array<string, int>
+     * @return array<int|string, int>
      */
     private function baseWidths(): array
     {

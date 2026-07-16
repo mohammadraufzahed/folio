@@ -46,7 +46,9 @@ final class Theme
      */
     public function textStyle(string $name): array
     {
-        return $this->textStyles[$name]?->properties ?? [];
+        $preset = $this->textStyles[$name] ?? null;
+
+        return $preset !== null ? $preset->properties : [];
     }
 
     /**
@@ -54,7 +56,9 @@ final class Theme
      */
     public function layerStyle(string $name): array
     {
-        return $this->layerStyles[$name]?->properties ?? [];
+        $preset = $this->layerStyles[$name] ?? null;
+
+        return $preset !== null ? $preset->properties : [];
     }
 
     public function recipe(string $name): ?Recipe

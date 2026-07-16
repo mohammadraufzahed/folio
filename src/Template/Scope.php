@@ -23,7 +23,7 @@ final class Scope
         $this->data = $data;
         $this->locals = $locals;
         $this->parent = $parent;
-        $this->strict = $strict ?? ($parent?->strict ?? false);
+        $this->strict = $strict ?? ($parent !== null ? $parent->strict : false);
     }
 
     /**
