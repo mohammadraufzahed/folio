@@ -2,8 +2,18 @@
   "name": "folio-pdf",
   "displayName": "Folio PDF Template Language",
   "description": "Language support for Folio PDF template language (.folio)",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "publisher": "folio-pdf",
+  "license": "MIT",
+  "homepage": "https://mohammadraufzahed.github.io/folio/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mohammadraufzahed/folio.git",
+    "directory": "vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/mohammadraufzahed/folio/issues"
+  },
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -118,7 +128,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "package": "vsce package --allow-missing-repository"
+    "package": "vsce package"
   },
   "dependencies": {
     "vscode-languageclient": "^8.1.0"
@@ -126,6 +136,7 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
     "typescript": "^5.0.0"
   }
 }

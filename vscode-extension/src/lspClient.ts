@@ -86,13 +86,26 @@ export class FolioPdfLspClient implements vscode.Disposable {
             return configured;
         }
 
-        // Prefer workspace root: <workspace>/lsp/lsp.php
         const folders = vscode.workspace.workspaceFolders;
         if (folders) {
             for (const folder of folders) {
-                const candidate = path.join(folder.uri.fsPath, 'lsp', 'lsp.php');
-                if (fs.existsSync(candidate)) {
-                    return candidate;
+                const root = folder.uri.fsPath;
+
+                // Development layout: the repo itself is open.
+                const devCandidate = path.join(root, 'lsp', 'lsp.php');
+                if (fs.existsSync(devCandidate)) {
+                    return devCandidate;
+                }
+
+                // Composer-installed package layout.
+                const packageCandidates = [
+                    path.join(root, 'vendor', 'mohammadraufzahed', 'folio', 'lsp', 'lsp.php'),
+                    path.join(root, 'vendor', 'folio', 'pdf', 'lsp', 'lsp.php'),
+                ];
+                for (const candidate of packageCandidates) {
+                    if (fs.existsSync(candidate)) {
+                        return candidate;
+                    }
                 }
             }
         }
