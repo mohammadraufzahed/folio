@@ -1,7 +1,11 @@
 .vscode/**
 .vscode-test/**
 out/**/*.map
+out/lspClient.js
+out/lexer.js
+out/server/lexer.js
 src/**
+test-*.js
 tsconfig.json
 .gitignore
 .yarnrc
