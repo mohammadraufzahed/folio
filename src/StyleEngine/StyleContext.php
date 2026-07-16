@@ -31,7 +31,7 @@ final readonly class StyleContext
         return new self(null, $theme);
     }
 
-    public function withParent(ComputedStyle $parent): self
+    public function withParent(?ComputedStyle $parent): self
     {
         return new self($parent, $this->theme, $this->state, $this->classList, $this->rawProperties, $this->recipe, $this->slot, $this->textStyle, $this->layerStyle, $this->variants);
     }

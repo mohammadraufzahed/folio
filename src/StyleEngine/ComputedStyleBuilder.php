@@ -65,6 +65,7 @@ final class ComputedStyleBuilder
             'maxWidth' => $style->maxWidth(),
             'grow' => $style->grow(),
             'shrink' => $style->shrink(),
+            'gap' => $style->gap(),
         ];
         $builder->paint = [
             'fill' => $style->background(),

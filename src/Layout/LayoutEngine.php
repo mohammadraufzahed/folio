@@ -15,7 +15,11 @@ use Folio\Pdf\Nodes\Row;
 use Folio\Pdf\Nodes\Text;
 use Folio\Pdf\Nodes\TextRun;
 use Folio\Pdf\Ports\FontMetricsPort;
-use Folio\Pdf\Styling\Style;
+use Folio\Pdf\StyleEngine\ComputedStyle;
+use Folio\Pdf\StyleEngine\PandaStyleEngine;
+use Folio\Pdf\StyleEngine\StyleContext;
+use Folio\Pdf\StyleEngine\StyleEngine;
+use Folio\Pdf\StyleEngine\Theme;
 use Folio\Pdf\Template\Component;
 use Folio\Pdf\Template\PartialRegistry;
 
@@ -23,11 +27,19 @@ final class LayoutEngine
 {
     private readonly ?FontMetricsPort $fontMetrics;
     private readonly ?PartialRegistry $partials;
+    private readonly ?StyleEngine $styleEngine;
+    private readonly ?Theme $theme;
 
-    public function __construct(?FontMetricsPort $fontMetrics = null, ?PartialRegistry $partials = null)
-    {
+    public function __construct(
+        ?FontMetricsPort $fontMetrics = null,
+        ?PartialRegistry $partials = null,
+        ?StyleEngine $styleEngine = null,
+        ?Theme $theme = null,
+    ) {
         $this->fontMetrics = $fontMetrics;
         $this->partials = $partials;
+        $this->styleEngine = $styleEngine;
+        $this->theme = $theme;
     }
 
     private function fontMetrics(): FontMetricsPort
@@ -35,10 +47,16 @@ final class LayoutEngine
         return $this->fontMetrics ?? Core14FontMetrics::default();
     }
 
+    private function styleEngine(): StyleEngine
+    {
+        return $this->styleEngine ?? new PandaStyleEngine();
+    }
+
     private function textWrapper(): TextWrapper
     {
         return new TextWrapper($this->fontMetrics());
     }
+
     public function layout(Document $document): LayoutResult
     {
         $layoutBoxes = [];
@@ -53,76 +71,98 @@ final class LayoutEngine
 
     public function layoutNode(Node $node, LayoutContext $context): LayoutBox
     {
+        return $this->layoutNodeWithStyle($node, $context, null);
+    }
+
+    private function resolveStyle(Node $node, ?ComputedStyle $parent): ComputedStyle
+    {
+        $context = StyleContext::root($this->theme)->withParent($parent);
+
+        return $this->styleEngine()->resolve($node, $context);
+    }
+
+    private function layoutNodeWithStyle(Node $node, LayoutContext $context, ?ComputedStyle $parent): LayoutBox
+    {
+        $style = $this->resolveStyle($node, $parent);
+
         if ($node instanceof Page) {
-            return $this->layoutPage($node, $context);
+            return $this->layoutPage($node, $context, $style);
         }
 
         if ($node instanceof Column) {
-            return $this->layoutColumn($node, $context);
+            return $this->layoutColumn($node, $context, $style);
         }
 
         if ($node instanceof Row) {
-            return $this->layoutRow($node, $context);
+            return $this->layoutRow($node, $context, $style);
         }
 
         if ($node instanceof Text) {
-            return $this->layoutText($node, $context);
+            return $this->layoutText($node, $context, $style);
         }
 
         if ($node instanceof Heading) {
-            return $this->layoutHeading($node, $context);
+            return $this->layoutHeading($node, $context, $style);
         }
 
         if ($node instanceof TextRun) {
-            return $this->layoutTextRun($node, $context);
+            return $this->layoutTextRun($node, $context, $style);
         }
 
         if ($node instanceof Component) {
-            return $this->layoutComponent($node, $context);
+            return $this->layoutComponent($node, $context, $style);
         }
 
-        return $this->layoutDefault($node, $context);
+        return LayoutBox::make(
+            Point::origin(),
+            Size::make($context->availableWidth(), 0.0)
+        )->withComputedStyle($style);
     }
 
-    private function layoutPage(Page $page, LayoutContext $context): LayoutBox
+    private function layoutPage(Page $page, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
         $size = Size::make($page->width(), $page->height());
-        $position = Point::origin();
-
         $children = [];
+
         if ($page->content() !== null) {
             $innerContext = LayoutContext::make(
                 $context->availableWidth(),
                 $context->availableHeight()
             );
-            $children[] = $this->layoutNode($page->content(), $innerContext);
+            $children[] = $this->layoutNodeWithStyle($page->content(), $innerContext, $style);
         }
 
-        return LayoutBox::make($position, $size)->withChildren($children);
+        return LayoutBox::make(Point::origin(), $size)
+            ->withChildren($children)
+            ->withComputedStyle($style);
     }
 
-    private function layoutColumn(Column $column, LayoutContext $context): LayoutBox
+    private function layoutColumn(Column $column, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
-        $style = $column->style();
-        $paddingTop = $style?->paddingTop() ?? 0.0;
-        $paddingBottom = $style?->paddingBottom() ?? 0.0;
-        $paddingLeft = $style?->paddingLeft() ?? 0.0;
-        $paddingRight = $style?->paddingRight() ?? 0.0;
+        $paddingTop = $style->box->paddingTop ?? $style->box->padding ?? 0.0;
+        $paddingBottom = $style->box->paddingBottom ?? $style->box->padding ?? 0.0;
+        $paddingLeft = $style->box->paddingLeft ?? $style->box->padding ?? 0.0;
+        $paddingRight = $style->box->paddingRight ?? $style->box->padding ?? 0.0;
+        $gap = $style->layout->gap ?? 0.0;
 
-        $availableWidth = $context->availableWidth() - $paddingLeft - $paddingRight;
-        $availableHeight = $context->availableHeight() - $paddingTop - $paddingBottom;
+        $availableWidth = max(0.0, $context->availableWidth() - $paddingLeft - $paddingRight);
+        $availableHeight = max(0.0, $context->availableHeight() - $paddingTop - $paddingBottom);
 
         $y = $paddingTop;
         $maxWidth = 0.0;
         $childBoxes = [];
+        $count = count($column->children());
 
-        foreach ($column->children() as $child) {
-            $childContext = LayoutContext::make($availableWidth, $availableHeight - $y);
-            $childBox = $this->layoutNode($child, $childContext);
+        foreach ($column->children() as $index => $child) {
+            $childContext = LayoutContext::make($availableWidth, max(0.0, $availableHeight - $y));
+            $childBox = $this->layoutNodeWithStyle($child, $childContext, $style);
             $childBox = $childBox->withPosition(Point::make($paddingLeft, $y));
 
             $childBoxes[] = $childBox;
             $y += $childBox->height();
+            if ($index !== $count - 1) {
+                $y += $gap;
+            }
             $maxWidth = max($maxWidth, $childBox->width());
         }
 
@@ -131,32 +171,64 @@ final class LayoutEngine
 
         return LayoutBox::make(
             Point::origin(),
-            Size::make($totalWidth, $totalHeight)
-        )->withChildren($childBoxes);
+            Size::make($totalWidth, $totalHeight),
+            $childBoxes,
+            $style,
+        );
     }
 
-    private function layoutRow(Row $row, LayoutContext $context): LayoutBox
+    private function layoutRow(Row $row, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
-        $style = $row->style();
-        $paddingTop = $style?->paddingTop() ?? 0.0;
-        $paddingBottom = $style?->paddingBottom() ?? 0.0;
-        $paddingLeft = $style?->paddingLeft() ?? 0.0;
-        $paddingRight = $style?->paddingRight() ?? 0.0;
+        $paddingTop = $style->box->paddingTop ?? $style->box->padding ?? 0.0;
+        $paddingBottom = $style->box->paddingBottom ?? $style->box->padding ?? 0.0;
+        $paddingLeft = $style->box->paddingLeft ?? $style->box->padding ?? 0.0;
+        $paddingRight = $style->box->paddingRight ?? $style->box->padding ?? 0.0;
+        $gap = $style->layout->gap ?? 0.0;
 
-        $availableWidth = $context->availableWidth() - $paddingLeft - $paddingRight;
-        $availableHeight = $context->availableHeight() - $paddingTop - $paddingBottom;
+        $availableWidth = max(0.0, $context->availableWidth() - $paddingLeft - $paddingRight);
+        $availableHeight = max(0.0, $context->availableHeight() - $paddingTop - $paddingBottom);
+
+        $children = $row->children();
+        $count = count($children);
+
+        $naturalBoxes = [];
+        $naturalWidth = 0.0;
+        $totalGrow = 0.0;
+        $gaps = max(0, $count - 1) * $gap;
+
+        foreach ($children as $child) {
+            $childContext = LayoutContext::make($availableWidth, $availableHeight);
+            $childStyle = $this->resolveStyle($child, $style);
+            $childBox = $this->layoutNodeWithStyle($child, $childContext, $style)
+                ->withComputedStyle($childStyle);
+
+            $naturalBoxes[] = $childBox;
+            $naturalWidth += $childBox->width();
+            $totalGrow += $childStyle->layout->grow ?? 0.0;
+        }
+
+        $remainingWidth = max(0.0, $availableWidth - $naturalWidth - $gaps);
 
         $x = $paddingLeft;
         $maxHeight = 0.0;
         $childBoxes = [];
 
-        foreach ($row->children() as $child) {
-            $childContext = LayoutContext::make($availableWidth - $x, $availableHeight);
-            $childBox = $this->layoutNode($child, $childContext);
-            $childBox = $childBox->withPosition(Point::make($x, $paddingTop));
+        foreach ($naturalBoxes as $index => $childBox) {
+            $childStyle = $childBox->computedStyle();
+            $grow = $childStyle?->layout->grow ?? 0.0;
 
+            if ($totalGrow > 0.0 && $grow > 0.0) {
+                $extra = ($grow / $totalGrow) * $remainingWidth;
+                $newWidth = $childBox->width() + $extra;
+                $childBox = $childBox->withSize(Size::make($newWidth, $childBox->height()));
+            }
+
+            $childBox = $childBox->withPosition(Point::make($x, $paddingTop));
             $childBoxes[] = $childBox;
             $x += $childBox->width();
+            if ($index !== $count - 1) {
+                $x += $gap;
+            }
             $maxHeight = max($maxHeight, $childBox->height());
         }
 
@@ -165,58 +237,41 @@ final class LayoutEngine
 
         return LayoutBox::make(
             Point::origin(),
-            Size::make($totalWidth, $totalHeight)
-        )->withChildren($childBoxes);
-    }
-
-    private function layoutText(Text $text, LayoutContext $context): LayoutBox
-    {
-        $wrapped = $this->wrapNodeText($text->text(), $text->style(), $context->availableWidth());
-
-        return LayoutBox::make(
-            Point::origin(),
-            Size::make($wrapped->width, $wrapped->height)
+            Size::make($totalWidth, $totalHeight),
+            $childBoxes,
+            $style,
         );
     }
 
-    private function layoutTextRun(TextRun $textRun, LayoutContext $context): LayoutBox
+    private function layoutText(Text $text, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
-        $wrapped = $this->wrapNodeText($textRun->text(), $textRun->style(), $context->availableWidth());
+        $wrapped = $this->wrapComputedText($text->text(), $style, $context->availableWidth());
 
         return LayoutBox::make(
             Point::origin(),
-            Size::make($wrapped->width, $wrapped->height)
+            Size::make($wrapped->width, $wrapped->height),
+            [],
+            $style,
         );
     }
 
-    private function layoutComponent(Component $component, LayoutContext $context): LayoutBox
+    private function layoutTextRun(TextRun $textRun, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
-        if ($this->partials === null) {
-            return $this->layoutDefault($component, $context);
-        }
+        $wrapped = $this->wrapComputedText($textRun->text(), $style, $context->availableWidth());
 
-        $resolved = $this->partials->resolve($component);
-
-        return $this->layoutNode($resolved, $context);
+        return LayoutBox::make(
+            Point::origin(),
+            Size::make($wrapped->width, $wrapped->height),
+            [],
+            $style,
+        );
     }
 
-    private function wrapNodeText(string $text, ?Style $style, float $availableWidth): TextWrapResult
+    private function layoutHeading(Heading $heading, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
-        $fontSize = $style?->fontSize() ?? 12.0;
-        $lineHeightMultiplier = $style?->lineHeight() ?? 1.2;
-        $fontName = $style?->font() ?? 'Helvetica';
-
-        $font = Font::make($fontName, size: $fontSize);
-
-        return $this->textWrapper()->wrap($text, $font, $fontSize, $availableWidth, $lineHeightMultiplier);
-    }
-
-    private function layoutHeading(Heading $heading, LayoutContext $context): LayoutBox
-    {
-        $style = $heading->style();
-        $fontSize = $style?->fontSize() ?? (32.0 - ($heading->level() * 4));
-        $lineHeightMultiplier = $style?->lineHeight() ?? 1.2;
-        $fontName = $style?->font() ?? 'Helvetica';
+        $fontSize = $style->text->fontSize ?? (32.0 - ($heading->level() * 4));
+        $lineHeightMultiplier = $style->text->lineHeight ?? 1.2;
+        $fontName = $style->text->font ?? 'Helvetica';
 
         $font = Font::make($fontName, size: $fontSize);
 
@@ -230,15 +285,34 @@ final class LayoutEngine
 
         return LayoutBox::make(
             Point::origin(),
-            Size::make($wrapped->width, $wrapped->height)
+            Size::make($wrapped->width, $wrapped->height),
+            [],
+            $style,
         );
     }
 
-    private function layoutDefault(Node $node, LayoutContext $context): LayoutBox
+    private function layoutComponent(Component $component, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
-        return LayoutBox::make(
-            Point::origin(),
-            Size::make($context->availableWidth(), 0.0)
-        );
+        if ($this->partials === null) {
+            return LayoutBox::make(
+                Point::origin(),
+                Size::make($context->availableWidth(), 0.0),
+            )->withComputedStyle($style);
+        }
+
+        $resolved = $this->partials->resolve($component);
+
+        return $this->layoutNodeWithStyle($resolved, $context, $style);
+    }
+
+    private function wrapComputedText(string $text, ComputedStyle $style, float $availableWidth): TextWrapResult
+    {
+        $fontSize = $style->text->fontSize ?? 12.0;
+        $lineHeightMultiplier = $style->text->lineHeight ?? 1.2;
+        $fontName = $style->text->font ?? 'Helvetica';
+
+        $font = Font::make($fontName, size: $fontSize);
+
+        return $this->textWrapper()->wrap($text, $font, $fontSize, $availableWidth, $lineHeightMultiplier);
     }
 }

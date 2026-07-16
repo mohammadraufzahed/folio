@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Layout;
 
+use Folio\Pdf\StyleEngine\ComputedStyle;
 use Folio\Pdf\Support\Immutable;
 
 final class LayoutBox
@@ -13,17 +14,19 @@ final class LayoutBox
     private readonly Point $position;
     private readonly Size $size;
     private readonly array $children;
+    private readonly ?ComputedStyle $computedStyle;
 
-    public function __construct(Point $position, Size $size, array $children = [])
+    public function __construct(Point $position, Size $size, array $children = [], ?ComputedStyle $computedStyle = null)
     {
         $this->position = $position;
         $this->size = $size;
         $this->children = array_values($children);
+        $this->computedStyle = $computedStyle;
     }
 
-    public static function make(Point $position, Size $size): self
+    public static function make(Point $position, Size $size, array $children = [], ?ComputedStyle $computedStyle = null): self
     {
-        return new self($position, $size);
+        return new self($position, $size, $children, $computedStyle);
     }
 
     public static function fromSize(Size $size): self
@@ -61,6 +64,11 @@ final class LayoutBox
         return $this->position->y();
     }
 
+    public function computedStyle(): ?ComputedStyle
+    {
+        return $this->computedStyle;
+    }
+
     /**
      * @return array<int, LayoutBox>
      */
@@ -71,21 +79,26 @@ final class LayoutBox
 
     public function withPosition(Point $position): self
     {
-        return new self($position, $this->size, $this->children);
+        return new self($position, $this->size, $this->children, $this->computedStyle);
     }
 
     public function withSize(Size $size): self
     {
-        return new self($this->position, $size, $this->children);
+        return new self($this->position, $size, $this->children, $this->computedStyle);
     }
 
     public function withChildren(array $children): self
     {
-        return new self($this->position, $this->size, $children);
+        return new self($this->position, $this->size, $children, $this->computedStyle);
+    }
+
+    public function withComputedStyle(?ComputedStyle $computedStyle): self
+    {
+        return new self($this->position, $this->size, $this->children, $computedStyle);
     }
 
     public function addChild(LayoutBox $child): self
     {
-        return new self($this->position, $this->size, [...$this->children, $child]);
+        return new self($this->position, $this->size, [...$this->children, $child], $this->computedStyle);
     }
 }
