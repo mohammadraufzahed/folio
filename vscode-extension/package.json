@@ -2,7 +2,7 @@
   "name": "folio-pdf",
   "displayName": "Folio PDF Template Language",
   "description": "Language support for Folio PDF template language (.folio)",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "folio-pdf",
   "license": "MIT",
   "homepage": "https://mohammadraufzahed.github.io/folio/",
@@ -67,62 +67,25 @@
     "configuration": {
       "title": "Folio PDF",
       "properties": {
-        "folio-pdf.format.enable": {
+        "folio-pdf.lsp.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Enable formatting for Folio PDF templates"
+          "description": "Enable the Folio PDF language server"
         },
         "folio-pdf.format.indentSize": {
           "type": "number",
           "default": 4,
           "description": "Number of spaces for indentation"
-        },
-        "folio-pdf.lsp.enable": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable Folio PDF language server"
-        },
-        "folio-pdf.lsp.phpPath": {
-          "type": "string",
-          "default": "php",
-          "description": "Path to PHP binary used to run the language server"
-        },
-        "folio-pdf.lsp.serverPath": {
-          "type": "string",
-          "default": "",
-          "description": "Absolute path to lsp/lsp.php (auto-detected from workspace when empty)"
         }
       }
     },
     "commands": [
       {
-        "command": "folio-pdf.formatDocument",
-        "title": "Folio PDF: Format Document",
-        "category": "Folio PDF"
-      },
-      {
-        "command": "folio-pdf.compileTemplate",
-        "title": "Folio PDF: Compile Template",
-        "category": "Folio PDF"
-      },
-      {
         "command": "folio-pdf.restartLsp",
         "title": "Folio PDF: Restart Language Server",
         "category": "Folio PDF"
       }
-    ],
-    "menus": {
-      "commandPalette": [
-        {
-          "command": "folio-pdf.formatDocument",
-          "when": "editorLangId == folio || editorLangId == pdf-template"
-        },
-        {
-          "command": "folio-pdf.compileTemplate",
-          "when": "editorLangId == folio || editorLangId == pdf-template"
-        }
-      ]
-    }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -131,7 +94,9 @@
     "package": "vsce package"
   },
   "dependencies": {
-    "vscode-languageclient": "^8.1.0"
+    "vscode-languageclient": "^8.1.0",
+    "vscode-languageserver": "^8.1.0",
+    "vscode-languageserver-textdocument": "^1.0.8"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

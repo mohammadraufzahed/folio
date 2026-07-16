@@ -12,6 +12,53 @@ const folioLanguage = {
   aliases: ['pdf-template'],
 }
 
+const v1ArchiveSidebar = [
+  {
+    text: 'v1 Guide',
+    items: [
+      { text: 'Getting Started', link: '/guide/getting-started' },
+      { text: 'Installation', link: '/guide/installation' },
+      { text: 'Quick Start', link: '/guide/quick-start' },
+      { text: 'Styling', link: '/guide/styling' },
+      { text: 'Architecture', link: '/guide/architecture' },
+    ]
+  },
+  {
+    text: 'v1 API',
+    items: [
+      { text: 'Pdf', link: '/api/pdf' },
+      { text: 'Nodes', link: '/api/nodes' },
+      { text: 'Style', link: '/api/style' },
+    ]
+  },
+  {
+    text: 'v1 Template Language',
+    items: [
+      { text: 'Overview', link: '/template-language/overview' },
+      { text: 'Syntax', link: '/template-language/syntax' },
+      { text: 'Elements', link: '/template-language/elements' },
+      { text: 'Control Flow', link: '/template-language/control-flow' },
+      { text: 'Directives', link: '/template-language/directives' },
+    ]
+  },
+  {
+    text: 'v1 Tooling',
+    items: [
+      { text: 'Formatter', link: '/tooling/formatter' },
+      { text: 'Language Server', link: '/tooling/lsp' },
+      { text: 'VS Code Extension', link: '/tooling/vscode' },
+      { text: 'Tree-sitter', link: '/tooling/tree-sitter' },
+    ]
+  },
+  {
+    text: 'v1 Contributing',
+    items: [
+      { text: 'Testing', link: '/contributing/testing' },
+      { text: 'Releases', link: '/contributing/releases' },
+    ]
+  },
+]
+
 export default defineConfig({
   title: 'Folio',
   titleTemplate: ':title — PDF generation for PHP',
@@ -30,22 +77,12 @@ export default defineConfig({
     siteTitle: 'Folio',
 
     nav: [
-      { text: 'Guide', link: '/guide/getting-started' },
-      { text: 'API', link: '/api/pdf' },
-      { text: 'Templates', link: '/template-language/overview' },
-      { text: 'Tooling', link: '/tooling/formatter' },
+      { text: 'Guide', link: '/v2/getting-started' },
+      { text: 'Examples', link: '/v2/examples' },
+      { text: 'CLI', link: '/v2/cli' },
+      { text: 'Architecture', link: '/v2/architecture' },
       {
-        text: 'v2.0',
-        items: [
-          { text: 'Folio 2.0', link: '/v2/' },
-          { text: 'Architecture', link: '/v2/architecture' },
-          { text: 'Template language', link: '/v2/template-language' },
-          { text: 'CLI', link: '/v2/cli' },
-          { text: 'Benchmarks', link: '/v2/benchmarks' },
-        ],
-      },
-      {
-        text: 'v1.x',
+        text: 'v1.x Archive',
         items: [
           { text: 'Getting Started', link: '/guide/getting-started' },
           { text: 'Quick Start', link: '/guide/quick-start' },
@@ -58,6 +95,42 @@ export default defineConfig({
 
     sidebar: {
       '/v2/': [
+        {
+          text: 'Getting Started',
+          items: [
+            { text: 'Overview', link: '/v2/' },
+            { text: 'Getting Started', link: '/v2/getting-started' },
+            { text: 'Examples', link: '/v2/examples' },
+            { text: 'Migration from v1', link: '/v2/migration' },
+          ]
+        },
+        {
+          text: 'Core Concepts',
+          collapsed: false,
+          items: [
+            { text: 'Template Language', link: '/v2/template-language' },
+            { text: 'Styling', link: '/v2/styling' },
+            { text: 'CLI', link: '/v2/cli' },
+            { text: 'Tooling', link: '/v2/tooling' },
+          ]
+        },
+        {
+          text: 'Advanced',
+          collapsed: false,
+          items: [
+            { text: 'Architecture', link: '/v2/architecture' },
+            { text: 'Benchmarks', link: '/v2/benchmarks' },
+          ]
+        },
+        {
+          text: 'Community',
+          collapsed: false,
+          items: [
+            { text: 'Contributing', link: '/v2/contributing' },
+          ]
+        },
+      ],
+      '/': [
         {
           text: 'Folio 2.0',
           items: [
@@ -72,54 +145,13 @@ export default defineConfig({
             { text: 'Contributing', link: '/v2/contributing' },
             { text: 'Migration from v1', link: '/v2/migration' },
           ]
-        }
-      ],
-      '/': [
-        {
-          text: 'Guide',
-          items: [
-            { text: 'Getting Started', link: '/guide/getting-started' },
-            { text: 'Installation', link: '/guide/installation' },
-            { text: 'Quick Start', link: '/guide/quick-start' },
-            { text: 'Styling', link: '/guide/styling' },
-            { text: 'Architecture', link: '/guide/architecture' },
-          ]
-        },
-        {
-          text: 'API',
-          items: [
-            { text: 'Pdf', link: '/api/pdf' },
-            { text: 'Nodes', link: '/api/nodes' },
-            { text: 'Style', link: '/api/style' },
-          ]
-        },
-        {
-          text: 'Template Language',
-          items: [
-            { text: 'Overview', link: '/template-language/overview' },
-            { text: 'Syntax', link: '/template-language/syntax' },
-            { text: 'Elements', link: '/template-language/elements' },
-            { text: 'Control Flow', link: '/template-language/control-flow' },
-            { text: 'Directives', link: '/template-language/directives' },
-          ]
-        },
-        {
-          text: 'Tooling',
-          items: [
-            { text: 'Formatter', link: '/tooling/formatter' },
-            { text: 'Language Server', link: '/tooling/lsp' },
-            { text: 'VS Code Extension', link: '/tooling/vscode' },
-            { text: 'Tree-sitter', link: '/tooling/tree-sitter' },
-          ]
-        },
-        {
-          text: 'Contributing',
-          items: [
-            { text: 'Testing', link: '/contributing/testing' },
-            { text: 'Releases', link: '/contributing/releases' },
-          ]
         },
       ],
+      '/guide/': v1ArchiveSidebar,
+      '/api/': v1ArchiveSidebar,
+      '/template-language/': v1ArchiveSidebar,
+      '/tooling/': v1ArchiveSidebar,
+      '/contributing/': v1ArchiveSidebar,
     },
 
     socialLinks: [
