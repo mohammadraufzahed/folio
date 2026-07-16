@@ -8,6 +8,16 @@ Folio requires PHP 8.3 or later and Composer. It has no runtime dependencies bey
 composer require mohammadraufzahed/folio
 ```
 
+Install a specific release:
+
+```bash
+composer require mohammadraufzahed/folio:^1.0
+```
+
+Composer pulls the package from [Packagist](https://packagist.org/packages/mohammadraufzahed/folio). Source archives and release notes are also available on [GitHub Releases](https://github.com/mohammadraufzahed/folio/releases).
+
+See the [release process](../contributing/releases.md) for how versions are tagged and published.
+
 ## Requirements
 
 - PHP >= 8.3

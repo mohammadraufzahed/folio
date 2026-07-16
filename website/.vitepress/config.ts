@@ -79,6 +79,7 @@ export default defineConfig({
           text: 'Contributing',
           items: [
             { text: 'Testing', link: '/contributing/testing' },
+            { text: 'Releases', link: '/contributing/releases' },
           ]
         },
       ],

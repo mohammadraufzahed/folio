@@ -35,6 +35,9 @@
             "Folio\\Pdf\\": "src/"
         }
     },
+    "bin": [
+        "bin/format.php"
+    ],
     "autoload-dev": {
         "psr-4": {
             "Folio\\Pdf\\Tests\\": "tests/"
