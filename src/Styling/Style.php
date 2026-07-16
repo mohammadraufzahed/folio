@@ -144,6 +144,16 @@ final class Style
         return new self([...$this->toArray(), 'gap' => $value]);
     }
 
+    public function withGrow(?float $value): self
+    {
+        return new self([...$this->toArray(), 'grow' => $value]);
+    }
+
+    public function withShrink(?float $value): self
+    {
+        return new self([...$this->toArray(), 'shrink' => $value]);
+    }
+
     public function withAlignment(?Alignment $alignment): self
     {
         return new self([...$this->toArray(), 'alignment' => $alignment]);

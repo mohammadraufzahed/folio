@@ -181,14 +181,18 @@ final class ComputedStyleBuilder
         $this->layout['maxWidth'] = $value;
         return $this;
     }
-    public function withColor(?Color $value): self
+    public function withColor(?Color $value, bool $force = true): self
     {
-        $this->text['color'] = $value;
+        if ($force || ($this->text['color'] ?? null) === null) {
+            $this->text['color'] = $value;
+        }
         return $this;
     }
-    public function withFontSize(?float $value): self
+    public function withFontSize(?float $value, bool $force = true): self
     {
-        $this->text['fontSize'] = $value;
+        if ($force || ($this->text['fontSize'] ?? null) === null) {
+            $this->text['fontSize'] = $value;
+        }
         return $this;
     }
     public function withFontWeight(?FontWeight $value): self
@@ -196,14 +200,18 @@ final class ComputedStyleBuilder
         $this->text['fontWeight'] = $value;
         return $this;
     }
-    public function withFont(?string $value): self
+    public function withFont(?string $value, bool $force = true): self
     {
-        $this->text['font'] = $value;
+        if ($force || ($this->text['font'] ?? null) === null) {
+            $this->text['font'] = $value;
+        }
         return $this;
     }
-    public function withLineHeight(?float $value): self
+    public function withLineHeight(?float $value, bool $force = true): self
     {
-        $this->text['lineHeight'] = $value;
+        if ($force || ($this->text['lineHeight'] ?? null) === null) {
+            $this->text['lineHeight'] = $value;
+        }
         return $this;
     }
     public function withLetterSpacing(?float $value): self
@@ -211,9 +219,11 @@ final class ComputedStyleBuilder
         $this->text['letterSpacing'] = $value;
         return $this;
     }
-    public function withAlignment(?Alignment $value): self
+    public function withAlignment(?Alignment $value, bool $force = true): self
     {
-        $this->text['alignment'] = $value;
+        if ($force || ($this->text['alignment'] ?? null) === null) {
+            $this->text['alignment'] = $value;
+        }
         return $this;
     }
     public function withTextDecoration(?string $value): self

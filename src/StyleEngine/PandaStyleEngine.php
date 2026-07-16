@@ -41,11 +41,11 @@ final readonly class PandaStyleEngine implements StyleEngine
             return;
         }
 
-        $builder->withColor($inherited->text->color);
-        $builder->withFont($inherited->text->font);
-        $builder->withFontSize($inherited->text->fontSize);
-        $builder->withLineHeight($inherited->text->lineHeight);
-        $builder->withAlignment($inherited->text->alignment);
+        $builder->withColor($inherited->text->color, false);
+        $builder->withFont($inherited->text->font, false);
+        $builder->withFontSize($inherited->text->fontSize, false);
+        $builder->withLineHeight($inherited->text->lineHeight, false);
+        $builder->withAlignment($inherited->text->alignment, false);
     }
 
     private function applyPresets(ComputedStyleBuilder $builder, StyleContext $context, TokenSet $tokens): void

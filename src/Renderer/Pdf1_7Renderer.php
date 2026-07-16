@@ -155,10 +155,17 @@ final class Pdf1_7Renderer implements RendererPort
         $lineHeight = $this->fontMetrics->lineHeight($font, $fontSize) * max(0.1, $lineHeightMultiplier);
 
         foreach ($wrapped->lines as $index => $line) {
+            $lineWidth = $this->fontMetrics->measure($line, $font, $fontSize)->width;
+            $offsetX = match ($style?->text->alignment ?? null) {
+                \Folio\Pdf\Styling\Alignment::Right => max(0.0, $box->width() - $lineWidth),
+                \Folio\Pdf\Styling\Alignment::Center => max(0.0, ($box->width() - $lineWidth) / 2.0),
+                default => 0.0,
+            };
+
             $baselineY = $pageHeight - $dy - $fontSize - ($index * $lineHeight);
             $stream .= sprintf(
                 "1 0 0 1 %.2f %.2f Tm\n(%s) Tj\n",
-                $dx,
+                $dx + $offsetX,
                 $baselineY,
                 $this->escapePdfString($line),
             );

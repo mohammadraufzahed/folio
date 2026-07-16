@@ -73,6 +73,30 @@ final class AttributeMapper
             }
         }
 
+        if (isset($attrs['gap'])) {
+            $val = self::parseFloat($attrs['gap']);
+            if ($val !== null) {
+                $style = $style->withGap($val);
+                $applied = true;
+            }
+        }
+
+        if (isset($attrs['grow'])) {
+            $val = self::parseFloat($attrs['grow']);
+            if ($val !== null) {
+                $style = $style->withGrow($val);
+                $applied = true;
+            }
+        }
+
+        if (isset($attrs['shrink'])) {
+            $val = self::parseFloat($attrs['shrink']);
+            if ($val !== null) {
+                $style = $style->withShrink($val);
+                $applied = true;
+            }
+        }
+
         if (isset($attrs['align'])) {
             $align = self::parseAlignment($attrs['align']);
             if ($align !== null) {

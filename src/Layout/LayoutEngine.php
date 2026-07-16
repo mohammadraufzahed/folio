@@ -362,12 +362,15 @@ final class LayoutEngine
         $maxHeight = 0.0;
         $cellBoxes = [];
         $cells = $row->cells();
+        $rowStyle = $this->resolveStyle($row, $style);
 
         foreach ($cells as $index => $cell) {
             $cellWidth = $columnWidths[$index] ?? 0.0;
             $cellContext = LayoutContext::make(max(0.0, $cellWidth), $context->availableHeight());
-            $cellBox = $this->layoutNodeWithStyle($cell, $cellContext, $style);
-            $cellBox = $cellBox->withPosition(Point::make($offsetX + $x, 0.0));
+            $cellBox = $this->layoutTableCell($cell, $cellContext, $rowStyle);
+            $cellBox = $cellBox
+                ->withSize(Size::make(max($cellBox->width(), $cellWidth), $cellBox->height()))
+                ->withPosition(Point::make($offsetX + $x, 0.0));
 
             $cellBoxes[] = $cellBox;
             $x += $cellBox->width();
@@ -378,7 +381,7 @@ final class LayoutEngine
             Point::origin(),
             Size::make($x, $maxHeight),
             $cellBoxes,
-            $style,
+            $rowStyle,
             $row,
         );
     }
@@ -393,9 +396,13 @@ final class LayoutEngine
 
     private function layoutTableCell(TableCell $cell, LayoutContext $context, ComputedStyle $style): LayoutBox
     {
-        $box = $this->layoutNodeWithStyle($cell->content(), $context, $style);
+        $cellStyle = $this->resolveStyle($cell, $style);
+        $contentBox = $this->layoutNodeWithStyle($cell->content(), $context, $cellStyle);
+        $contentBox = $contentBox->withSize(
+            Size::make(max($contentBox->width(), $context->availableWidth()), $contentBox->height())
+        );
 
-        return $box->withSource($cell);
+        return LayoutBox::make($contentBox->position(), $contentBox->size(), [$contentBox], $cellStyle, $cell);
     }
 
     /**

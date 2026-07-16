@@ -566,6 +566,12 @@ final class PhpTemplateCompiler implements TemplateCompiler
     {
         $content = $this->generateChildrenAsNode($node);
         $pageExpr = $this->generatePageExpr($node);
+        $styleExpr = $this->generateStyleExpr($node);
+
+        if ($styleExpr !== 'null') {
+            $pageExpr .= '->withStyle(' . $styleExpr . ')';
+        }
+
         return 'page(' . $pageExpr . '->withContent(' . $content . '))';
     }
 
@@ -634,7 +640,14 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
     private function generateTable(AstNode $node): string
     {
-        return 'Table::simple(' . $this->generateChildrenArray($node) . ')';
+        $styleExpr = $this->generateStyleExpr($node);
+        $table = 'Table::simple(' . $this->generateChildrenArray($node) . ')';
+
+        if ($styleExpr === 'null') {
+            return $table;
+        }
+
+        return $table . '->withStyle(' . $styleExpr . ')';
     }
 
     private function generateStyleExpr(AstNode $node): string
@@ -652,6 +665,9 @@ final class PhpTemplateCompiler implements TemplateCompiler
             'font',
             'padding',
             'margin',
+            'gap',
+            'grow',
+            'shrink',
             'align',
             'lineHeight',
             'letterSpacing',
@@ -693,12 +709,18 @@ final class PhpTemplateCompiler implements TemplateCompiler
     private function generateTableRow(AstNode $node, bool $isHeader): string
     {
         $method = $isHeader ? 'header' : 'make';
-        return 'TableRow::' . $method . '(' . $this->generateChildrenArray($node) . ')';
+        $styleExpr = $this->generateStyleExpr($node);
+        $cells = $this->generateChildrenArray($node);
+
+        return 'TableRow::' . $method . '(' . $cells . ', ' . $styleExpr . ')';
     }
 
     private function generateTableFooter(AstNode $node): string
     {
-        return 'TableRow::footer(' . $this->generateChildrenArray($node) . ')';
+        $styleExpr = $this->generateStyleExpr($node);
+        $cells = $this->generateChildrenArray($node);
+
+        return 'TableRow::footer(' . $cells . ', ' . $styleExpr . ')';
     }
 
     private function generateVarDecl(AstNode $node): string
@@ -750,11 +772,13 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $colSpan = (int) ($attrs['colspan'] ?? $attrs['colSpan'] ?? 1);
         $variant = $attrs['variant'] ?? $attrs['color'] ?? null;
         $content = $this->generateCellContent($node);
+        $styleExpr = $this->generateStyleExpr($node);
 
         if ($isHeader) {
             return sprintf(
-                'TableCell::header(%s, null, %d, %d)',
+                'TableCell::header(%s, %s, %d, %d)',
                 $content,
+                $styleExpr,
                 max(1, $rowSpan),
                 max(1, $colSpan)
             );
@@ -762,15 +786,17 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
         if ($rowSpan > 1 || $colSpan > 1) {
             return sprintf(
-                'TableCell::withSpan(%s, %d, %d)',
+                'TableCell::withSpan(%s, %d, %d, %s)',
                 $content,
                 max(1, $rowSpan),
-                max(1, $colSpan)
+                max(1, $colSpan),
+                $styleExpr
             );
         }
 
         $variantExpr = $variant !== null ? ', ' . var_export((string) $variant, true) : '';
-        return 'TableCell::make(' . $content . $variantExpr . ')';
+        $styleSuffix = $styleExpr !== 'null' ? '->withStyle(' . $styleExpr . ')' : '';
+        return 'TableCell::make(' . $content . $variantExpr . ')' . $styleSuffix;
     }
 
     private function generateCellContent(AstNode $node): string
