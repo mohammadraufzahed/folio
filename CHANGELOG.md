@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-07-16
+
+### Added
+- TypeScript language server (`vscode-extension/src/server/`) replaces the PHP-based LSP.
+- VS Code extension now bundles the LSP and no longer requires a local PHP binary.
+- v2 documentation is now the primary site content, with v1 docs archived under `v1.x`.
+
+## [2.0.0] - 2026-07-16
+
+### Added
+- Folio 2.0: ground-up redesign with onion/hexagonal architecture, immutable document model, layout tree, pagination, `Pdf1_7Renderer`, and `.folio` template language.
+- `TemplateEngine` with v2 preprocessor supporting `prop`, `@use`, string interpolation, `if`/`else` and `foreach ... as`.
+- `StyleEngine` with typed `ComputedStyle`, `BoxStyle`, `TextStyle`, `LayoutStyle` and `PaintStyle`.
+- CLI commands `render`, `compile`, `serve` and `cache:clear`.
+- Benchmarks, golden regression tests and expanded v2 documentation.
+
+### Changed
+- **Breaking:** removed the v1 `PdfFileWriter` and `Document::generate()` path; use the v2 `TemplateEngine` or PHP builder API.
+
 ## [1.1.3] - 2026-07-16
 
 ### Changed
