@@ -112,6 +112,13 @@ final class Pdf
         return $this->generate()->toBytes();
     }
 
+    public function document(): Document
+    {
+        $document = $this->document ?? Document::make();
+
+        return $this->applyChrome($document, $this);
+    }
+
     private function generate(): PdfWriter
     {
         $document = $this->document ?? Document::make();
