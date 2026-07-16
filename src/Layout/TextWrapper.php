@@ -87,6 +87,58 @@ final readonly class TextWrapper
     }
 
     /**
+     * @return array{0: TextWrapResult, 1: TextWrapResult}
+     */
+    public function split(
+        string $text,
+        Font $font,
+        float $size,
+        float $maxWidth,
+        float $maxHeight,
+        float $lineHeightMultiplier = 1.0,
+    ): array {
+        $wrapped = $this->wrap($text, $font, $size, $maxWidth, $lineHeightMultiplier);
+
+        if ($wrapped->height <= $maxHeight || $wrapped->lines === []) {
+            return [$wrapped, new TextWrapResult([], 0.0, 0.0)];
+        }
+
+        $lineCount = count($wrapped->lines);
+        $lineHeight = $wrapped->height / $lineCount;
+        $fitCount = max(1, (int) floor($maxHeight / $lineHeight));
+
+        if ($fitCount >= $lineCount) {
+            return [$wrapped, new TextWrapResult([], 0.0, 0.0)];
+        }
+
+        $firstLines = array_slice($wrapped->lines, 0, $fitCount);
+        $restLines = array_slice($wrapped->lines, $fitCount);
+
+        return [
+            $this->resultForLines($firstLines, $font, $size, $lineHeight),
+            $this->resultForLines($restLines, $font, $size, $lineHeight),
+        ];
+    }
+
+    /**
+     * @param array<int, string> $lines
+     */
+    private function resultForLines(array $lines, Font $font, float $size, float $lineHeight): TextWrapResult
+    {
+        $maxLineWidth = 0.0;
+
+        foreach ($lines as $line) {
+            $maxLineWidth = max($maxLineWidth, $this->fontMetrics->measure($line, $font, $size)->width);
+        }
+
+        return new TextWrapResult(
+            $lines,
+            $maxLineWidth,
+            count($lines) * $lineHeight,
+        );
+    }
+
+    /**
      * @param array<int, string> $lines
      */
     private function breakLongWord(

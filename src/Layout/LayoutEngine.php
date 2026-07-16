@@ -12,6 +12,9 @@ use Folio\Pdf\Nodes\Column;
 use Folio\Pdf\Nodes\Heading;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Row;
+use Folio\Pdf\Nodes\Table;
+use Folio\Pdf\Nodes\TableCell;
+use Folio\Pdf\Nodes\TableRow;
 use Folio\Pdf\Nodes\Text;
 use Folio\Pdf\Nodes\TextRun;
 use Folio\Pdf\Ports\FontMetricsPort;
@@ -109,6 +112,18 @@ final class LayoutEngine
             return $this->layoutTextRun($node, $context, $style);
         }
 
+        if ($node instanceof Table) {
+            return $this->layoutTable($node, $context, $style);
+        }
+
+        if ($node instanceof TableRow) {
+            return $this->layoutTableRow($node, $context, $style);
+        }
+
+        if ($node instanceof TableCell) {
+            return $this->layoutTableCell($node, $context, $style);
+        }
+
         if ($node instanceof Component) {
             return $this->layoutComponent($node, $context, $style);
         }
@@ -116,7 +131,8 @@ final class LayoutEngine
         return LayoutBox::make(
             Point::origin(),
             Size::make($context->availableWidth(), 0.0)
-        )->withComputedStyle($style);
+        )->withComputedStyle($style)
+            ->withSource($node);
     }
 
     private function layoutPage(Page $page, LayoutContext $context, ComputedStyle $style): LayoutBox
@@ -134,7 +150,8 @@ final class LayoutEngine
 
         return LayoutBox::make(Point::origin(), $size)
             ->withChildren($children)
-            ->withComputedStyle($style);
+            ->withComputedStyle($style)
+            ->withSource($page);
     }
 
     private function layoutColumn(Column $column, LayoutContext $context, ComputedStyle $style): LayoutBox
@@ -174,6 +191,7 @@ final class LayoutEngine
             Size::make($totalWidth, $totalHeight),
             $childBoxes,
             $style,
+            $column,
         );
     }
 
@@ -240,6 +258,7 @@ final class LayoutEngine
             Size::make($totalWidth, $totalHeight),
             $childBoxes,
             $style,
+            $row,
         );
     }
 
@@ -252,6 +271,7 @@ final class LayoutEngine
             Size::make($wrapped->width, $wrapped->height),
             [],
             $style,
+            $text,
         );
     }
 
@@ -264,6 +284,7 @@ final class LayoutEngine
             Size::make($wrapped->width, $wrapped->height),
             [],
             $style,
+            $textRun,
         );
     }
 
@@ -288,7 +309,134 @@ final class LayoutEngine
             Size::make($wrapped->width, $wrapped->height),
             [],
             $style,
+            $heading,
         );
+    }
+
+    private function layoutTable(Table $table, LayoutContext $context, ComputedStyle $style): LayoutBox
+    {
+        $paddingTop = $style->box->paddingTop ?? $style->box->padding ?? 0.0;
+        $paddingBottom = $style->box->paddingBottom ?? $style->box->padding ?? 0.0;
+        $paddingLeft = $style->box->paddingLeft ?? $style->box->padding ?? 0.0;
+        $paddingRight = $style->box->paddingRight ?? $style->box->padding ?? 0.0;
+
+        $availableWidth = max(0.0, $context->availableWidth() - $paddingLeft - $paddingRight);
+        $availableHeight = max(0.0, $context->availableHeight() - $paddingTop - $paddingBottom);
+
+        $rows = $table->rows();
+        $columnCount = $table->columnCount();
+        $columnWidths = $this->resolveTableColumnWidths($table, $availableWidth, $columnCount);
+
+        $rowBoxes = [];
+        $y = $paddingTop;
+        $maxWidth = 0.0;
+
+        foreach ($rows as $row) {
+            $rowContext = LayoutContext::make($availableWidth, max(0.0, $availableHeight - $y));
+            $rowBox = $this->layoutTableRowWithCells($row, $rowContext, $style, $columnWidths, $paddingLeft);
+            $rowBox = $rowBox->withPosition(Point::make($paddingLeft, $y));
+
+            $rowBoxes[] = $rowBox;
+            $y += $rowBox->height();
+            $maxWidth = max($maxWidth, $rowBox->width());
+        }
+
+        $totalWidth = $maxWidth + $paddingLeft + $paddingRight;
+        $totalHeight = $y + $paddingBottom;
+
+        return LayoutBox::make(
+            Point::origin(),
+            Size::make($totalWidth, $totalHeight),
+            $rowBoxes,
+            $style,
+            $table,
+        );
+    }
+
+    /**
+     * @param array<int, float> $columnWidths
+     */
+    private function layoutTableRowWithCells(TableRow $row, LayoutContext $context, ComputedStyle $style, array $columnWidths, float $offsetX): LayoutBox
+    {
+        $x = 0.0;
+        $maxHeight = 0.0;
+        $cellBoxes = [];
+        $cells = $row->cells();
+
+        foreach ($cells as $index => $cell) {
+            $cellWidth = $columnWidths[$index] ?? 0.0;
+            $cellContext = LayoutContext::make(max(0.0, $cellWidth), $context->availableHeight());
+            $cellBox = $this->layoutNodeWithStyle($cell, $cellContext, $style);
+            $cellBox = $cellBox->withPosition(Point::make($offsetX + $x, 0.0));
+
+            $cellBoxes[] = $cellBox;
+            $x += $cellBox->width();
+            $maxHeight = max($maxHeight, $cellBox->height());
+        }
+
+        return LayoutBox::make(
+            Point::origin(),
+            Size::make($x, $maxHeight),
+            $cellBoxes,
+            $style,
+            $row,
+        );
+    }
+
+    private function layoutTableRow(TableRow $row, LayoutContext $context, ComputedStyle $style): LayoutBox
+    {
+        $columnCount = count($row->cells());
+        $columnWidths = $this->resolveTableColumnWidthsFromCells($row->cells(), $context->availableWidth(), $columnCount);
+
+        return $this->layoutTableRowWithCells($row, $context, $style, $columnWidths, 0.0);
+    }
+
+    private function layoutTableCell(TableCell $cell, LayoutContext $context, ComputedStyle $style): LayoutBox
+    {
+        $box = $this->layoutNodeWithStyle($cell->content(), $context, $style);
+
+        return $box->withSource($cell);
+    }
+
+    /**
+     * @return array<int, float>
+     */
+    private function resolveTableColumnWidths(Table $table, float $availableWidth, int $columnCount): array
+    {
+        $explicit = $table->columnWidths();
+
+        if ($explicit !== []) {
+            $total = array_sum($explicit);
+
+            return array_map(fn (float $w) => $total > 0 ? ($w / $total) * $availableWidth : 0.0, $explicit);
+        }
+
+        $firstRow = $table->rows()[0] ?? null;
+        $cells = $firstRow !== null ? $firstRow->cells() : [];
+
+        return $this->resolveTableColumnWidthsFromCells($cells, $availableWidth, $columnCount);
+    }
+
+    /**
+     * @param array<int, TableCell> $cells
+     * @return array<int, float>
+     */
+    private function resolveTableColumnWidthsFromCells(array $cells, float $availableWidth, int $columnCount): array
+    {
+        $count = max(1, $columnCount);
+        $base = $availableWidth / $count;
+        $widths = [];
+
+        foreach ($cells as $index => $cell) {
+            $colSpan = $cell->colSpan();
+            $widths[$index] = $base * $colSpan;
+        }
+
+        for ($i = count($widths); $i < $count; $i++) {
+            $widths[$i] = $base;
+        }
+
+        return $widths;
     }
 
     private function layoutComponent(Component $component, LayoutContext $context, ComputedStyle $style): LayoutBox
@@ -297,7 +445,8 @@ final class LayoutEngine
             return LayoutBox::make(
                 Point::origin(),
                 Size::make($context->availableWidth(), 0.0),
-            )->withComputedStyle($style);
+            )->withComputedStyle($style)
+                ->withSource($component);
         }
 
         $resolved = $this->partials->resolve($component);
