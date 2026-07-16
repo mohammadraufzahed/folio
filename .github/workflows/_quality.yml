@@ -1,0 +1,60 @@
+name: Quality
+
+on:
+  workflow_call:
+    inputs:
+      php-version:
+        required: true
+        type: string
+      run-cs:
+        required: false
+        type: boolean
+        default: false
+      strict-validate:
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  quality:
+    name: PHP ${{ inputs.php-version }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ inputs.php-version }}
+          extensions: mbstring
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Validate composer.json
+        if: inputs.strict-validate
+        run: composer validate
+
+      - name: Run tests
+        run: composer test
+
+      - name: Run static analysis
+        run: composer analyze
+
+      - name: Check code style
+        if: inputs.run-cs
+        run: composer cs-check
