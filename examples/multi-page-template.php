@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-$compiler = new PhpTemplateCompiler();
-
-$pdf = $compiler->render(file_get_contents(__DIR__ . '/templates/multi-page.folio'), [
-    'reportTitle' => 'Annual Report 2024',
-    'companyName' => 'Acme Corporation',
+$pdf = $engine->renderFile(__DIR__ . '/templates/multi-page.folio', [
+    'title' => 'Multi-Page Report',
+    'company' => 'Acme Corporation',
 ]);
 
-$pdf->save(__DIR__ . '/multi-page-template.pdf');
+file_put_contents(__DIR__ . '/multi-page.pdf', $pdf);
 
-echo 'PDF generated: ' . __DIR__ . '/multi-page-template.pdf' . "\n";
+echo "Generated multi-page.pdf\n";

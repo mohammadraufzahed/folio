@@ -1,7 +1,6 @@
-// Company multi-page report driven by PHP $data
-// Template engine: var/prop declarations, foreach, partials, cell variants
 
-// --- Property declarations (optional, for IDE + defaults) ---
+// Premium company operations report
+
 prop company = ""
 prop report = ""
 prop summary = ""
@@ -18,541 +17,318 @@ prop metrics = ""
 prop regions = ""
 prop vendors = ""
 prop supportTickets = ""
-prop quarters = ""
-prop channels = ""
-prop training = ""
-prop compliance = ""
-prop assets = ""
-prop notes = ""
-prop riskItems = ""
-prop topPerformers = ""
-var reportTitle = "Annual Operations Report"
 
-// Repeating chrome on every page (themeable + layout variants)
-// header styles: bar | band | minimal | split
-// themes: navy | teal | slate | emerald | crimson | violet
-// Custom chrome layout (Mode B) + theme overrides
-pageheader(height=64, theme=navy, only=all) {
-    row(align=center, gap=10, pad=12) {
-        monogram "AR"
-        column(grow=1) {
-            text(size=15, weight=bold, color=text) company.name
-            text(size=9, color=muted) report.title
-        }
-        column(align=end, width=150) {
-            text(size=10, color=text, align=end) report.period
-            text(size=8, color=muted, align=end) report.generatedAt
-            badge(align=end) "CONFIDENTIAL"
-        }
-    }
-}
-pagefooter(height=40, theme=navy) {
-    row(align=center, gap=8, pad=10) {
-        text(size=8, color=muted) company.name
-        spacer
-        text(size=8, color=muted) "Internal Use Only"
-        spacer
-        pagenum(format="Page {page} of {pages}", size=8, color=muted, align=end)
-    }
+page(background="#0f172a") {
+  column(width="100%", padding=80, background="#0f172a", gap=20, align="center") {
+    text(color="#64748b", fontSize=11, fontWeight="bold", letterSpacing=3) "OPERATIONS REPORT"
+    heading(color="#ffffff", fontSize=40) report.title
+    text(color="#94a3b8", fontSize=13) company.name
+    text(color="#64748b", fontSize=10) report.period
+    text(color="#64748b", fontSize=9) report.generatedAt
+  }
 }
 
-// --- Page 1: Branded header + Executive Summary + Departments ---
-page {
-    column {
-        heading "1. Executive Summary"
-        table {
-            header {
-                th "Metric"
-                th "Value"
-                th "Change"
-                th "Trend"
-            }
-            foreach summary as item {
-                tr {
-                    td item.label
-                    td item.value
-                    td item.change
-                    td(variant=success) item.trend
-                }
-            }
-            footer {
-                td(colspan=4) "All figures preliminary - subject to audit adjustment"
-            }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=22) "Executive Summary"
+  }
+  column(width="100%", padding=48, gap=24, background="#ffffff") {
+    row(gap=12) {
+      foreach summary as item {
+        column(grow=1, padding=16, background="#f8fafc", gap=6) {
+          text(color="#64748b", fontSize=8, fontWeight="bold") item.label
+          heading(color="#0f172a", fontSize=18) item.value
+          text(color="#10b981", fontSize=9) item.change
         }
-
-        heading "2. Departments"
-        table {
-            header {
-                th(colspan=2) "Department Info"
-                th(colspan=2) "Resources"
-            }
-            header {
-                th "Name"
-                th "Head"
-                th "Headcount"
-                th "Budget"
-            }
-            foreach departments as dept {
-                tr {
-                    td dept.name
-                    td dept.head
-                    td dept.headcount
-                    td dept.budget
-                }
-            }
-            footer {
-                td(colspan=2) "Total"
-                td "312"
-                td "$36.3M"
-            }
-        }
-
-        heading "3. Employees"
-        table {
-            header {
-                th "ID"
-                th "Name"
-                th "Role"
-                th "Department"
-                th "Salary"
-            }
-            foreach employees as emp {
-                tr {
-                    td emp.id
-                    td emp.name
-                    td emp.role
-                    td emp.department
-                    td emp.salary
-                }
-            }
-        }
+      }
     }
+  }
 }
 
-// --- Page 2: Products + Sales + Inventory with warning columns ---
-page {
-    column {
-        heading "4. Product Catalog"
-        table {
-            header {
-                th "SKU"
-                th "Product"
-                th "Category"
-                th "Price"
-                th "Stock"
-            }
-            foreach products as product {
-                tr {
-                    td product.sku
-                    td product.name
-                    td product.category
-                    td product.price
-                    td(variant=warning) product.stock
-                }
-            }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Departments & Employees"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Departments"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Name"
+        th "Head"
+        th(align="right") "Headcount"
+        th(align="right") "Budget"
+      }
+      foreach departments as dept {
+        tr(background="#ffffff", fontSize=9) {
+          td dept.name
+          td dept.head
+          td(align="right") dept.headcount
+          td(align="right") dept.budget
         }
-
-        heading "5. Sales by Product"
-        table {
-            header {
-                th "Product"
-                th "Units"
-                th "Revenue"
-                th "Region"
-            }
-            foreach sales as sale {
-                tr {
-                    td sale.product
-                    td sale.units
-                    td sale.revenue
-                    td sale.region
-                }
-            }
-            footer {
-                td(colspan=2) "Total"
-                td "$4.08M"
-                td "All"
-            }
-        }
-
-        heading "6. Inventory Status"
-        table {
-            header {
-                th "Warehouse"
-                th "SKU"
-                th "On Hand"
-                th "Reserved"
-                th "Available"
-            }
-            foreach inventory as item {
-                tr {
-                    td item.warehouse
-                    td item.sku
-                    td item.onHand
-                    td(variant=warning) item.reserved
-                    td(variant=success) item.available
-                }
-            }
-        }
+      }
     }
+
+    heading(color="#0f172a", fontSize=14) "Employees"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "ID"
+        th "Name"
+        th "Role"
+        th "Department"
+        th(align="right") "Salary"
+      }
+      foreach employees as emp {
+        tr(background="#ffffff", fontSize=9) {
+          td emp.id
+          td emp.name
+          td emp.role
+          td emp.department
+          td(align="right") emp.salary
+        }
+      }
+    }
+  }
 }
 
-// --- Page 3: Customers + Invoices + Expenses ---
-page {
-    column {
-        heading "7. Top Customers"
-        table {
-            header {
-                th(colspan=2) "Customer"
-                th(colspan=2) "Value"
-            }
-            header {
-                th "Name"
-                th "Segment"
-                th "Country"
-                th "LTV"
-            }
-            foreach customers as customer {
-                tr {
-                    td customer.name
-                    td customer.segment
-                    td customer.country
-                    td(variant=info) customer.ltv
-                }
-            }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Products & Sales"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Product Catalog"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "SKU"
+        th "Product"
+        th "Category"
+        th(align="right") "Price"
+        th(align="right") "Stock"
+      }
+      foreach products as product {
+        tr(background="#ffffff", fontSize=9) {
+          td product.sku
+          td product.name
+          td product.category
+          td(align="right") product.price
+          td(align="right") product.stock
         }
-
-        heading "8. Invoices"
-        table {
-            header {
-                th "Invoice #"
-                th "Customer"
-                th "Amount"
-                th "Status"
-                th "Due Date"
-            }
-            foreach invoices as invoice {
-                tr {
-                    td invoice.number
-                    td invoice.customer
-                    td invoice.amount
-                    td(variant=danger) invoice.status
-                    td invoice.dueDate
-                }
-            }
-            footer {
-                td(colspan=2) "Outstanding"
-                td "$446,550"
-                td "2 Open"
-                td ""
-            }
-        }
-
-        heading "9. Operating Expenses"
-        table {
-            header {
-                th "Category"
-                th "Vendor"
-                th "Amount"
-                th "Month"
-            }
-            foreach expenses as expense {
-                tr {
-                    td expense.category
-                    td expense.vendor
-                    td(variant=warning) expense.amount
-                    td expense.month
-                }
-            }
-        }
+      }
     }
+
+    heading(color="#0f172a", fontSize=14) "Sales by Product"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Product"
+        th(align="right") "Units"
+        th(align="right") "Revenue"
+        th "Region"
+      }
+      foreach sales as sale {
+        tr(background="#ffffff", fontSize=9) {
+          td sale.product
+          td(align="right") sale.units
+          td(align="right") sale.revenue
+          td sale.region
+        }
+      }
+    }
+  }
 }
 
-// --- Page 4: Projects + KPIs + Regional Performance ---
-page {
-    column {
-        heading "10. Project Portfolio"
-        table {
-            header {
-                th "Project"
-                th "Owner"
-                th "Status"
-                th "Progress"
-                th "Budget"
-            }
-            foreach projects as project {
-                tr {
-                    td project.name
-                    td project.owner
-                    td project.status
-                    td project.progress
-                    td project.budget
-                }
-            }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Inventory & Customers"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Inventory Status"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Warehouse"
+        th "SKU"
+        th(align="right") "On Hand"
+        th(align="right") "Reserved"
+        th(align="right") "Available"
+      }
+      foreach inventory as item {
+        tr(background="#ffffff", fontSize=9) {
+          td item.warehouse
+          td item.sku
+          td(align="right") item.onHand
+          td(align="right") item.reserved
+          td(align="right") item.available
         }
-
-        heading "11. KPI Scorecard"
-        table {
-            header {
-                th "KPI"
-                th "Target"
-                th "Actual"
-                th "Status"
-            }
-            foreach metrics as metric {
-                tr {
-                    td metric.name
-                    td metric.target
-                    td metric.actual
-                    td(variant=success) metric.status
-                }
-            }
-            footer {
-                td(colspan=3) "Overall Score"
-                td "4/5 Hit"
-            }
-        }
-
-        heading "12. Regional Performance"
-        table {
-            header {
-                th "Region"
-                th "Revenue"
-                th "Growth"
-                th "Customers"
-            }
-            foreach regions as region {
-                tr {
-                    td region.name
-                    td region.revenue
-                    td(variant=success) region.growth
-                    td region.customers
-                }
-            }
-            footer {
-                td "Total"
-                td "$48.2M"
-                td "+15%"
-                td "1,284"
-            }
-        }
+      }
     }
+
+    heading(color="#0f172a", fontSize=14) "Top Customers"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Name"
+        th "Segment"
+        th "Country"
+        th(align="right") "LTV"
+      }
+      foreach customers as customer {
+        tr(background="#ffffff", fontSize=9) {
+          td customer.name
+          td customer.segment
+          td customer.country
+          td(align="right") customer.ltv
+        }
+      }
+    }
+  }
 }
 
-// --- Page 5: Risk Register + Vendors + Support ---
-page {
-    column {
-        heading "13. Risk Register"
-        table {
-            header {
-                th(colspan=3) "Risk Details"
-                th "Severity"
-            }
-            header {
-                th "ID"
-                th "Description"
-                th "Owner"
-                th "Level"
-            }
-            foreach riskItems as risk {
-                tr {
-                    td risk.id
-                    td risk.description
-                    td risk.owner
-                    td(variant=danger) risk.level
-                }
-            }
-            footer {
-                td(colspan=4) "Review cadence: monthly | Next review: 2025-02-15"
-            }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Invoices & Expenses"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Invoices"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Invoice #"
+        th "Customer"
+        th(align="right") "Amount"
+        th "Status"
+        th "Due Date"
+      }
+      foreach invoices as invoice {
+        tr(background="#ffffff", fontSize=9) {
+          td invoice.number
+          td invoice.customer
+          td(align="right") invoice.amount
+          td invoice.status
+          td invoice.dueDate
         }
-
-        heading "14. Vendor Management"
-        table {
-            header {
-                th "Vendor"
-                th "Category"
-                th "Rating"
-                th "Contract End"
-            }
-            foreach vendors as vendor {
-                tr {
-                    td vendor.name
-                    td vendor.category
-                    td(variant=info) vendor.rating
-                    td vendor.contractEnd
-                }
-            }
-        }
-
-        heading "15. Support Tickets"
-        table {
-            header {
-                th "Ticket"
-                th "Priority"
-                th "Customer"
-                th "Status"
-                th "Assignee"
-            }
-            foreach supportTickets as ticket {
-                tr {
-                    td ticket.id
-                    td(variant=warning) ticket.priority
-                    td ticket.customer
-                    td ticket.status
-                    td ticket.assignee
-                }
-            }
-        }
+      }
     }
+
+    heading(color="#0f172a", fontSize=14) "Operating Expenses"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Category"
+        th "Vendor"
+        th(align="right") "Amount"
+        th "Month"
+      }
+      foreach expenses as expense {
+        tr(background="#ffffff", fontSize=9) {
+          td expense.category
+          td expense.vendor
+          td(align="right") expense.amount
+          td expense.month
+        }
+      }
+    }
+  }
 }
 
-// --- Page 6: Quarterly + Marketing + Top Performers ---
-page {
-    column {
-        heading "16. Quarterly Comparison"
-        table {
-            header {
-                th(colspan=4) "Year over Year"
-            }
-            header {
-                th "Quarter"
-                th "Revenue"
-                th "Expenses"
-                th "Profit"
-            }
-            foreach quarters as q {
-                tr {
-                    td q.name
-                    td q.revenue
-                    td q.expenses
-                    td(variant=success) q.profit
-                }
-            }
-            footer {
-                td "FY Total"
-                td "$48.2M"
-                td "$31.1M"
-                td "$17.1M"
-            }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Projects & KPIs"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Project Portfolio"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Project"
+        th "Owner"
+        th "Status"
+        th "Progress"
+        th(align="right") "Budget"
+      }
+      foreach projects as project {
+        tr(background="#ffffff", fontSize=9) {
+          td project.name
+          td project.owner
+          td project.status
+          td project.progress
+          td(align="right") project.budget
         }
-
-        heading "17. Marketing Channels"
-        table {
-            header {
-                th "Channel"
-                th "Spend"
-                th "Leads"
-                th "CAC"
-            }
-            foreach channels as channel {
-                tr {
-                    td channel.name
-                    td channel.spend
-                    td channel.leads
-                    td(variant=warning) channel.cac
-                }
-            }
-        }
-
-        heading "18. Top Performers"
-        table {
-            header {
-                th "Rank"
-                th "Name"
-                th "Department"
-                th "Score"
-            }
-            foreach topPerformers as performer {
-                tr {
-                    td performer.rank
-                    td performer.name
-                    td performer.department
-                    td(variant=success) performer.score
-                }
-            }
-            footer {
-                td(colspan=4) "Awards ceremony: 2025-02-28 | Venue: Austin HQ"
-            }
-        }
+      }
     }
+
+    heading(color="#0f172a", fontSize=14) "KPI Scorecard"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "KPI"
+        th "Target"
+        th "Actual"
+        th "Status"
+      }
+      foreach metrics as metric {
+        tr(background="#ffffff", fontSize=9) {
+          td metric.name
+          td metric.target
+          td metric.actual
+          td metric.status
+        }
+      }
+    }
+  }
 }
 
-// --- Page 7: Training + Compliance + Assets + Notes ---
-page {
-    column {
-        heading "19. Training Programs"
-        table {
-            header {
-                th "Program"
-                th "Attendees"
-                th "Hours"
-                th "Score"
-            }
-            foreach training as course {
-                tr {
-                    td course.name
-                    td course.attendees
-                    td course.hours
-                    td(variant=success) course.score
-                }
-            }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Regions, Vendors & Support"
+  }
+  column(width="100%", padding=40, gap=16, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Regional Performance"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Region"
+        th(align="right") "Revenue"
+        th(align="right") "Growth"
+        th(align="right") "Customers"
+      }
+      foreach regions as region {
+        tr(background="#ffffff", fontSize=9) {
+          td region.name
+          td(align="right") region.revenue
+          td(align="right") region.growth
+          td(align="right") region.customers
         }
-
-        heading "20. Compliance Checklist"
-        table {
-            header {
-                th "Control"
-                th "Owner"
-                th "Due"
-                th "State"
-            }
-            foreach compliance as item {
-                tr {
-                    td item.control
-                    td item.owner
-                    td item.due
-                    td(variant=info) item.state
-                }
-            }
-        }
-
-        heading "21. Asset Register"
-        table {
-            header {
-                th "Asset"
-                th "Type"
-                th "Location"
-                th "Value"
-            }
-            foreach assets as asset {
-                tr {
-                    td asset.name
-                    td asset.type
-                    td asset.location
-                    td(variant=info) asset.value
-                }
-            }
-            footer {
-                td(colspan=3) "Total Registered"
-                td "$1.17M"
-            }
-        }
-
-        heading "22. Closing Notes"
-        table {
-            header {
-                th "Author"
-                th "Note"
-                th "Date"
-            }
-            foreach notes as note {
-                tr {
-                    td note.author
-                    td note.text
-                    td note.date
-                }
-            }
-        }
+      }
     }
+
+    heading(color="#0f172a", fontSize=14) "Vendors"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Vendor"
+        th "Category"
+        th "Rating"
+        th "Contract End"
+      }
+      foreach vendors as vendor {
+        tr(background="#ffffff", fontSize=9) {
+          td vendor.name
+          td vendor.category
+          td vendor.rating
+          td vendor.contractEnd
+        }
+      }
+    }
+
+    heading(color="#0f172a", fontSize=14) "Support Tickets"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+        th "Ticket"
+        th "Priority"
+        th "Customer"
+        th "Status"
+        th "Assignee"
+      }
+      foreach supportTickets as ticket {
+        tr(background="#ffffff", fontSize=9) {
+          td ticket.id
+          td ticket.priority
+          td ticket.customer
+          td ticket.status
+          td ticket.assignee
+        }
+      }
+    }
+  }
 }

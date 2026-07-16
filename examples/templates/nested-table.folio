@@ -1,49 +1,56 @@
-page {
-    column {
-        heading "Nested Table Example"
-        table {
-            header {
-                th "Student"
-                th "Grades"
-            }
-            tr {
-                td "John Doe"
-                td {
-                    table {
-                        header {
-                            th "Subject"
-                            th "Score"
-                        }
-                        tr {
-                            td "Math"
-                            td "95"
-                        }
-                        tr {
-                            td "Science"
-                            td "88"
-                        }
-                    }
-                }
-            }
-            tr {
-                td "Jane Smith"
-                td {
-                    table {
-                        header {
-                            th "Subject"
-                            th "Score"
-                        }
-                        tr {
-                            td "Math"
-                            td "92"
-                        }
-                        tr {
-                            td "English"
-                            td "90"
-                        }
-                    }
-                }
-            }
-        }
+
+// Premium nested table template
+
+page(background="#ffffff") {
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=40) {
+      heading(color="#ffffff", fontSize=24) "Student Grades"
     }
+    column(width="100%", padding=48, gap=20) {
+      table(padding=12, background="#f8fafc", width="100%") {
+        header(background="#0f172a", color="#ffffff", fontSize=10, fontWeight="bold") {
+          th "Student"
+          th "Grades"
+        }
+        tr(background="#ffffff", fontSize=10) {
+          td "John Doe"
+          td {
+            table(padding=6, background="#ffffff", width="100%") {
+              header(background="#64748b", color="#ffffff", fontSize=9, fontWeight="bold") {
+                th "Subject"
+                th "Score"
+              }
+              tr(background="#f1f5f9", fontSize=9) {
+                td "Math"
+                td(align="right") "95"
+              }
+              tr(background="#ffffff", fontSize=9) {
+                td "Science"
+                td(align="right") "88"
+              }
+            }
+          }
+        }
+        tr(background="#f1f5f9", fontSize=10) {
+          td "Jane Smith"
+          td {
+            table(padding=6, background="#ffffff", width="100%") {
+              header(background="#64748b", color="#ffffff", fontSize=9, fontWeight="bold") {
+                th "Subject"
+                th "Score"
+              }
+              tr(background="#f1f5f9", fontSize=9) {
+                td "Math"
+                td(align="right") "92"
+              }
+              tr(background="#ffffff", fontSize=9) {
+                td "English"
+                td(align="right") "90"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }

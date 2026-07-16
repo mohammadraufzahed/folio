@@ -34,9 +34,46 @@ export default defineConfig({
       { text: 'API', link: '/api/pdf' },
       { text: 'Templates', link: '/template-language/overview' },
       { text: 'Tooling', link: '/tooling/formatter' },
+      {
+        text: 'v2.0',
+        items: [
+          { text: 'Folio 2.0', link: '/v2/' },
+          { text: 'Architecture', link: '/v2/architecture' },
+          { text: 'Template language', link: '/v2/template-language' },
+          { text: 'CLI', link: '/v2/cli' },
+          { text: 'Benchmarks', link: '/v2/benchmarks' },
+        ],
+      },
+      {
+        text: 'v1.x',
+        items: [
+          { text: 'Getting Started', link: '/guide/getting-started' },
+          { text: 'Quick Start', link: '/guide/quick-start' },
+          { text: 'Installation', link: '/guide/installation' },
+          { text: 'API', link: '/api/pdf' },
+          { text: 'Template Language', link: '/template-language/overview' },
+        ],
+      },
     ],
 
     sidebar: {
+      '/v2/': [
+        {
+          text: 'Folio 2.0',
+          items: [
+            { text: 'Overview', link: '/v2/' },
+            { text: 'Getting Started', link: '/v2/getting-started' },
+            { text: 'Template language', link: '/v2/template-language' },
+            { text: 'Styling', link: '/v2/styling' },
+            { text: 'Examples', link: '/v2/examples' },
+            { text: 'CLI', link: '/v2/cli' },
+            { text: 'Architecture', link: '/v2/architecture' },
+            { text: 'Benchmarks', link: '/v2/benchmarks' },
+            { text: 'Contributing', link: '/v2/contributing' },
+            { text: 'Migration from v1', link: '/v2/migration' },
+          ]
+        }
+      ],
       '/': [
         {
           text: 'Guide',

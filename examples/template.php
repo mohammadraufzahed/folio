@@ -4,18 +4,23 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax();
 
-$template = 'page { column { heading "Template Demo" text "Generated from template" } }';
+$template = <<<'FOLIO'
+page(background="#ffffff") {
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=40) {
+      heading(color="#ffffff", fontSize=28) title
+    }
+    column(width="100%", padding=48, gap=20) {
+      text(color="#334155", fontSize=11, lineHeight=1.6) content
+    }
+  }
+}
+FOLIO;
 
-$compiler = new PhpTemplateCompiler();
-$phpCode = $compiler->compile($template);
+$pdf = $engine->render($template, ['title' => 'Inline Template', 'content' => 'Premium style from an inline template.']);
 
-echo "=== Generated PHP Code ===\n";
-echo $phpCode . "\n";
-echo "=== End Generated Code ===\n\n";
+file_put_contents(__DIR__ . '/template.pdf', $pdf);
 
-$cachePath = $compiler->getCachePath($template);
-file_put_contents($cachePath, $phpCode);
-
-echo "Compiled template saved to: $cachePath\n";
+echo "Generated template.pdf\n";

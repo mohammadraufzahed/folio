@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-$compiler = new PhpTemplateCompiler();
-
-$pdf = $compiler->render(file_get_contents(__DIR__ . '/templates/styled-document.folio'), [
-    'title' => 'Styled Document Example',
-    'content' => 'This demonstrates styling in templates.',
+$pdf = $engine->renderFile(__DIR__ . '/templates/styled-document.folio', [
+    'title' => 'Styled Document',
+    'content' => 'Demonstration of color, alignment, font sizes and spacing.',
 ]);
 
-$pdf->save(__DIR__ . '/styled-document-template.pdf');
+file_put_contents(__DIR__ . '/styled-document.pdf', $pdf);
 
-echo 'PDF generated: ' . __DIR__ . '/styled-document-template.pdf' . "\n";
+echo "Generated styled-document.pdf\n";

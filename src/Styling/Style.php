@@ -37,6 +37,7 @@ final class Style
     private readonly ?Flex $flex;
     private readonly ?float $grow;
     private readonly ?float $shrink;
+    private readonly ?float $gap;
     private readonly ?Length $width;
     private readonly ?Length $height;
     private readonly ?Length $minWidth;
@@ -71,6 +72,7 @@ final class Style
         $this->flex = $properties['flex'] ?? null;
         $this->grow = $properties['grow'] ?? null;
         $this->shrink = $properties['shrink'] ?? null;
+        $this->gap = $properties['gap'] ?? null;
         $this->width = $properties['width'] ?? null;
         $this->height = $properties['height'] ?? null;
         $this->minWidth = $properties['minWidth'] ?? null;
@@ -135,6 +137,21 @@ final class Style
     public function withOpacity(?float $value): self
     {
         return new self([...$this->toArray(), 'opacity' => $value]);
+    }
+
+    public function withGap(?float $value): self
+    {
+        return new self([...$this->toArray(), 'gap' => $value]);
+    }
+
+    public function withGrow(?float $value): self
+    {
+        return new self([...$this->toArray(), 'grow' => $value]);
+    }
+
+    public function withShrink(?float $value): self
+    {
+        return new self([...$this->toArray(), 'shrink' => $value]);
     }
 
     public function withAlignment(?Alignment $alignment): self
@@ -264,6 +281,10 @@ final class Style
     public function shrink(): ?float
     {
         return $this->shrink;
+    }
+    public function gap(): ?float
+    {
+        return $this->gap;
     }
     public function width(): ?Length
     {

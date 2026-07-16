@@ -4,21 +4,30 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-$compiler = new PhpTemplateCompiler();
+$items = [];
+$total = 0.0;
+for ($i = 1; $i <= 5; $i++) {
+    $lineTotal = $i * (100 + ($i * 50));
+    $total += $lineTotal;
+    $items[] = [
+        'name' => 'Premium Service ' . $i,
+        'quantity' => (string) $i,
+        'price' => '$' . number_format(100 + ($i * 50), 2),
+        'total' => '$' . number_format($lineTotal, 2),
+    ];
+}
 
-$pdf = $compiler->render(file_get_contents(__DIR__ . '/templates/invoice.folio'), [
-    'customerName' => 'Jane Smith',
-    'customerEmail' => 'jane@example.com',
-    'invoiceNumber' => 'INV-002',
-    'invoiceDate' => '2024-01-16',
-    'items' => [
-        ['name' => 'Product A', 'quantity' => 2, 'price' => '99.00'],
-        ['name' => 'Product B', 'quantity' => 1, 'price' => '49.00'],
-    ],
+$pdf = $engine->renderFile(__DIR__ . '/templates/invoice.folio', [
+    'customerName' => 'Alice Johnson',
+    'customerEmail' => 'alice@example.com',
+    'invoiceNumber' => 'INV-2024-0042',
+    'invoiceDate' => date('F j, Y'),
+    'items' => $items,
+    'total' => '$' . number_format($total, 2),
 ]);
 
-$pdf->save(__DIR__ . '/invoice-template.pdf');
+file_put_contents(__DIR__ . '/invoice-template.pdf', $pdf);
 
-echo 'PDF generated: ' . __DIR__ . '/invoice-template.pdf' . "\n";
+echo "Generated invoice-template.pdf\n";

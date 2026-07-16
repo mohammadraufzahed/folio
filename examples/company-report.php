@@ -4,218 +4,166 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-/**
- * @return array<string, mixed>
- */
-function buildReportData(): array
-{
-    return [
-        'company' => [
-            'name' => 'Acme Robotics Inc.',
-        ],
-        'report' => [
-            'title' => 'Annual Operations Report',
-            'period' => 'FY 2025 / Q1-Q4',
-            'generatedAt' => 'Generated: ' . date('Y-m-d H:i'),
-        ],
-        'summary' => [
-            ['label' => 'Total Revenue', 'value' => '$48.2M', 'change' => '+12%', 'trend' => 'Up'],
-            ['label' => 'Gross Margin', 'value' => '41%', 'change' => '+2pp', 'trend' => 'Up'],
-            ['label' => 'Active Customers', 'value' => '1,284', 'change' => '+9%', 'trend' => 'Up'],
-            ['label' => 'NPS', 'value' => '62', 'change' => '+4', 'trend' => 'Up'],
-            ['label' => 'Headcount', 'value' => '312', 'change' => '+18', 'trend' => 'Up'],
-        ],
-        'departments' => [
-            ['name' => 'Engineering', 'head' => 'A. Nguyen', 'headcount' => '96', 'budget' => '$12.4M'],
-            ['name' => 'Sales', 'head' => 'M. Alvarez', 'headcount' => '54', 'budget' => '$6.1M'],
-            ['name' => 'Support', 'head' => 'R. Patel', 'headcount' => '41', 'budget' => '$3.2M'],
-            ['name' => 'Marketing', 'head' => 'S. Kim', 'headcount' => '28', 'budget' => '$4.0M'],
-            ['name' => 'Finance', 'head' => 'J. Brooks', 'headcount' => '19', 'budget' => '$2.1M'],
-            ['name' => 'Operations', 'head' => 'L. Costa', 'headcount' => '74', 'budget' => '$8.5M'],
-        ],
-        'employees' => array_map(
-            static fn (int $i): array => [
-                'id' => sprintf('E%04d', 1000 + $i),
-                'name' => ['Alex Reed', 'Jordan Lee', 'Sam Ortiz', 'Taylor Quinn', 'Casey Bloom', 'Riley Chen', 'Morgan Diaz', 'Avery Fox'][$i % 8],
-                'role' => ['Engineer', 'Account Exec', 'Support', 'Designer', 'Analyst'][$i % 5],
-                'department' => ['Engineering', 'Sales', 'Support', 'Marketing', 'Finance'][$i % 5],
-                'salary' => '$' . number_format(65000 + ($i * 1750), 0),
-            ],
-            range(0, 49)
-        ),
-        'products' => [
-            ['sku' => 'RB-100', 'name' => 'Rover Base', 'category' => 'Hardware', 'price' => '$4,200', 'stock' => '84'],
-            ['sku' => 'RB-200', 'name' => 'Rover Pro', 'category' => 'Hardware', 'price' => '$7,800', 'stock' => '41'],
-            ['sku' => 'SN-10', 'name' => 'Lidar Sensor', 'category' => 'Sensors', 'price' => '$920', 'stock' => '260'],
-            ['sku' => 'SN-22', 'name' => 'Depth Cam', 'category' => 'Sensors', 'price' => '$640', 'stock' => '190'],
-            ['sku' => 'SW-AI', 'name' => 'Nav AI License', 'category' => 'Software', 'price' => '$1,200', 'stock' => '∞'],
-            ['sku' => 'KT-01', 'name' => 'Field Kit', 'category' => 'Accessories', 'price' => '$310', 'stock' => '500'],
-            ['sku' => 'BT-9', 'name' => 'Battery Pack', 'category' => 'Power', 'price' => '$480', 'stock' => '320'],
-            ['sku' => 'CH-3', 'name' => 'Dock Charger', 'category' => 'Power', 'price' => '$890', 'stock' => '110'],
-        ],
-        'sales' => [
-            ['product' => 'Rover Pro', 'units' => '120', 'revenue' => '$936K', 'region' => 'NA'],
-            ['product' => 'Rover Base', 'units' => '210', 'revenue' => '$882K', 'region' => 'EU'],
-            ['product' => 'Nav AI License', 'units' => '540', 'revenue' => '$648K', 'region' => 'APAC'],
-            ['product' => 'Lidar Sensor', 'units' => '890', 'revenue' => '$819K', 'region' => 'NA'],
-            ['product' => 'Field Kit', 'units' => '1,400', 'revenue' => '$434K', 'region' => 'LATAM'],
-            ['product' => 'Battery Pack', 'units' => '760', 'revenue' => '$365K', 'region' => 'EU'],
-        ],
-        'inventory' => [
-            ['warehouse' => 'Austin', 'sku' => 'RB-100', 'onHand' => '40', 'reserved' => '8', 'available' => '32'],
-            ['warehouse' => 'Austin', 'sku' => 'RB-200', 'onHand' => '22', 'reserved' => '5', 'available' => '17'],
-            ['warehouse' => 'Berlin', 'sku' => 'SN-10', 'onHand' => '120', 'reserved' => '30', 'available' => '90'],
-            ['warehouse' => 'Singapore', 'sku' => 'BT-9', 'onHand' => '200', 'reserved' => '45', 'available' => '155'],
-            ['warehouse' => 'Singapore', 'sku' => 'CH-3', 'onHand' => '60', 'reserved' => '12', 'available' => '48'],
-            ['warehouse' => 'São Paulo', 'sku' => 'KT-01', 'onHand' => '300', 'reserved' => '20', 'available' => '280'],
-        ],
-        'customers' => [
-            ['name' => 'NorthGrid Energy', 'segment' => 'Enterprise', 'country' => 'USA', 'ltv' => '$1.2M'],
-            ['name' => 'Helix Logistics', 'segment' => 'Mid-Market', 'country' => 'Germany', 'ltv' => '$480K'],
-            ['name' => 'Orbit Farms', 'segment' => 'SMB', 'country' => 'Brazil', 'ltv' => '$95K'],
-            ['name' => 'Kite Medical', 'segment' => 'Enterprise', 'country' => 'Japan', 'ltv' => '$760K'],
-            ['name' => 'Blue Harbor', 'segment' => 'Mid-Market', 'country' => 'UK', 'ltv' => '$310K'],
-            ['name' => 'Summit Mining', 'segment' => 'Enterprise', 'country' => 'Australia', 'ltv' => '$890K'],
-        ],
-        'invoices' => [
-            ['number' => 'INV-2401', 'customer' => 'NorthGrid Energy', 'amount' => '$120,000', 'status' => 'Paid', 'dueDate' => '2025-01-15'],
-            ['number' => 'INV-2402', 'customer' => 'Helix Logistics', 'amount' => '$48,500', 'status' => 'Open', 'dueDate' => '2025-02-01'],
-            ['number' => 'INV-2403', 'customer' => 'Orbit Farms', 'amount' => '$12,300', 'status' => 'Overdue', 'dueDate' => '2025-01-05'],
-            ['number' => 'INV-2404', 'customer' => 'Kite Medical', 'amount' => '$88,000', 'status' => 'Paid', 'dueDate' => '2025-01-20'],
-            ['number' => 'INV-2405', 'customer' => 'Blue Harbor', 'amount' => '$27,750', 'status' => 'Open', 'dueDate' => '2025-02-12'],
-            ['number' => 'INV-2406', 'customer' => 'Summit Mining', 'amount' => '$150,000', 'status' => 'Paid', 'dueDate' => '2025-01-28'],
-        ],
-        'expenses' => [
-            ['category' => 'Cloud', 'vendor' => 'AWS', 'amount' => '$86,000', 'month' => 'Jan'],
-            ['category' => 'Cloud', 'vendor' => 'GCP', 'amount' => '$41,000', 'month' => 'Jan'],
-            ['category' => 'Travel', 'vendor' => 'Delta', 'amount' => '$18,400', 'month' => 'Feb'],
-            ['category' => 'Hardware', 'vendor' => 'DigiKey', 'amount' => '$62,200', 'month' => 'Feb'],
-            ['category' => 'Marketing', 'vendor' => 'Meta Ads', 'amount' => '$33,000', 'month' => 'Mar'],
-            ['category' => 'Facilities', 'vendor' => 'WeWork', 'amount' => '$29,500', 'month' => 'Mar'],
-        ],
-        'projects' => [
-            ['name' => 'NavStack 3.0', 'owner' => 'A. Nguyen', 'status' => 'On Track', 'progress' => '72%', 'budget' => '$2.1M'],
-            ['name' => 'EU Expansion', 'owner' => 'M. Alvarez', 'status' => 'At Risk', 'progress' => '48%', 'budget' => '$1.4M'],
-            ['name' => 'Support Portal', 'owner' => 'R. Patel', 'status' => 'On Track', 'progress' => '85%', 'budget' => '$420K'],
-            ['name' => 'Battery Gen2', 'owner' => 'L. Costa', 'status' => 'Delayed', 'progress' => '39%', 'budget' => '$980K'],
-            ['name' => 'Partner API', 'owner' => 'S. Kim', 'status' => 'On Track', 'progress' => '61%', 'budget' => '$310K'],
-        ],
-        'metrics' => [
-            ['name' => 'MRR', 'target' => '$4.0M', 'actual' => '$4.2M', 'status' => 'Hit'],
-            ['name' => 'Churn', 'target' => '< 2%', 'actual' => '1.6%', 'status' => 'Hit'],
-            ['name' => 'Gross Margin', 'target' => '40%', 'actual' => '41%', 'status' => 'Hit'],
-            ['name' => 'Support CSAT', 'target' => '90%', 'actual' => '88%', 'status' => 'Miss'],
-            ['name' => 'Deploy Frequency', 'target' => '20/wk', 'actual' => '24/wk', 'status' => 'Hit'],
-        ],
-        'regions' => [
-            ['name' => 'North America', 'revenue' => '$21.4M', 'growth' => '+11%', 'customers' => '520'],
-            ['name' => 'Europe', 'revenue' => '$14.8M', 'growth' => '+9%', 'customers' => '410'],
-            ['name' => 'APAC', 'revenue' => '$8.1M', 'growth' => '+18%', 'customers' => '240'],
-            ['name' => 'LATAM', 'revenue' => '$3.9M', 'growth' => '+22%', 'customers' => '114'],
-        ],
-        'vendors' => [
-            ['name' => 'AWS', 'category' => 'Cloud', 'rating' => 'A', 'contractEnd' => '2026-06'],
-            ['name' => 'DigiKey', 'category' => 'Components', 'rating' => 'A-', 'contractEnd' => '2025-12'],
-            ['name' => 'DHL', 'category' => 'Logistics', 'rating' => 'B+', 'contractEnd' => '2025-09'],
-            ['name' => 'Okta', 'category' => 'Security', 'rating' => 'A', 'contractEnd' => '2026-03'],
-            ['name' => 'Figma', 'category' => 'Design', 'rating' => 'A', 'contractEnd' => '2025-11'],
-        ],
-        'supportTickets' => [
-            ['id' => 'T-901', 'priority' => 'High', 'customer' => 'Helix Logistics', 'status' => 'Open', 'assignee' => 'Casey'],
-            ['id' => 'T-902', 'priority' => 'Med', 'customer' => 'Orbit Farms', 'status' => 'Pending', 'assignee' => 'Riley'],
-            ['id' => 'T-903', 'priority' => 'Low', 'customer' => 'Blue Harbor', 'status' => 'Resolved', 'assignee' => 'Avery'],
-            ['id' => 'T-904', 'priority' => 'High', 'customer' => 'Summit Mining', 'status' => 'Open', 'assignee' => 'Jordan'],
-            ['id' => 'T-905', 'priority' => 'Med', 'customer' => 'Kite Medical', 'status' => 'Open', 'assignee' => 'Morgan'],
-            ['id' => 'T-906', 'priority' => 'Low', 'customer' => 'NorthGrid Energy', 'status' => 'Resolved', 'assignee' => 'Sam'],
-        ],
-        'quarters' => [
-            ['name' => 'Q1', 'revenue' => '$10.2M', 'expenses' => '$7.1M', 'profit' => '$3.1M'],
-            ['name' => 'Q2', 'revenue' => '$11.5M', 'expenses' => '$7.6M', 'profit' => '$3.9M'],
-            ['name' => 'Q3', 'revenue' => '$12.8M', 'expenses' => '$8.0M', 'profit' => '$4.8M'],
-            ['name' => 'Q4', 'revenue' => '$13.7M', 'expenses' => '$8.4M', 'profit' => '$5.3M'],
-        ],
-        'channels' => [
-            ['name' => 'Paid Search', 'spend' => '$420K', 'leads' => '3,100', 'cac' => '$135'],
-            ['name' => 'Events', 'spend' => '$280K', 'leads' => '860', 'cac' => '$325'],
-            ['name' => 'Partners', 'spend' => '$150K', 'leads' => '1,240', 'cac' => '$121'],
-            ['name' => 'Content', 'spend' => '$95K', 'leads' => '2,050', 'cac' => '$46'],
-            ['name' => 'Outbound', 'spend' => '$210K', 'leads' => '740', 'cac' => '$284'],
-        ],
-        'training' => [
-            ['name' => 'Safety Level 1', 'attendees' => '180', 'hours' => '4', 'score' => '94%'],
-            ['name' => 'Robot Ops', 'attendees' => '96', 'hours' => '16', 'score' => '91%'],
-            ['name' => 'Security Awareness', 'attendees' => '312', 'hours' => '2', 'score' => '97%'],
-            ['name' => 'Sales Playbook', 'attendees' => '54', 'hours' => '8', 'score' => '89%'],
-        ],
-        'compliance' => [
-            ['control' => 'SOC2 Access Reviews', 'owner' => 'Security', 'due' => '2025-03-01', 'state' => 'Complete'],
-            ['control' => 'GDPR DPIA', 'owner' => 'Legal', 'due' => '2025-03-15', 'state' => 'In Progress'],
-            ['control' => 'ISO 9001 Audit', 'owner' => 'QA', 'due' => '2025-04-01', 'state' => 'Planned'],
-            ['control' => 'Backup Restore Test', 'owner' => 'SRE', 'due' => '2025-02-20', 'state' => 'Complete'],
-        ],
-        'assets' => [
-            ['name' => 'CNC Cell A', 'type' => 'Manufacturing', 'location' => 'Austin', 'value' => '$420K'],
-            ['name' => 'Test Fleet', 'type' => 'R&D', 'location' => 'Austin', 'value' => '$310K'],
-            ['name' => 'EU Demo Units', 'type' => 'Sales', 'location' => 'Berlin', 'value' => '$180K'],
-            ['name' => 'GPU Cluster', 'type' => 'Compute', 'location' => 'Cloud', 'value' => '$260K'],
-        ],
-        'notes' => [
-            ['author' => 'CEO', 'text' => 'Strong year; double down on APAC partners.', 'date' => '2025-12-18'],
-            ['author' => 'CFO', 'text' => 'Margin expansion continues; watch cloud spend.', 'date' => '2025-12-18'],
-            ['author' => 'COO', 'text' => 'Battery Gen2 delay needs recovery plan in Q1.', 'date' => '2025-12-19'],
-            ['author' => 'CRO', 'text' => 'Enterprise pipeline healthy entering next FY.', 'date' => '2025-12-19'],
-        ],
-        'riskItems' => [
-            ['id' => 'R-01', 'description' => 'Single-source dependency for LiDAR sensors', 'owner' => 'L. Costa', 'level' => 'High'],
-            ['id' => 'R-02', 'description' => 'EU regulatory changes on battery disposal', 'owner' => 'Legal', 'level' => 'Medium'],
-            ['id' => 'R-03', 'description' => 'Key talent retention in Engineering', 'owner' => 'A. Nguyen', 'level' => 'High'],
-            ['id' => 'R-04', 'description' => 'Cloud cost overruns in Q4', 'owner' => 'J. Brooks', 'level' => 'Medium'],
-            ['id' => 'R-05', 'description' => 'Supply chain disruption - shipping delays', 'owner' => 'Operations', 'level' => 'Low'],
-        ],
-        'topPerformers' => [
-            ['rank' => '1', 'name' => 'Alex Reed', 'department' => 'Engineering', 'score' => '98'],
-            ['rank' => '2', 'name' => 'Morgan Diaz', 'department' => 'Sales', 'score' => '96'],
-            ['rank' => '3', 'name' => 'Riley Chen', 'department' => 'Support', 'score' => '95'],
-            ['rank' => '4', 'name' => 'Taylor Quinn', 'department' => 'Marketing', 'score' => '93'],
-            ['rank' => '5', 'name' => 'Casey Bloom', 'department' => 'Finance', 'score' => '91'],
-        ],
+$company = [
+    'name' => 'Acme Operations Ltd.',
+    'address' => '100 Enterprise Way, San Francisco, CA 94107',
+];
+
+$report = [
+    'title' => 'Company Operations Report',
+    'period' => 'Fiscal Year 2024',
+    'generatedAt' => 'Generated on ' . date('F j, Y'),
+];
+
+$summary = [
+    ['label' => 'REVENUE', 'value' => '$48.2M', 'change' => '+12.4%'],
+    ['label' => 'PROFIT', 'value' => '$12.8M', 'change' => '+8.1%'],
+    ['label' => 'EMPLOYEES', 'value' => '342', 'change' => '+24'],
+    ['label' => 'CUSTOMERS', 'value' => '1,240', 'change' => '+18%'],
+    ['label' => 'CSAT', 'value' => '94%', 'change' => '+2%'],
+];
+
+$departments = [
+    ['name' => 'Engineering', 'head' => 'Dr. Sarah Chen', 'headcount' => '85', 'budget' => '$5.2M'],
+    ['name' => 'Sales', 'head' => 'Michael Ross', 'headcount' => '42', 'budget' => '$2.1M'],
+    ['name' => 'Marketing', 'head' => 'Emily Davis', 'headcount' => '28', 'budget' => '$1.8M'],
+    ['name' => 'Operations', 'head' => 'James Wilson', 'headcount' => '56', 'budget' => '$3.4M'],
+    ['name' => 'Support', 'head' => 'Linda Martinez', 'headcount' => '64', 'budget' => '$1.9M'],
+    ['name' => 'HR', 'head' => 'Robert Brown', 'headcount' => '18', 'budget' => '$0.9M'],
+];
+
+$employees = [];
+for ($i = 1; $i <= 10; $i++) {
+    $employees[] = [
+        'id' => 'E' . str_pad((string) $i, 3, '0', \STR_PAD_LEFT),
+        'name' => 'Employee ' . $i,
+        'role' => 'Role ' . $i,
+        'department' => 'Department ' . ($i % 4 + 1),
+        'salary' => '$' . number_format(50000 + ($i * 5000), 2),
     ];
 }
 
-$compiler = new PhpTemplateCompiler();
-$templatePath = __DIR__ . '/templates/company-report.folio';
-$data = buildReportData();
-
-echo "Compiling template with data binding...\n";
-$t0 = microtime(true);
-$php = $compiler->compileFile($templatePath);
-$tCompile = microtime(true) - $t0;
-echo 'Compiled bytes: ' . strlen($php) . "\n";
-echo sprintf("Compile time: %.2f ms\n", $tCompile * 1000);
-
-if (str_contains($php, 'function (array $data')) {
-    echo "OK: compiled template accepts array \$data\n";
-}
-if (str_contains($php, 'foreach')) {
-    echo "OK: foreach loops present in compiled output\n";
+$products = [];
+for ($i = 1; $i <= 8; $i++) {
+    $products[] = [
+        'sku' => 'SKU-' . str_pad((string) $i, 3, '0', \STR_PAD_LEFT),
+        'name' => 'Product ' . $i,
+        'category' => 'Category ' . ($i % 3 + 1),
+        'price' => '$' . number_format(10 + $i * 5, 2),
+        'stock' => (string) (100 - $i * 7),
+    ];
 }
 
-$t1 = microtime(true);
-$compiler->compileFile($templatePath);
-$tCached = microtime(true) - $t1;
-echo sprintf("Cached compile time: %.3f ms\n", $tCached * 1000);
+$sales = [
+    ['product' => 'Widget A', 'units' => '1,240', 'revenue' => '$12.4K', 'region' => 'North America'],
+    ['product' => 'Widget B', 'units' => '980', 'revenue' => '$9.8K', 'region' => 'Europe'],
+    ['product' => 'Widget C', 'units' => '760', 'revenue' => '$7.6K', 'region' => 'Asia'],
+    ['product' => 'Widget D', 'units' => '540', 'revenue' => '$5.4K', 'region' => 'South America'],
+    ['product' => 'Widget E', 'units' => '320', 'revenue' => '$3.2K', 'region' => 'Africa'],
+    ['product' => 'Widget F', 'units' => '410', 'revenue' => '$4.1K', 'region' => 'Oceania'],
+];
 
-echo "\nRendering PDF...\n";
-$t2 = microtime(true);
-$pdf = $compiler->renderFile($templatePath, $data);
-$tRender = microtime(true) - $t2;
-echo sprintf("Render time: %.2f ms\n", $tRender * 1000);
+$inventory = [
+    ['warehouse' => 'West', 'sku' => 'SKU-001', 'onHand' => '120', 'reserved' => '20', 'available' => '100'],
+    ['warehouse' => 'East', 'sku' => 'SKU-002', 'onHand' => '95', 'reserved' => '15', 'available' => '80'],
+    ['warehouse' => 'Central', 'sku' => 'SKU-003', 'onHand' => '200', 'reserved' => '50', 'available' => '150'],
+    ['warehouse' => 'South', 'sku' => 'SKU-004', 'onHand' => '60', 'reserved' => '10', 'available' => '50'],
+    ['warehouse' => 'North', 'sku' => 'SKU-005', 'onHand' => '80', 'reserved' => '5', 'available' => '75'],
+    ['warehouse' => 'International', 'sku' => 'SKU-006', 'onHand' => '150', 'reserved' => '30', 'available' => '120'],
+];
 
-$out = __DIR__ . '/company-report.pdf';
-$pdf->save($out);
+$customers = [
+    ['name' => 'Global Tech', 'segment' => 'Enterprise', 'country' => 'USA', 'ltv' => '$450K'],
+    ['name' => 'Startup X', 'segment' => 'SMB', 'country' => 'UK', 'ltv' => '$85K'],
+    ['name' => 'MegaCorp', 'segment' => 'Enterprise', 'country' => 'Germany', 'ltv' => '$920K'],
+    ['name' => 'Design Studio', 'segment' => 'Agency', 'country' => 'France', 'ltv' => '$120K'],
+    ['name' => 'Retail Plus', 'segment' => 'Retail', 'country' => 'Canada', 'ltv' => '$210K'],
+    ['name' => 'Finance Hub', 'segment' => 'Finance', 'country' => 'Japan', 'ltv' => '$760K'],
+];
 
-echo "PDF saved: {$out}\n";
-echo "Pages: 7-page report with 22 tables, multi-headers, footers, variant colors\n";
-echo sprintf("Total time: %.2f ms\n", (microtime(true) - $t0) * 1000);
+$invoices = [];
+for ($i = 1; $i <= 6; $i++) {
+    $invoices[] = [
+        'number' => 'INV-' . str_pad((string) $i, 4, '0', \STR_PAD_LEFT),
+        'customer' => 'Customer ' . $i,
+        'amount' => '$' . number_format(1000 + $i * 250, 2),
+        'status' => $i % 2 === 0 ? 'Paid' : 'Pending',
+        'dueDate' => '2024-' . str_pad((string) (12 - $i), 2, '0', \STR_PAD_LEFT) . '-15',
+    ];
+}
+
+$expenses = [
+    ['category' => 'Software', 'vendor' => 'SaaS Corp', 'amount' => '$4,500', 'month' => '2024-06'],
+    ['category' => 'Hardware', 'vendor' => 'Tech Supply', 'amount' => '$12,000', 'month' => '2024-06'],
+    ['category' => 'Travel', 'vendor' => 'Business Travel Inc', 'amount' => '$3,200', 'month' => '2024-06'],
+    ['category' => 'Marketing', 'vendor' => 'Ad Partners', 'amount' => '$8,000', 'month' => '2024-06'],
+    ['category' => 'Rent', 'vendor' => 'Office Properties', 'amount' => '$25,000', 'month' => '2024-06'],
+    ['category' => 'Utilities', 'vendor' => 'City Power', 'amount' => '$1,800', 'month' => '2024-06'],
+];
+
+$projects = [
+    ['name' => 'Platform 2.0', 'owner' => 'Sarah Chen', 'status' => 'In Progress', 'progress' => '75%', 'budget' => '$1.2M'],
+    ['name' => 'Mobile App', 'owner' => 'Michael Ross', 'status' => 'Planning', 'progress' => '20%', 'budget' => '$800K'],
+    ['name' => 'Data Warehouse', 'owner' => 'James Wilson', 'status' => 'Completed', 'progress' => '100%', 'budget' => '$2.0M'],
+    ['name' => 'AI Assistant', 'owner' => 'Emily Davis', 'status' => 'In Progress', 'progress' => '40%', 'budget' => '$1.5M'],
+    ['name' => 'Security Audit', 'owner' => 'Linda Martinez', 'status' => 'In Progress', 'progress' => '60%', 'budget' => '$300K'],
+];
+
+$metrics = [
+    ['name' => 'Uptime', 'target' => '99.99%', 'actual' => '99.97%', 'status' => 'Good'],
+    ['name' => 'Response Time', 'target' => '<200ms', 'actual' => '180ms', 'status' => 'Good'],
+    ['name' => 'NPS', 'target' => '70', 'actual' => '72', 'status' => 'Good'],
+    ['name' => 'Churn', 'target' => '<5%', 'actual' => '4.2%', 'status' => 'Good'],
+    ['name' => 'Support SLA', 'target' => '95%', 'actual' => '96%', 'status' => 'Good'],
+];
+
+$regions = [
+    ['name' => 'North America', 'revenue' => '$24.1M', 'growth' => '+14%', 'customers' => '620'],
+    ['name' => 'Europe', 'revenue' => '$14.5M', 'growth' => '+9%', 'customers' => '380'],
+    ['name' => 'Asia Pacific', 'revenue' => '$7.2M', 'growth' => '+22%', 'customers' => '190'],
+    ['name' => 'Latin America', 'revenue' => '$2.4M', 'growth' => '+6%', 'customers' => '50'],
+];
+
+$vendors = [
+    ['name' => 'CloudHost Pro', 'category' => 'Cloud', 'rating' => '4.8', 'contractEnd' => '2025-03'],
+    ['name' => 'Office Supplies Co', 'category' => 'Office', 'rating' => '4.2', 'contractEnd' => '2024-12'],
+    ['name' => 'Legal Advisors', 'category' => 'Legal', 'rating' => '4.9', 'contractEnd' => '2025-06'],
+    ['name' => 'Print Solutions', 'category' => 'Print', 'rating' => '4.0', 'contractEnd' => '2024-09'],
+    ['name' => 'Travel Partners', 'category' => 'Travel', 'rating' => '4.5', 'contractEnd' => '2025-01'],
+];
+
+$supportTickets = [];
+for ($i = 1; $i <= 6; $i++) {
+    $supportTickets[] = [
+        'id' => 'TKT-' . str_pad((string) $i, 4, '0', \STR_PAD_LEFT),
+        'priority' => $i % 3 === 0 ? 'High' : 'Normal',
+        'customer' => 'Customer ' . $i,
+        'status' => $i % 2 === 0 ? 'Resolved' : 'Open',
+        'assignee' => 'Agent ' . $i,
+    ];
+}
+
+$pdf = $engine->renderFile(__DIR__ . '/templates/company-report.folio', [
+    'company' => $company,
+    'report' => $report,
+    'summary' => $summary,
+    'departments' => $departments,
+    'employees' => $employees,
+    'products' => $products,
+    'sales' => $sales,
+    'inventory' => $inventory,
+    'customers' => $customers,
+    'invoices' => $invoices,
+    'expenses' => $expenses,
+    'projects' => $projects,
+    'metrics' => $metrics,
+    'regions' => $regions,
+    'vendors' => $vendors,
+    'supportTickets' => $supportTickets,
+]);
+
+file_put_contents(__DIR__ . '/company-report.pdf', $pdf);
+
+echo "Generated company-report.pdf\n";

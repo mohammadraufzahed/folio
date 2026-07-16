@@ -1,43 +1,50 @@
-page {
-    column {
-        heading "Financial Report - Q4 2024"
-        table {
-            header {
-                th(colspan=5) "Financial Performance"
-            }
-            header {
-                th(colspan=2) "Revenue"
-                th(colspan=2) "Expenses"
-                th "Net Profit"
-            }
-            header {
-                th "Q4"
-                th "YTD"
-                th "Q4"
-                th "YTD"
-                th "Q4"
-            }
-            tr {
-                td "$1.2M"
-                td "$4.8M"
-                td "$800K"
-                td "$3.2M"
-                td "$400K"
-            }
-            tr {
-                td "$1.5M"
-                td "$6.0M"
-                td "$900K"
-                td "$3.6M"
-                td "$600K"
-            }
-            tr {
-                td "$1.8M"
-                td "$7.2M"
-                td "$1.0M"
-                td "$4.0M"
-                td "$800K"
-            }
-        }
+
+// Premium financial report template
+
+page(background="#ffffff") {
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=40) {
+      heading(color="#ffffff", fontSize=24) "Financial Report - Q4 2024"
     }
+    column(width="100%", padding=48, gap=20) {
+      table(padding=12, background="#f8fafc", width="100%") {
+        header(background="#0f172a", color="#ffffff", fontSize=10, fontWeight="bold") {
+          th(colspan=5, align="center") "Financial Performance"
+        }
+        header(background="#334155", color="#ffffff", fontSize=10, fontWeight="bold") {
+          th(colspan=2, align="center") "Revenue"
+          th(colspan=2, align="center") "Expenses"
+          th(align="center") "Net Profit"
+        }
+        header(background="#64748b", color="#ffffff", fontSize=10, fontWeight="bold") {
+          th "Q4"
+          th "YTD"
+          th "Q4"
+          th "YTD"
+          th "Q4"
+        }
+        tr(background="#ffffff", fontSize=10) {
+          td "$1.2M"
+          td "$4.8M"
+          td "$800K"
+          td "$3.2M"
+          td "$400K"
+        }
+        tr(background="#f1f5f9", fontSize=10) {
+          td "$1.5M"
+          td "$6.0M"
+          td "$900K"
+          td "$3.6M"
+          td "$600K"
+        }
+        tr(background="#ffffff", fontSize=10) {
+          td "$1.8M"
+          td "$7.2M"
+          td "$1.0M"
+          td "$4.0M"
+          td "$800K"
+        }
+      }
+    }
+  }
 }

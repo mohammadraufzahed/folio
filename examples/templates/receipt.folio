@@ -1,0 +1,39 @@
+
+// Premium receipt template (80mm thermal roll)
+
+prop store = ""
+prop address = ""
+prop date = ""
+prop items = ""
+prop total = ""
+
+page(size="226 x 842", background="#ffffff") {
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=20) {
+      heading(color="#ffffff", fontSize=16, align="center") store
+      text(color="#94a3b8", fontSize=8, align="center") address
+    }
+    column(width="100%", padding=16, gap=8, align="center") {
+      text(color="#64748b", fontSize=9) date
+      table(padding=10, background="#f8fafc", width="100%") {
+        header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+          th "Qty"
+          th "Item"
+          th(align="right") "Price"
+        }
+        foreach items as item {
+          tr(background="#ffffff", fontSize=9) {
+            td item.quantity
+            td item.name
+            td(align="right") item.price
+          }
+        }
+      }
+      row(gap=8) {
+        text(color="#0f172a", fontSize=10, fontWeight="bold", grow=1) "Total"
+        text(color="#0f172a", fontSize=10, fontWeight="bold", align="right", grow=1) total
+      }
+      text(color="#64748b", fontSize=8, align="center") "Thank you for your business."
+    }
+  }
+}
