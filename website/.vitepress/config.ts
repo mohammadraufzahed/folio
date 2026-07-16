@@ -62,10 +62,15 @@ export default defineConfig({
           text: 'Folio 2.0',
           items: [
             { text: 'Overview', link: '/v2/' },
-            { text: 'Architecture', link: '/v2/architecture' },
+            { text: 'Getting Started', link: '/v2/getting-started' },
             { text: 'Template language', link: '/v2/template-language' },
+            { text: 'Styling', link: '/v2/styling' },
+            { text: 'Examples', link: '/v2/examples' },
             { text: 'CLI', link: '/v2/cli' },
+            { text: 'Architecture', link: '/v2/architecture' },
             { text: 'Benchmarks', link: '/v2/benchmarks' },
+            { text: 'Contributing', link: '/v2/contributing' },
+            { text: 'Migration from v1', link: '/v2/migration' },
           ]
         }
       ],

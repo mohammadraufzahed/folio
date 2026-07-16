@@ -37,7 +37,7 @@ page(background="#ffffff") {
                 th(align="right") "Price"
                 th(align="right") "Total"
             }
-            each item in items {
+            foreach items as item {
                 tr(background="#ffffff", fontSize=10) {
                     td item.name
                     td(align="right") item.quantity
@@ -108,10 +108,10 @@ if customer.vip {
 }
 ```
 
-### each
+### foreach
 
 ```folio
-each item in items {
+foreach items as item {
     row {
         text item.name
         text(align="right") item.price
