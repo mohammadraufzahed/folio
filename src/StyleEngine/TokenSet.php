@@ -32,6 +32,30 @@ final readonly class TokenSet
         return isset($this->categories[$category][$name]);
     }
 
+    public function resolve(mixed $value): mixed
+    {
+        if (!is_string($value)) {
+            return $value;
+        }
+
+        $value = trim($value);
+
+        if (!str_starts_with($value, '{') || !str_ends_with($value, '}')) {
+            return $value;
+        }
+
+        $inner = trim(substr($value, 1, -1));
+        $parts = explode('.', $inner, 2);
+
+        if (count($parts) !== 2) {
+            return $value;
+        }
+
+        $resolved = $this->get($parts[0], $parts[1]);
+
+        return $resolved ?? $value;
+    }
+
     public function color(string $name): ?Color
     {
         $value = $this->get('colors', $name);

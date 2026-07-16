@@ -32,6 +32,14 @@ final class ShorthandParser
     {
         $value = trim($value);
 
+        if ($tokens !== null) {
+            $value = $tokens->resolve($value);
+
+            if (!is_string($value)) {
+                return null;
+            }
+        }
+
         if ($tokens !== null && $tokens->has('colors', $value)) {
             return $tokens->color($value);
         }
@@ -68,6 +76,14 @@ final class ShorthandParser
     {
         $value = trim($value);
 
+        if ($tokens !== null) {
+            $value = $tokens->resolve($value);
+
+            if (!is_string($value)) {
+                return $value instanceof Length ? $value : null;
+            }
+        }
+
         if ($tokens !== null && $tokens->has($category, $value)) {
             return $tokens->length($category, $value);
         }
@@ -80,6 +96,14 @@ final class ShorthandParser
      */
     public static function padding(string $value, ?TokenSet $tokens = null): array
     {
+        if ($tokens !== null) {
+            $value = $tokens->resolve($value);
+
+            if (!is_string($value)) {
+                return ['top' => null, 'right' => null, 'bottom' => null, 'left' => null];
+            }
+        }
+
         $values = self::split($value);
 
         $resolved = array_map(
@@ -98,6 +122,14 @@ final class ShorthandParser
 
     public static function border(string $value, ?TokenSet $tokens = null): ?Border
     {
+        if ($tokens !== null) {
+            $value = $tokens->resolve($value);
+
+            if (!is_string($value)) {
+                return null;
+            }
+        }
+
         $parts = self::split($value);
 
         if (count($parts) < 2) {
@@ -126,6 +158,14 @@ final class ShorthandParser
 
     public static function shadow(string $value, ?TokenSet $tokens = null): ?Shadow
     {
+        if ($tokens !== null) {
+            $value = $tokens->resolve($value);
+
+            if (!is_string($value)) {
+                return null;
+            }
+        }
+
         $parts = self::split($value);
 
         if (count($parts) < 3) {

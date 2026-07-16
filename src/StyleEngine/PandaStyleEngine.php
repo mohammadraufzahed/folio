@@ -14,10 +14,17 @@ final readonly class PandaStyleEngine implements StyleEngine
         $style = $node->style() ?? Style::make();
         $tokens = $context->tokenSet();
 
+        $classList = $style->classList();
+
+        if ($classList !== []) {
+            $context = $context->withClassList($classList);
+        }
+
         $builder = ComputedStyleBuilder::fromStyle($style);
 
         $this->applyInheritance($builder, $context);
         $this->applyPresets($builder, $context, $tokens);
+        $this->applyNamedStyles($builder, $context, $tokens);
         $this->applyRecipes($builder, $context, $tokens);
 
         if (!empty($context->classList)) {
@@ -63,6 +70,23 @@ final readonly class PandaStyleEngine implements StyleEngine
 
         if ($context->layerStyle !== null) {
             $builder->apply($theme->layerStyle($context->layerStyle), $tokens);
+        }
+    }
+
+    private function applyNamedStyles(ComputedStyleBuilder $builder, StyleContext $context, TokenSet $tokens): void
+    {
+        $theme = $context->theme;
+
+        if ($theme === null) {
+            return;
+        }
+
+        foreach ($context->classList as $class) {
+            $properties = $theme->style($class);
+
+            if (!empty($properties)) {
+                $builder->apply($properties, $tokens);
+            }
         }
     }
 

@@ -22,6 +22,7 @@ use Folio\Pdf\StyleEngine\ComputedStyle;
 use Folio\Pdf\StyleEngine\PandaStyleEngine;
 use Folio\Pdf\StyleEngine\StyleContext;
 use Folio\Pdf\StyleEngine\StyleEngine;
+use Folio\Pdf\StyleEngine\StyleSheet;
 use Folio\Pdf\StyleEngine\Theme;
 use Folio\Pdf\Styling\FontWeight;
 use Folio\Pdf\Styling\Length;
@@ -35,17 +36,22 @@ final class LayoutEngine
     private readonly ?PartialRegistry $partials;
     private readonly ?StyleEngine $styleEngine;
     private readonly ?Theme $theme;
+    private readonly ?StyleSheet $styleSheet;
+
+    private ?Theme $activeTheme = null;
 
     public function __construct(
         ?FontMetricsPort $fontMetrics = null,
         ?PartialRegistry $partials = null,
         ?StyleEngine $styleEngine = null,
         ?Theme $theme = null,
+        ?StyleSheet $styleSheet = null,
     ) {
         $this->fontMetrics = $fontMetrics;
         $this->partials = $partials;
         $this->styleEngine = $styleEngine;
         $this->theme = $theme;
+        $this->styleSheet = $styleSheet;
     }
 
     private function fontMetrics(): FontMetricsPort
@@ -65,6 +71,8 @@ final class LayoutEngine
 
     public function layout(Document $document): LayoutResult
     {
+        $this->activeTheme = $this->resolveTheme($document);
+
         $layoutBoxes = [];
 
         foreach ($document->pages() as $page) {
@@ -75,6 +83,22 @@ final class LayoutEngine
         return new LayoutResult($layoutBoxes);
     }
 
+    private function resolveTheme(Document $document): ?Theme
+    {
+        $theme = $document->theme() ?? $this->theme;
+        $styleSheet = $document->styleSheet() ?? $this->styleSheet;
+
+        if ($styleSheet === null) {
+            return $theme;
+        }
+
+        if ($theme === null) {
+            return new Theme(stylesheet: $styleSheet);
+        }
+
+        return $theme->withStyleSheet($styleSheet);
+    }
+
     public function layoutNode(Node $node, LayoutContext $context): LayoutBox
     {
         return $this->layoutNodeWithStyle($node, $context, null);
@@ -82,7 +106,7 @@ final class LayoutEngine
 
     private function resolveStyle(Node $node, ?ComputedStyle $parent): ComputedStyle
     {
-        $context = StyleContext::root($this->theme)->withParent($parent);
+        $context = StyleContext::root($this->activeTheme ?? $this->theme)->withParent($parent);
 
         return $this->styleEngine()->resolve($node, $context);
     }
