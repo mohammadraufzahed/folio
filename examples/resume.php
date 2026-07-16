@@ -4,45 +4,43 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\TemplateEngine;
-
-$engine = (new TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
+$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
 $pdf = $engine->renderFile(__DIR__ . '/templates/resume.folio', [
-    'name' => 'Jordan Lee',
+    'name' => 'Sarah Chen',
     'title' => 'Senior Software Engineer',
-    'contact' => 'jordan.lee@example.com | +1 555 123 4567',
-    'summary' => 'Results-driven software engineer with 8+ years building scalable cloud services, developer tools and open-source libraries.',
+    'contact' => 'sarah.chen@example.com  555-123-4567  San Francisco, CA',
+    'summary' => 'Experienced software engineer with a passion for building clean, scalable systems and delightful user experiences.',
     'experience' => [
         [
-            'roleCompany' => 'Senior Software Engineer at Acme Robotics',
-            'dates' => '2021 - Present',
+            'roleCompany' => 'Senior Engineer at TechCorp',
+            'dates' => '2020 - Present',
             'bullets' => [
-                '- Led the design of a PDF generation engine used company-wide.',
-                '- Improved CI/CD pipelines reducing release times by 40%.',
+                'Led the migration to a microservices architecture.',
+                'Improved CI/CD pipelines and reduced build times by 40%.',
             ],
         ],
         [
-            'roleCompany' => 'Software Engineer at NorthGrid Energy',
-            'dates' => '2018 - 2021',
+            'roleCompany' => 'Software Engineer at StartUp Inc',
+            'dates' => '2017 - 2020',
             'bullets' => [
-                '- Built real-time telemetry ingestion processing 1M events/min.',
-                '- Mentored junior engineers and drove code-review best practices.',
+                'Built the core payments platform.',
+                'Mentored junior engineers.',
             ],
         ],
     ],
     'education' => [
-        ['schoolDegree' => 'University of Texas - B.S. Computer Science'],
-        ['schoolDegree' => 'Georgia Tech - M.S. Computer Science'],
+        ['schoolDegree' => 'B.S. Computer Science, Stanford University'],
+        ['schoolDegree' => 'M.S. Software Engineering, UC Berkeley'],
     ],
     'skills' => [
         ['name' => 'PHP', 'level' => 'Expert'],
-        ['name' => 'Distributed Systems', 'level' => 'Advanced'],
-        ['name' => 'PDF / PostScript', 'level' => 'Advanced'],
-        ['name' => 'Rust', 'level' => 'Intermediate'],
+        ['name' => 'Python', 'level' => 'Advanced'],
+        ['name' => 'System Design', 'level' => 'Advanced'],
+        ['name' => 'Leadership', 'level' => 'Intermediate'],
     ],
 ]);
 
 file_put_contents(__DIR__ . '/resume.pdf', $pdf);
 
-echo 'Resume PDF saved: ' . __DIR__ . '/resume.pdf' . "\n";
+echo "Generated resume.pdf\n";

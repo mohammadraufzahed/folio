@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\TemplateEngine;
-
-$engine = (new TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
+$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
 $pdf = $engine->renderFile(__DIR__ . '/templates/hello-world.folio', [
     'title' => 'Hello, World!',
@@ -15,4 +13,4 @@ $pdf = $engine->renderFile(__DIR__ . '/templates/hello-world.folio', [
 
 file_put_contents(__DIR__ . '/hello-world-template.pdf', $pdf);
 
-echo 'PDF generated: ' . __DIR__ . '/hello-world-template.pdf' . "\n";
+echo "Generated hello-world-template.pdf\n";
