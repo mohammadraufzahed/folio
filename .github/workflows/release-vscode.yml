@@ -6,6 +6,10 @@ on:
       - 'vscode-v*'
   workflow_dispatch:
 
+concurrency:
+  group: vscode-release-${{ github.ref }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
