@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-07-16
+
+### Fixed
+- VS Code extension now bundles the LSP server with esbuild, so language features work in the packaged VSIX.
+
 ## [2.0.1] - 2026-07-16
 
 ### Added
