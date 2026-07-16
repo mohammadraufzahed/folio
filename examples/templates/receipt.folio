@@ -7,30 +7,35 @@ prop date = ""
 prop items = ""
 prop total = ""
 
-page(size="226 x 842") {
-    column {
-        heading(size=14) store
-        text(size=8) address
-        text(size=8) date
-        text(size=8) "------------------------------"
+page(size="226 x 842", background="#ffffff") {
+  column(padding=12, gap=8, background="#ffffff") {
+    heading(color="#1e3a8a", fontSize=14, fontWeight="bold", align="center") store
+    text(color="#64748b", fontSize=8, align="center") address
+    text(color="#94a3b8", fontSize=8, align="center") date
+    text(color="#94a3b8", fontSize=8, align="center") "----------------------------------------"
 
-        table {
-            header {
-                th "Qty"
-                th "Item"
-                th "Price"
-            }
-            foreach items as item {
-                tr {
-                    td item.quantity
-                    td item.name
-                    td item.price
-                }
-            }
+    table(padding=4, background="#f8fafc") {
+      header(background="#1e3a8a", color="#ffffff", fontSize=8, fontWeight="bold") {
+        th "Qty"
+        th "Item"
+        th(align="right") "Price"
+      }
+      foreach items as item {
+        tr(background="#ffffff", fontSize=8) {
+          td item.quantity
+          td item.name
+          td(align="right") item.price
         }
-
-        text(size=8) "------------------------------"
-        heading(size=12) "Total: {total}"
-        text(size=8) "Thank you for your business!"
+      }
     }
+
+    text(color="#94a3b8", fontSize=8, align="center") "----------------------------------------"
+
+    row(gap=8) {
+      column(grow=1) { text(fontSize=9, color="#334155") "Total" }
+      column(grow=1) { text(fontSize=9, color="#1e3a8a", fontWeight="bold", align="right") total }
+    }
+
+    text(color="#64748b", fontSize=8, align="center") "Thank you for your business!"
+  }
 }

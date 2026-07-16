@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+use Folio\Pdf\Template\TemplateEngine;
 
 /**
  * @return array<string, mixed>
@@ -69,7 +69,7 @@ function buildReportData(): array
             ['warehouse' => 'Berlin', 'sku' => 'SN-10', 'onHand' => '120', 'reserved' => '30', 'available' => '90'],
             ['warehouse' => 'Singapore', 'sku' => 'BT-9', 'onHand' => '200', 'reserved' => '45', 'available' => '155'],
             ['warehouse' => 'Singapore', 'sku' => 'CH-3', 'onHand' => '60', 'reserved' => '12', 'available' => '48'],
-            ['warehouse' => 'São Paulo', 'sku' => 'KT-01', 'onHand' => '300', 'reserved' => '20', 'available' => '280'],
+            ['warehouse' => 'Sao Paulo', 'sku' => 'KT-01', 'onHand' => '300', 'reserved' => '20', 'available' => '280'],
         ],
         'customers' => [
             ['name' => 'NorthGrid Energy', 'segment' => 'Enterprise', 'country' => 'USA', 'ltv' => '$1.2M'],
@@ -130,92 +130,16 @@ function buildReportData(): array
             ['id' => 'T-905', 'priority' => 'Med', 'customer' => 'Kite Medical', 'status' => 'Open', 'assignee' => 'Morgan'],
             ['id' => 'T-906', 'priority' => 'Low', 'customer' => 'NorthGrid Energy', 'status' => 'Resolved', 'assignee' => 'Sam'],
         ],
-        'quarters' => [
-            ['name' => 'Q1', 'revenue' => '$10.2M', 'expenses' => '$7.1M', 'profit' => '$3.1M'],
-            ['name' => 'Q2', 'revenue' => '$11.5M', 'expenses' => '$7.6M', 'profit' => '$3.9M'],
-            ['name' => 'Q3', 'revenue' => '$12.8M', 'expenses' => '$8.0M', 'profit' => '$4.8M'],
-            ['name' => 'Q4', 'revenue' => '$13.7M', 'expenses' => '$8.4M', 'profit' => '$5.3M'],
-        ],
-        'channels' => [
-            ['name' => 'Paid Search', 'spend' => '$420K', 'leads' => '3,100', 'cac' => '$135'],
-            ['name' => 'Events', 'spend' => '$280K', 'leads' => '860', 'cac' => '$325'],
-            ['name' => 'Partners', 'spend' => '$150K', 'leads' => '1,240', 'cac' => '$121'],
-            ['name' => 'Content', 'spend' => '$95K', 'leads' => '2,050', 'cac' => '$46'],
-            ['name' => 'Outbound', 'spend' => '$210K', 'leads' => '740', 'cac' => '$284'],
-        ],
-        'training' => [
-            ['name' => 'Safety Level 1', 'attendees' => '180', 'hours' => '4', 'score' => '94%'],
-            ['name' => 'Robot Ops', 'attendees' => '96', 'hours' => '16', 'score' => '91%'],
-            ['name' => 'Security Awareness', 'attendees' => '312', 'hours' => '2', 'score' => '97%'],
-            ['name' => 'Sales Playbook', 'attendees' => '54', 'hours' => '8', 'score' => '89%'],
-        ],
-        'compliance' => [
-            ['control' => 'SOC2 Access Reviews', 'owner' => 'Security', 'due' => '2025-03-01', 'state' => 'Complete'],
-            ['control' => 'GDPR DPIA', 'owner' => 'Legal', 'due' => '2025-03-15', 'state' => 'In Progress'],
-            ['control' => 'ISO 9001 Audit', 'owner' => 'QA', 'due' => '2025-04-01', 'state' => 'Planned'],
-            ['control' => 'Backup Restore Test', 'owner' => 'SRE', 'due' => '2025-02-20', 'state' => 'Complete'],
-        ],
-        'assets' => [
-            ['name' => 'CNC Cell A', 'type' => 'Manufacturing', 'location' => 'Austin', 'value' => '$420K'],
-            ['name' => 'Test Fleet', 'type' => 'R&D', 'location' => 'Austin', 'value' => '$310K'],
-            ['name' => 'EU Demo Units', 'type' => 'Sales', 'location' => 'Berlin', 'value' => '$180K'],
-            ['name' => 'GPU Cluster', 'type' => 'Compute', 'location' => 'Cloud', 'value' => '$260K'],
-        ],
-        'notes' => [
-            ['author' => 'CEO', 'text' => 'Strong year; double down on APAC partners.', 'date' => '2025-12-18'],
-            ['author' => 'CFO', 'text' => 'Margin expansion continues; watch cloud spend.', 'date' => '2025-12-18'],
-            ['author' => 'COO', 'text' => 'Battery Gen2 delay needs recovery plan in Q1.', 'date' => '2025-12-19'],
-            ['author' => 'CRO', 'text' => 'Enterprise pipeline healthy entering next FY.', 'date' => '2025-12-19'],
-        ],
-        'riskItems' => [
-            ['id' => 'R-01', 'description' => 'Single-source dependency for LiDAR sensors', 'owner' => 'L. Costa', 'level' => 'High'],
-            ['id' => 'R-02', 'description' => 'EU regulatory changes on battery disposal', 'owner' => 'Legal', 'level' => 'Medium'],
-            ['id' => 'R-03', 'description' => 'Key talent retention in Engineering', 'owner' => 'A. Nguyen', 'level' => 'High'],
-            ['id' => 'R-04', 'description' => 'Cloud cost overruns in Q4', 'owner' => 'J. Brooks', 'level' => 'Medium'],
-            ['id' => 'R-05', 'description' => 'Supply chain disruption - shipping delays', 'owner' => 'Operations', 'level' => 'Low'],
-        ],
-        'topPerformers' => [
-            ['rank' => '1', 'name' => 'Alex Reed', 'department' => 'Engineering', 'score' => '98'],
-            ['rank' => '2', 'name' => 'Morgan Diaz', 'department' => 'Sales', 'score' => '96'],
-            ['rank' => '3', 'name' => 'Riley Chen', 'department' => 'Support', 'score' => '95'],
-            ['rank' => '4', 'name' => 'Taylor Quinn', 'department' => 'Marketing', 'score' => '93'],
-            ['rank' => '5', 'name' => 'Casey Bloom', 'department' => 'Finance', 'score' => '91'],
-        ],
     ];
 }
 
-$compiler = new PhpTemplateCompiler();
-$templatePath = __DIR__ . '/templates/company-report.folio';
 $data = buildReportData();
+$data['employees'] = array_slice($data['employees'], 0, 12);
 
-echo "Compiling template with data binding...\n";
-$t0 = microtime(true);
-$php = $compiler->compileFile($templatePath);
-$tCompile = microtime(true) - $t0;
-echo 'Compiled bytes: ' . strlen($php) . "\n";
-echo sprintf("Compile time: %.2f ms\n", $tCompile * 1000);
+$engine = (new TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-if (str_contains($php, 'function (array $data')) {
-    echo "OK: compiled template accepts array \$data\n";
-}
-if (str_contains($php, 'foreach')) {
-    echo "OK: foreach loops present in compiled output\n";
-}
+$pdf = $engine->renderFile(__DIR__ . '/templates/company-report.folio', $data);
 
-$t1 = microtime(true);
-$compiler->compileFile($templatePath);
-$tCached = microtime(true) - $t1;
-echo sprintf("Cached compile time: %.3f ms\n", $tCached * 1000);
+file_put_contents(__DIR__ . '/company-report.pdf', $pdf);
 
-echo "\nRendering PDF...\n";
-$t2 = microtime(true);
-$pdf = $compiler->renderFile($templatePath, $data);
-$tRender = microtime(true) - $t2;
-echo sprintf("Render time: %.2f ms\n", $tRender * 1000);
-
-$out = __DIR__ . '/company-report.pdf';
-$pdf->save($out);
-
-echo "PDF saved: {$out}\n";
-echo "Pages: 7-page report with 22 tables, multi-headers, footers, variant colors\n";
-echo sprintf("Total time: %.2f ms\n", (microtime(true) - $t0) * 1000);
+echo 'Company report PDF saved: ' . __DIR__ . '/company-report.pdf' . "\n";

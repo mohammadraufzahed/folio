@@ -1,27 +1,31 @@
-page {
-    column {
-        heading "Simple Table Example"
-        table {
-            header {
-                th "Name"
-                th "Age"
-                th "City"
-            }
-            tr {
-                td "John Doe"
-                td "30"
-                td "New York"
-            }
-            tr {
-                td "Jane Smith"
-                td "25"
-                td "Los Angeles"
-            }
-            tr {
-                td "Bob Johnson"
-                td "35"
-                td "Chicago"
-            }
-        }
+// Simple Table Example
+// Demonstrates styled headers and alternating rows
+
+page(background="#f1f5f9") {
+  column(padding=48, gap=20, background="#ffffff") {
+    heading(color="#1e3a8a", fontSize=24, fontWeight="bold") "Simple Table Example"
+
+    table(padding=12, background="#f8fafc") {
+      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+        th "Product"
+        th(align="right") "Price"
+        th(align="right") "Stock"
+      }
+      tr(background="#ffffff", fontSize=10) {
+        td "Folio Pro License"
+        td(align="right") "$49.00"
+        td(align="right") "In stock"
+      }
+      tr(background="#f1f5f9", fontSize=10) {
+        td "Enterprise Support"
+        td(align="right") "$199.00"
+        td(align="right") "In stock"
+      }
+      tr(background="#ffffff", fontSize=10) {
+        td "Custom Integration"
+        td(align="right") "$999.00"
+        td(align="right") "Contact us"
+      }
     }
+  }
 }

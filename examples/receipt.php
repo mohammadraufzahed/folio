@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+use Folio\Pdf\Template\TemplateEngine;
 
-$compiler = new PhpTemplateCompiler();
+$engine = (new TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-$pdf = $compiler->renderFile(__DIR__ . '/templates/receipt.folio', [
-    'store' => 'Byte Café',
+$pdf = $engine->renderFile(__DIR__ . '/templates/receipt.folio', [
+    'store' => 'Byte Cafe',
     'address' => '123 Coffee Lane, Tech City',
     'date' => date('Y-m-d H:i'),
     'items' => [
@@ -21,7 +21,6 @@ $pdf = $compiler->renderFile(__DIR__ . '/templates/receipt.folio', [
     'total' => '$18.00',
 ]);
 
-$out = __DIR__ . '/receipt.pdf';
-$pdf->save($out);
+file_put_contents(__DIR__ . '/receipt.pdf', $pdf);
 
-echo "Receipt PDF saved: {$out}\n";
+echo 'Receipt PDF saved: ' . __DIR__ . '/receipt.pdf' . "\n";

@@ -4,12 +4,15 @@
 var title = "Styled Document"
 var content = "This document demonstrates styling in templates."
 
-page {
-  column(padding=20, margin=10) {
-    heading title
-    text content
+page(background="#f1f5f9") {
+  column(padding=48, gap=20, background="#ffffff") {
+    heading(color="#1e3a8a", fontSize=24, fontWeight="bold") title
+    text(color="#334155", fontSize=11) content
 
-    text(color="#333333", fontSize=14) "This text has custom color and font size."
-    text(align=center) "This text is centered."
+    column(padding=24, background="#f8fafc", gap=12) {
+      text(color="#0ea5e9", fontSize=14) "This text has custom color and font size."
+      text(color="#64748b", fontSize=11, align="center") "This text is centered."
+      text(color="#10b981", fontSize=11, align="right") "This text is right-aligned."
+    }
   }
 }

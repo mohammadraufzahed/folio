@@ -6,37 +6,34 @@ prop course = ""
 prop date = ""
 prop issuer = ""
 
-pageheader(height=30, theme=navy) {
-    text(align=center, size=8, color=textLight) "Official Certificate"
-}
+page(background="#1e3a8a") {
+  column(padding=48, background="#1e3a8a") {
+    column(padding=64, gap=28, background="#ffffff") {
+      heading(color="#1e3a8a", fontSize=32, fontWeight="bold", align="center") "Certificate of Completion"
+      text(color="#64748b", fontSize=14, align="center") "This certifies that"
+      heading(color="#0ea5e9", fontSize=28, fontWeight="bold", align="center") recipient
+      text(color="#64748b", fontSize=14, align="center") "has successfully completed the course"
+      heading(color="#1e3a8a", fontSize=20, fontWeight="bold", align="center") course
 
-pagefooter(height=20, theme=navy) {
-    text(align=center, size=8, color=textLight) "Issued by {issuer}"
-}
+      row(gap=0) {
+        text(color="#94a3b8", fontSize=11) "Issued on "
+        text(color="#94a3b8", fontSize=11) date
+      }
+      row(gap=0) {
+        text(color="#94a3b8", fontSize=11) "Issued by "
+        text(color="#94a3b8", fontSize=11) issuer
+      }
 
-page(size="595 x 842") {
-    column(padding=60, gap=20) {
-        heading(size=28) "Certificate of Completion"
-        text(size=12) "This certifies that"
-        heading(size=24, color=primary) recipient
-        text(size=12) "has successfully completed the course"
-        heading(size=18) course
-        text(size=10) "Issued on {date}"
-
-        heading(size=12) "Signatures"
-        table {
-            header {
-                th "Director"
-                th "Instructor"
-            }
-            tr {
-                td "____________________"
-                td "____________________"
-            }
-            tr {
-                td date
-                td date
-            }
+      row(gap=48) {
+        column(grow=1, gap=4) {
+          text(color="#94a3b8", fontSize=9, align="center") "____________________"
+          text(color="#64748b", fontSize=9, align="center") "Director"
         }
+        column(grow=1, gap=4) {
+          text(color="#94a3b8", fontSize=9, align="center") "____________________"
+          text(color="#64748b", fontSize=9, align="center") "Instructor"
+        }
+      }
     }
+  }
 }

@@ -1,51 +1,75 @@
 // Invoice Template
-// Demonstrates variables, control flow, and page chrome
+// Demonstrates variables, control flow, and styled tables
 
-var customerName = "John Doe"
-var customerEmail = "john@example.com"
-var invoiceNumber = "INV-001"
-var invoiceDate = "2024-01-15"
-var items = ""
+prop customerName = ""
+prop customerEmail = ""
+prop invoiceNumber = ""
+prop invoiceDate = ""
+prop items = ""
 
-pageheader(height=40) {
-  text "Acme Corporation"
-  text "123 Business Street"
-}
+page(background="#f1f5f9") {
+  column(padding=48, gap=28, background="#ffffff") {
+    row(gap=16) {
+      column(grow=1, gap=6) {
+        heading(color="#1e3a8a", fontSize=28, fontWeight="bold") "Acme Corporation"
+        text(color="#64748b", fontSize=11) "123 Business Street"
+        text(color="#64748b", fontSize=11) "New York, NY 10001"
+      }
+      column(padding=16, background="#1e3a8a", gap=4) {
+        text(color="#ffffff", fontSize=10, align="right") "INVOICE"
+        heading(color="#ffffff", fontSize=20, fontWeight="bold", align="right") invoiceNumber
+      }
+    }
 
-pagefooter(height=30) {
-  row(align=center) {
-    text "Thank you for your business!"
-    spacer
-    pagenum(format="Page {page} of {pages}", size=8)
-  }
-}
+    row(gap=48) {
+      column(grow=1, gap=6) {
+        heading(color="#1e3a8a", fontSize=14, fontWeight="bold") "Bill To"
+        text(color="#334155", fontSize=11) customerName
+        text(color="#64748b", fontSize=10) customerEmail
+      }
+      column(grow=1, gap=6) {
+        heading(color="#1e3a8a", fontSize=14, fontWeight="bold") "Invoice Details"
+        row(gap=0) {
+          text(color="#334155", fontSize=11) "Date: "
+          text(color="#334155", fontSize=11) invoiceDate
+        }
+        text(color="#334155", fontSize=11) "Terms: Net 30"
+      }
+    }
 
-page {
-  column {
-    heading "Invoice"
-    text "Invoice #:"
-    text invoiceNumber
-    text "Date:"
-    text invoiceDate
+    heading(color="#1e3a8a", fontSize=16, fontWeight="bold") "Items"
 
-    heading "Customer"
-    text "Name:"
-    text customerName
-    text "Email:"
-    text customerEmail
-
-    heading "Items"
-    table {
-      header {
-        th "Name"
-        th "Quantity"
-        th "Price"
+    table(padding=12, background="#f8fafc") {
+      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+        th "Description"
+        th(align="right") "Quantity"
+        th(align="right") "Price"
+        th(align="right") "Total"
       }
       foreach items as item {
-        tr {
+        tr(background="#ffffff", fontSize=10) {
           td item.name
-          td item.quantity
-          td item.price
+          td(align="right") item.quantity
+          td(align="right") item.price
+          td(align="right") item.total
+        }
+      }
+    }
+
+    row(gap=12) {
+      column(grow=1) {}
+      column(padding=16, background="#f8fafc", gap=6) {
+        row(gap=8) {
+          column(grow=1) { text(color="#334155", fontSize=11) "Subtotal" }
+          column(grow=1) { text(color="#334155", fontSize=11, align="right") "$0.00" }
+        }
+        row(gap=8) {
+          column(grow=1) { text(color="#334155", fontSize=11) "Tax" }
+          column(grow=1) { text(color="#334155", fontSize=11, align="right") "$0.00" }
+        }
+        row(gap=8) {
+          column(grow=1) { text(color="#1e3a8a", fontSize=14, fontWeight="bold") "Total" }
+          column(grow=1) { text(color="#1e3a8a", fontSize=14, fontWeight="bold", align="right") "$0.00" }
         }
       }
     }

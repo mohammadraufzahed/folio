@@ -1,32 +1,35 @@
-page {
-    column {
-        heading "Multi-Level Headers with Cell Spans"
-        table {
-            header {
-                th(colspan=4) "Company Overview"
-            }
-            header {
-                th(colspan=2) "Engineering"
-                th(colspan=2) "Sales"
-            }
-            header {
-                th "Team Size"
-                th "Budget"
-                th "Revenue"
-                th "Growth"
-            }
-            tr {
-                td "25"
-                td "$2.5M"
-                td "$10M"
-                td "15%"
-            }
-            tr {
-                td "30"
-                td "$3.0M"
-                td "$15M"
-                td "20%"
-            }
-        }
+// Multi-Level Headers with Cell Spans
+
+page(background="#f1f5f9") {
+  column(padding=48, gap=20, background="#ffffff") {
+    heading(color="#1e3a8a", fontSize=24, fontWeight="bold") "Multi-Level Headers with Cell Spans"
+
+    table(padding=12, background="#f8fafc") {
+      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+        th(colspan=4, align="center") "Company Overview"
+      }
+      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+        th(colspan=2, align="center") "Engineering"
+        th(colspan=2, align="center") "Sales"
+      }
+      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+        th "Team Size"
+        th "Budget"
+        th "Revenue"
+        th "Growth"
+      }
+      tr(background="#ffffff", fontSize=10) {
+        td "25"
+        td "$2.5M"
+        td "$10M"
+        td "15%"
+      }
+      tr(background="#f1f5f9", fontSize=10) {
+        td "30"
+        td "$3.0M"
+        td "$15M"
+        td "20%"
+      }
     }
+  }
 }

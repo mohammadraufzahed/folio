@@ -1,27 +1,27 @@
 // Multi-Page Document Template
-// Demonstrates multiple pages with content
+// Demonstrates multiple pages with styled content
 
 var reportTitle = "Annual Report"
 var companyName = "Acme Corporation"
 
-page {
-  column {
-    heading reportTitle
-    text "Executive Summary"
-    text "This is the first page of the report."
+page(background="#f1f5f9") {
+  column(padding=64, gap=24, background="#ffffff") {
+    heading(color="#1e3a8a", fontSize=36, fontWeight="bold") reportTitle
+    text(color="#64748b", fontSize=14) companyName
+    text(color="#334155", fontSize=11) "Executive summary for the annual report goes here."
   }
 }
 
-page {
-  column {
-    heading "Financial Overview"
-    text "This is the second page of the report."
+page(background="#eef2ff") {
+  column(padding=48, gap=20, background="#ffffff") {
+    heading(color="#1e3a8a", fontSize=24, fontWeight="bold") "Financial Overview"
+    text(color="#334155", fontSize=11) "Detailed financial metrics and analysis for the fiscal year."
   }
 }
 
-page {
-  column {
-    heading "Conclusion"
-    text "This is the third page of the report."
+page(background="#f0fdf4") {
+  column(padding=48, gap=20, background="#ffffff") {
+    heading(color="#166534", fontSize=24, fontWeight="bold") "Conclusion"
+    text(color="#334155", fontSize=11) "Summary of findings and next steps for the coming year."
   }
 }

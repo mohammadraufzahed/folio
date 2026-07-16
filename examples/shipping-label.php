@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+use Folio\Pdf\Template\TemplateEngine;
 
-$compiler = new PhpTemplateCompiler();
+$engine = (new TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-$pdf = $compiler->renderFile(__DIR__ . '/templates/shipping-label.folio', [
+$pdf = $engine->renderFile(__DIR__ . '/templates/shipping-label.folio', [
     'from' => [
         'name' => 'Acme Robotics Inc.',
         'address1' => '123 Business Street',
@@ -29,7 +29,6 @@ $pdf = $compiler->renderFile(__DIR__ . '/templates/shipping-label.folio', [
     'weight' => '4.2 kg',
 ]);
 
-$out = __DIR__ . '/shipping-label.pdf';
-$pdf->save($out);
+file_put_contents(__DIR__ . '/shipping-label.pdf', $pdf);
 
-echo "Shipping label PDF saved: {$out}\n";
+echo 'Shipping label PDF saved: ' . __DIR__ . '/shipping-label.pdf' . "\n";

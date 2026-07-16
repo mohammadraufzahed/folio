@@ -6,34 +6,49 @@ prop to = ""
 prop tracking = ""
 prop weight = ""
 
-page(size="288 x 432") {
-    column(padding=12) {
-        heading(size=10) "SHIP TO"
-        heading(size=14) to.name
-        text to.address1
-        text to.address2
-        text "{to.city}, {to.state} {to.zip}"
-        text to.country
-
-        heading(size=10) "FROM"
-        text from.name
-        text from.address1
-        text "{from.city}, {from.state} {from.zip}"
-
-        heading(size=10) "PACKAGE DETAILS"
-        table {
-            tr {
-                td "Tracking:"
-                td tracking
-            }
-            tr {
-                td "Weight:"
-                td weight
-            }
-            tr {
-                td "Service:"
-                td "Priority"
-            }
-        }
+page(size="288 x 432", background="#f1f5f9") {
+  column(padding=12, gap=12, background="#ffffff") {
+    column(padding=12, background="#1e3a8a", gap=4) {
+      text(color="#ffffff", fontSize=8) "SHIP TO"
+      heading(color="#ffffff", fontSize=14, fontWeight="bold") to.name
     }
+
+    text(color="#334155", fontSize=9) to.address1
+    row(gap=0) {
+      text(color="#334155", fontSize=9) to.city
+      text(color="#334155", fontSize=9) ", "
+      text(color="#334155", fontSize=9) to.state
+      text(color="#334155", fontSize=9) " "
+      text(color="#334155", fontSize=9) to.zip
+    }
+    text(color="#64748b", fontSize=8) to.country
+
+    column(padding=8, background="#f8fafc", gap=2) {
+      text(color="#64748b", fontSize=7) "FROM"
+      text(color="#334155", fontSize=8) from.name
+      text(color="#334155", fontSize=8) from.address1
+      row(gap=0) {
+        text(color="#334155", fontSize=8) from.city
+        text(color="#334155", fontSize=8) ", "
+        text(color="#334155", fontSize=8) from.state
+        text(color="#334155", fontSize=8) " "
+        text(color="#334155", fontSize=8) from.zip
+      }
+    }
+
+    table(padding=8, background="#f8fafc") {
+      tr(background="#ffffff", fontSize=9) {
+        td "Tracking"
+        td(align="right") tracking
+      }
+      tr(background="#ffffff", fontSize=9) {
+        td "Weight"
+        td(align="right") weight
+      }
+      tr(background="#ffffff", fontSize=9) {
+        td "Service"
+        td(align="right") "Priority"
+      }
+    }
+  }
 }

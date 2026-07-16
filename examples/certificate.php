@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Folio\Pdf\Template\PhpTemplateCompiler;
+use Folio\Pdf\Template\TemplateEngine;
 
-$compiler = new PhpTemplateCompiler();
+$engine = (new TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
 
-$pdf = $compiler->renderFile(__DIR__ . '/templates/certificate.folio', [
+$pdf = $engine->renderFile(__DIR__ . '/templates/certificate.folio', [
     'recipient' => 'Alexandra Reed',
     'course' => 'Advanced Robotics Engineering',
     'date' => date('F j, Y'),
     'issuer' => 'Acme Robotics Institute',
 ]);
 
-$out = __DIR__ . '/certificate.pdf';
-$pdf->save($out);
+file_put_contents(__DIR__ . '/certificate.pdf', $pdf);
 
-echo "Certificate PDF saved: {$out}\n";
+echo 'Certificate PDF saved: ' . __DIR__ . '/certificate.pdf' . "\n";
