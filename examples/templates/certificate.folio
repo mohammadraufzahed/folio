@@ -1,0 +1,42 @@
+// Certificate of completion template
+// Usage: certificate.php renders this with recipient, course, date and issuer data
+
+prop recipient = ""
+prop course = ""
+prop date = ""
+prop issuer = ""
+
+pageheader(height=30, theme=navy) {
+    text(align=center, size=8, color=textLight) "Official Certificate"
+}
+
+pagefooter(height=20, theme=navy) {
+    text(align=center, size=8, color=textLight) "Issued by {issuer}"
+}
+
+page(size="595 x 842") {
+    column(padding=60, gap=20) {
+        heading(size=28) "Certificate of Completion"
+        text(size=12) "This certifies that"
+        heading(size=24, color=primary) recipient
+        text(size=12) "has successfully completed the course"
+        heading(size=18) course
+        text(size=10) "Issued on {date}"
+
+        heading(size=12) "Signatures"
+        table {
+            header {
+                th "Director"
+                th "Instructor"
+            }
+            tr {
+                td "____________________"
+                td "____________________"
+            }
+            tr {
+                td date
+                td date
+            }
+        }
+    }
+}

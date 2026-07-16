@@ -1,0 +1,60 @@
+// Resume / CV template
+// Usage: resume.php renders this with name, title, contact, summary,
+// experience, education and skills data
+
+prop name = ""
+prop title = ""
+prop contact = ""
+prop summary = ""
+prop experience = ""
+prop education = ""
+prop skills = ""
+
+pageheader(height=40, theme=slate) {
+    row(align=center, gap=8) {
+        monogram "CV"
+        column(grow=1) {
+            text(size=14, weight=bold, color=textLight) name
+            text(size=9, color=mutedLight) title
+        }
+    }
+}
+
+pagefooter(height=20, theme=slate) {
+    text(align=center, size=8, color=textLight) contact
+}
+
+page(size="595 x 842") {
+    column(padding=30) {
+        heading(size=16) "Summary"
+        text summary
+
+        heading(size=16) "Experience"
+        foreach experience as job {
+            heading(size=10) "{job.role} at {job.company}"
+            text(size=8) job.dates
+            foreach job.bullets as bullet {
+                text(size=8) "- {bullet}"
+            }
+        }
+
+        heading(size=16) "Education"
+        foreach education as edu {
+            text(size=9) "{edu.school} — {edu.degree}"
+        }
+
+        heading(size=16) "Skills"
+        table {
+            header {
+                th "Skill"
+                th "Level"
+            }
+            foreach skills as skill {
+                tr {
+                    td skill.name
+                    td skill.level
+                }
+            }
+        }
+    }
+}

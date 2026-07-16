@@ -1,0 +1,39 @@
+// 4x6 shipping label template
+// Usage: shipping-label.php renders this with from, to, tracking and weight data
+
+prop from = ""
+prop to = ""
+prop tracking = ""
+prop weight = ""
+
+page(size="288 x 432") {
+    column(padding=12) {
+        heading(size=10) "SHIP TO"
+        heading(size=14) to.name
+        text to.address1
+        text to.address2
+        text "{to.city}, {to.state} {to.zip}"
+        text to.country
+
+        heading(size=10) "FROM"
+        text from.name
+        text from.address1
+        text "{from.city}, {from.state} {from.zip}"
+
+        heading(size=10) "PACKAGE DETAILS"
+        table {
+            tr {
+                td "Tracking:"
+                td tracking
+            }
+            tr {
+                td "Weight:"
+                td weight
+            }
+            tr {
+                td "Service:"
+                td "Priority"
+            }
+        }
+    }
+}

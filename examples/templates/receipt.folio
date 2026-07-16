@@ -1,0 +1,36 @@
+// 80mm thermal receipt template
+// Usage: receipt.php renders this with store, address, date, items and total data
+
+prop store = ""
+prop address = ""
+prop date = ""
+prop items = ""
+prop total = ""
+
+page(size="226 x 842") {
+    column {
+        heading(size=14) store
+        text(size=8) address
+        text(size=8) date
+        text(size=8) "------------------------------"
+
+        table {
+            header {
+                th "Qty"
+                th "Item"
+                th "Price"
+            }
+            foreach items as item {
+                tr {
+                    td item.quantity
+                    td item.name
+                    td item.price
+                }
+            }
+        }
+
+        text(size=8) "------------------------------"
+        heading(size=12) "Total: {total}"
+        text(size=8) "Thank you for your business!"
+    }
+}
