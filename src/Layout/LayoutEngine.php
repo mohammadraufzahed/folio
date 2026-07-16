@@ -16,14 +16,18 @@ use Folio\Pdf\Nodes\Text;
 use Folio\Pdf\Nodes\TextRun;
 use Folio\Pdf\Ports\FontMetricsPort;
 use Folio\Pdf\Styling\Style;
+use Folio\Pdf\Template\Component;
+use Folio\Pdf\Template\PartialRegistry;
 
 final class LayoutEngine
 {
     private readonly ?FontMetricsPort $fontMetrics;
+    private readonly ?PartialRegistry $partials;
 
-    public function __construct(?FontMetricsPort $fontMetrics = null)
+    public function __construct(?FontMetricsPort $fontMetrics = null, ?PartialRegistry $partials = null)
     {
         $this->fontMetrics = $fontMetrics;
+        $this->partials = $partials;
     }
 
     private function fontMetrics(): FontMetricsPort
@@ -71,6 +75,10 @@ final class LayoutEngine
 
         if ($node instanceof TextRun) {
             return $this->layoutTextRun($node, $context);
+        }
+
+        if ($node instanceof Component) {
+            return $this->layoutComponent($node, $context);
         }
 
         return $this->layoutDefault($node, $context);
@@ -179,6 +187,17 @@ final class LayoutEngine
             Point::origin(),
             Size::make($wrapped->width, $wrapped->height)
         );
+    }
+
+    private function layoutComponent(Component $component, LayoutContext $context): LayoutBox
+    {
+        if ($this->partials === null) {
+            return $this->layoutDefault($component, $context);
+        }
+
+        $resolved = $this->partials->resolve($component);
+
+        return $this->layoutNode($resolved, $context);
     }
 
     private function wrapNodeText(string $text, ?Style $style, float $availableWidth): TextWrapResult
