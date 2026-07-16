@@ -1,7 +1,7 @@
 {
     "name": "mohammadraufzahed/folio",
     "description": "Modern PDF generation library for PHP 8.3+ with composable document model, layout engine, and custom template language",
-    "version": "1.1.3",
+    "version": "2.0.0",
     "type": "library",
     "keywords": [
         "pdf",

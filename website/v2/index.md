@@ -23,14 +23,18 @@ architecture and a much richer developer experience.
 
 ## Migration from v1
 
-Folio 2.0 is a major version. The `Pdf` builder and `Document` API are still
-available, but new code should prefer the v2 `TemplateEngine` and the
-`LayoutEngine` → `Paginator` → `Pdf1_7Renderer` pipeline.
+Folio 2.0 is a major version and is **not** backward compatible with v1. The old
+`PdfFileWriter` and `Document::generate()` path has been removed. New code
+should use the v2 `TemplateEngine` and the `LayoutEngine` → `Paginator` →
+`Pdf1_7Renderer` pipeline.
 
 ```php
 use Folio\Pdf\Template\TemplateEngine;
 
-$pdf = (new TemplateEngine())
+$pdf = (new TemplateEngine(__DIR__ . '/templates'))
     ->enableFolio2Syntax()
     ->renderFile('invoice.folio', $data);
 ```
+
+See the v1 documentation (accessible from the version switcher) for the
+previous API.

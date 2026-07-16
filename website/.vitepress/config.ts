@@ -44,6 +44,16 @@ export default defineConfig({
           { text: 'Benchmarks', link: '/v2/benchmarks' },
         ],
       },
+      {
+        text: 'v1.x',
+        items: [
+          { text: 'Getting Started', link: '/guide/getting-started' },
+          { text: 'Quick Start', link: '/guide/quick-start' },
+          { text: 'Installation', link: '/guide/installation' },
+          { text: 'API', link: '/api/pdf' },
+          { text: 'Template Language', link: '/template-language/overview' },
+        ],
+      },
     ],
 
     sidebar: {
