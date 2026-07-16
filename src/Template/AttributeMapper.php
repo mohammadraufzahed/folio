@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Template;
 
+use Folio\Pdf\StyleEngine\ShorthandParser;
+use Folio\Pdf\StyleEngine\TokenSet;
 use Folio\Pdf\Styling\Alignment;
 use Folio\Pdf\Styling\Color;
 use Folio\Pdf\Styling\FontWeight;
@@ -15,13 +17,19 @@ final class AttributeMapper
     /**
      * @param array<string, mixed> $attrs
      */
-    public static function toStyle(array $attrs): ?Style
+    public static function toStyle(array $attrs, ?TokenSet $tokens = null): ?Style
     {
         $style = Style::make();
         $applied = false;
 
+        if (isset($attrs['class'])) {
+            $class = is_array($attrs['class']) ? $attrs['class'] : (string) $attrs['class'];
+            $style = $style->withClass($class);
+            $applied = true;
+        }
+
         if (isset($attrs['color'])) {
-            $color = self::parseColor($attrs['color']);
+            $color = self::parseColor($attrs['color'], $tokens);
             if ($color !== null) {
                 $style = $style->withColor($color);
                 $applied = true;
@@ -29,7 +37,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['background'])) {
-            $bg = self::parseColor($attrs['background']);
+            $bg = self::parseColor($attrs['background'], $tokens);
             if ($bg !== null) {
                 $style = $style->withBackground($bg);
                 $applied = true;
@@ -37,7 +45,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['fontSize'])) {
-            $size = self::parseFloat($attrs['fontSize']);
+            $size = self::parseFontSize($attrs['fontSize'], $tokens);
             if ($size !== null) {
                 $style = $style->withFontSize($size);
                 $applied = true;
@@ -45,7 +53,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['fontWeight'])) {
-            $weight = self::parseFontWeight($attrs['fontWeight']);
+            $weight = self::parseFontWeight($attrs['fontWeight'], $tokens);
             if ($weight !== null) {
                 $style = $style->withFontWeight($weight);
                 $applied = true;
@@ -58,7 +66,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['padding'])) {
-            $val = self::parseFloat($attrs['padding']);
+            $val = self::parseSpace($attrs['padding'], $tokens);
             if ($val !== null) {
                 $style = $style->withPadding($val);
                 $applied = true;
@@ -66,7 +74,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['margin'])) {
-            $val = self::parseFloat($attrs['margin']);
+            $val = self::parseSpace($attrs['margin'], $tokens);
             if ($val !== null) {
                 $style = $style->withMargin($val);
                 $applied = true;
@@ -74,7 +82,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['gap'])) {
-            $val = self::parseFloat($attrs['gap']);
+            $val = self::parseSpace($attrs['gap'], $tokens);
             if ($val !== null) {
                 $style = $style->withGap($val);
                 $applied = true;
@@ -106,14 +114,11 @@ final class AttributeMapper
         }
 
         if (isset($attrs['lineHeight'])) {
-            $val = self::parseFloat($attrs['lineHeight']);
+            $val = self::parseSpace($attrs['lineHeight'], $tokens);
             if ($val !== null) {
                 $style = $style->withLineHeight($val);
                 $applied = true;
             }
-        }
-
-        if (isset($attrs['letterSpacing'])) {
         }
 
         if (isset($attrs['opacity'])) {
@@ -125,7 +130,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['width'])) {
-            $len = self::parseLength($attrs['width']);
+            $len = self::parseLength($attrs['width'], $tokens);
             if ($len !== null) {
                 $style = $style->withWidth($len);
                 $applied = true;
@@ -133,7 +138,7 @@ final class AttributeMapper
         }
 
         if (isset($attrs['height'])) {
-            $len = self::parseLength($attrs['height']);
+            $len = self::parseLength($attrs['height'], $tokens);
             if ($len !== null) {
                 $style = $style->withHeight($len);
                 $applied = true;
@@ -141,9 +146,25 @@ final class AttributeMapper
         }
 
         if (isset($attrs['radius'])) {
-            $val = self::parseFloat($attrs['radius']);
+            $val = self::parseSpace($attrs['radius'], $tokens, 'radii');
             if ($val !== null) {
                 $style = $style->withRadius($val);
+                $applied = true;
+            }
+        }
+
+        if (isset($attrs['border'])) {
+            $border = ShorthandParser::border((string) $attrs['border'], $tokens);
+            if ($border !== null) {
+                $style = $style->withBorder($border);
+                $applied = true;
+            }
+        }
+
+        if (isset($attrs['shadow'])) {
+            $shadow = ShorthandParser::shadow((string) $attrs['shadow'], $tokens);
+            if ($shadow !== null) {
+                $style = $style->withShadow($shadow);
                 $applied = true;
             }
         }
@@ -151,7 +172,7 @@ final class AttributeMapper
         return $applied ? $style : null;
     }
 
-    private static function parseColor(mixed $value): ?Color
+    private static function parseColor(mixed $value, ?TokenSet $tokens): ?Color
     {
         if ($value instanceof Color) {
             return $value;
@@ -159,11 +180,7 @@ final class AttributeMapper
 
         $str = (string) $value;
 
-        if (preg_match('/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/', $str)) {
-            return Color::hex($str);
-        }
-
-        return self::namedColor($str);
+        return ShorthandParser::color($str, $tokens);
     }
 
     private static function parseFloat(mixed $value): ?float
@@ -180,7 +197,54 @@ final class AttributeMapper
         return null;
     }
 
-    private static function parseFontWeight(mixed $value): ?FontWeight
+    private static function parseLength(mixed $value, ?TokenSet $tokens): ?Length
+    {
+        if ($value instanceof Length) {
+            return $value;
+        }
+
+        $str = (string) $value;
+
+        if (is_numeric($str)) {
+            return Length::pt((float) $str);
+        }
+
+        return ShorthandParser::length($str, $tokens);
+    }
+
+    private static function parseSpace(mixed $value, ?TokenSet $tokens, string $category = 'space'): ?float
+    {
+        $length = self::parseLength($value, $tokens);
+
+        if ($length !== null) {
+            return $length->toPixels();
+        }
+
+        if ($tokens !== null && is_string($value)) {
+            $fontSize = $tokens->fontSize($value);
+
+            if ($fontSize !== null && $category === 'fontSizes') {
+                return $fontSize;
+            }
+        }
+
+        return null;
+    }
+
+    private static function parseFontSize(mixed $value, ?TokenSet $tokens): ?float
+    {
+        if ($tokens !== null && is_string($value)) {
+            $fontSize = $tokens->fontSize($value);
+
+            if ($fontSize !== null) {
+                return $fontSize;
+            }
+        }
+
+        return self::parseSpace($value, $tokens, 'fontSizes');
+    }
+
+    private static function parseFontWeight(mixed $value, ?TokenSet $tokens): ?FontWeight
     {
         $str = strtolower((string) $value);
 
@@ -209,62 +273,5 @@ final class AttributeMapper
             'justify' => Alignment::Justify,
             default => null,
         };
-    }
-
-    private static function parseLength(mixed $value): ?Length
-    {
-        $str = (string) $value;
-
-        if (is_numeric($str)) {
-            return Length::pt((float) $str);
-        }
-
-        if (preg_match('/^([\d.]+)\s*(pt|px|cm|mm|%)$/', $str, $m)) {
-            $val = (float) $m[1];
-            return match ($m[2]) {
-                'pt' => Length::pt($val),
-                'px' => Length::px($val),
-                'cm' => Length::cm($val),
-                'mm' => Length::mm($val),
-                '%' => Length::percent($val),
-
-            };
-        }
-
-        return null;
-    }
-
-    private static function namedColor(string $name): ?Color
-    {
-        $colors = [
-            'black' => [0, 0, 0],
-            'white' => [255, 255, 255],
-            'red' => [255, 0, 0],
-            'green' => [0, 128, 0],
-            'blue' => [0, 0, 255],
-            'yellow' => [255, 255, 0],
-            'cyan' => [0, 255, 255],
-            'magenta' => [255, 0, 255],
-            'gray' => [128, 128, 128],
-            'grey' => [128, 128, 128],
-            'orange' => [255, 165, 0],
-            'purple' => [128, 0, 128],
-            'pink' => [255, 192, 203],
-            'brown' => [165, 42, 42],
-            'navy' => [0, 0, 128],
-            'teal' => [0, 128, 128],
-            'lime' => [0, 255, 0],
-            'silver' => [192, 192, 192],
-            'maroon' => [128, 0, 0],
-            'olive' => [128, 128, 0],
-        ];
-
-        $name = strtolower($name);
-        if (isset($colors[$name])) {
-            [$r, $g, $b] = $colors[$name];
-            return Color::rgb($r, $g, $b);
-        }
-
-        return null;
     }
 }

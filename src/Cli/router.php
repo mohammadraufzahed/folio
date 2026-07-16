@@ -16,7 +16,7 @@ if ($uri === '/_folio/health') {
 
 if ($uri !== '/render') {
     http_response_code(404);
-    echo 'Not found. Use /render?template=<file>&data=<json>&v2=1';
+    echo 'Not found. Use /render?template=<file>&data=<json>';
     return true;
 }
 
@@ -38,10 +38,6 @@ if ($template === '' || !is_file($template)) {
 }
 
 $engine = new TemplateEngine();
-
-if (isset($_GET['v2'])) {
-    $engine->enableFolio2Syntax(dirname($template));
-}
 
 try {
     $pdf = $engine->renderFile($template, $data);

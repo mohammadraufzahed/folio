@@ -34,6 +34,7 @@ enum TokenType: string
     case Bang = '!';
 
     case Comment = 'comment';
+    case StyleSheet = 'stylesheet';
     case Unknown = 'unknown';
     case EOF = 'eof';
 }

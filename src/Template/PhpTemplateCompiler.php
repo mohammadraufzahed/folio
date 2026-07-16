@@ -19,6 +19,8 @@ final class PhpTemplateCompiler implements TemplateCompiler
 
     private array $partialDirs = [];
 
+    private ?Folio2Preprocessor $preprocessor = null;
+
     public function __construct(string $cacheDir = '/tmp/folio-pdf-cache')
     {
         $this->cacheDir = $cacheDir;
@@ -69,7 +71,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
             throw new \RuntimeException("Unable to read template: {$absolute}");
         }
 
-        $php = $this->compileFresh($template);
+        $php = $this->compileFresh($template, $absolute);
         $this->writeFileCache($absolute, $cachePath, $php);
 
         return $php;
@@ -137,7 +139,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
             throw new \RuntimeException("Unable to read template: {$absolute}");
         }
 
-        $php = $this->compileFresh($template);
+        $php = $this->compileFresh($template, $absolute);
         $cachePath = $this->getFileCachePath($absolute);
         $this->writeFileCache($absolute, $cachePath, $php);
         unset($this->runtimeCache['file:' . $absolute]);
@@ -168,7 +170,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
                 throw new \RuntimeException("Unable to read template: {$absolute}");
             }
 
-            $this->writeFileCache($absolute, $cachePath, $this->compileFresh($template));
+            $this->writeFileCache($absolute, $cachePath, $this->compileFresh($template, $absolute));
         }
 
         $renderer = require $cachePath;
@@ -181,14 +183,24 @@ final class PhpTemplateCompiler implements TemplateCompiler
         return $renderer;
     }
 
-    private function compileFresh(string $template): string
+    private function compileFresh(string $template, ?string $path = null): string
     {
+        $template = $this->preprocess($template, $path);
         $lexer = new Lexer($template);
         $tokens = $lexer->tokenize();
         $parser = new Parser($tokens);
         $ast = $parser->parse();
 
         return $this->generatePhp($ast);
+    }
+
+    private function preprocess(string $template, ?string $path = null): string
+    {
+        if ($this->preprocessor === null) {
+            $this->preprocessor = new Folio2Preprocessor($this->baseDir);
+        }
+
+        return $this->preprocessor->process($template, $path);
     }
 
     private function resolvePath(string $path): string
@@ -272,6 +284,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
     {
         $php = "<?php\n\n";
         $php .= "use Folio\\Pdf\\Document\\Pdf;\n";
+        $php .= "use Folio\\Pdf\\Infrastructure\\Theme\\FolioThemeRepository;\n";
         $php .= "use Folio\\Pdf\\Nodes\\Column;\n";
         $php .= "use Folio\\Pdf\\Nodes\\Heading;\n";
         $php .= "use Folio\\Pdf\\Nodes\\Page;\n";
@@ -280,6 +293,8 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $php .= "use Folio\\Pdf\\Nodes\\TableCell;\n";
         $php .= "use Folio\\Pdf\\Nodes\\TableRow;\n";
         $php .= "use Folio\\Pdf\\Nodes\\Text;\n";
+        $php .= "use Folio\\Pdf\\StyleEngine\\FolioStyleParser;\n";
+        $php .= "use Folio\\Pdf\\StyleEngine\\TokenSet;\n";
         $php .= "use Folio\\Pdf\\Template\\Scope;\n";
         $php .= "use Folio\\Pdf\\Template\\AttributeMapper;\n\n";
 
@@ -294,22 +309,42 @@ final class PhpTemplateCompiler implements TemplateCompiler
             }
         }
 
+        $baseDir = $this->baseDir ?? (getcwd() ?: '.');
+        $baseDirExpr = var_export($baseDir, true);
+
         $php .= "return static function (array \$data = []): Pdf {\n";
         if ($defaults !== []) {
             $defaultsExpr = var_export($defaults, true);
             $php .= "    \$data = array_merge({$defaultsExpr}, \$data);\n";
         }
         $strictArg = $this->strict ? 'true' : 'false';
-        $php .= "    \$scope = new Scope(\$data, [], null, {$strictArg});\n\n";
+        $php .= "    \$scope = new Scope(\$data, [], null, {$strictArg});\n";
+        $php .= "    \$__baseDir = {$baseDirExpr};\n";
+        $php .= "    \$__themeRepository = new FolioThemeRepository(\$__baseDir);\n";
+        $php .= "    \$__tokenSet = new TokenSet();\n\n";
         $php .= "    \$pdf = Pdf::make();\n\n";
 
-        foreach ($node->children as $i => $child) {
+        foreach ($node->children as $child) {
             if ($child->type === 'VarDecl') {
                 continue;
             }
 
             if ($child->type === 'PageChrome') {
                 $php .= $this->generatePageChromeStatement($child, '    ');
+                continue;
+            }
+
+            if ($child->type === 'Theme') {
+                $themeName = $this->themeName($child);
+                $php .= "    \$pdf = \$pdf->theme({$themeName}, \$__themeRepository);\n";
+                $php .= "    \$__tokenSet = \$pdf->document()->theme()?->tokenSet() ?? new TokenSet();\n";
+                continue;
+            }
+
+            if ($child->type === 'StyleSheet') {
+                $source = (string) ($child->attributes['source'] ?? '');
+                $sourceExpr = var_export($source, true);
+                $php .= "    \$pdf = \$pdf->withStyleSheet((new FolioStyleParser())->parse({$sourceExpr}));\n";
                 continue;
             }
 
@@ -329,6 +364,13 @@ final class PhpTemplateCompiler implements TemplateCompiler
         $php .= "};\n";
 
         return $php;
+    }
+
+    private function themeName(AstNode $node): string
+    {
+        $name = (string) ($node->attributes['name'] ?? '');
+
+        return var_export($name, true);
     }
 
     private function generateAsContent(AstNode $node): string
@@ -361,6 +403,8 @@ final class PhpTemplateCompiler implements TemplateCompiler
             'Partial' => $this->generatePartial($node),
             'PageChrome' => 'null',
             'Directive' => 'null',
+            'Theme' => 'null',
+            'StyleSheet' => 'null',
             default => 'null',
         };
     }
@@ -675,6 +719,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
             'width',
             'height',
             'radius',
+            'class',
         ];
 
         $styleAttrs = [];
@@ -703,7 +748,8 @@ final class PhpTemplateCompiler implements TemplateCompiler
             $parts[] = var_export($key, true) . ' => ' . $expr;
         }
 
-        return '\\Folio\\Pdf\\Template\\AttributeMapper::toStyle([' . implode(', ', $parts) . '])';
+        return '\\Folio\\Pdf\\Template\\AttributeMapper::toStyle([' . implode(', ', $parts) . '], $__tokenSet)';
+
     }
 
     private function generateTableRow(AstNode $node, bool $isHeader): string
@@ -839,9 +885,11 @@ final class PhpTemplateCompiler implements TemplateCompiler
      */
     private function generateNodeList(array $children): string
     {
+        $skipTypes = ['VarDecl', 'Theme', 'StyleSheet'];
+
         $children = array_values(array_filter(
             $children,
-            static fn (AstNode $c): bool => $c->type !== 'VarDecl'
+            static fn (AstNode $c): bool => !in_array($c->type, $skipTypes, true)
         ));
 
         if ($children === []) {
@@ -1009,7 +1057,7 @@ final class PhpTemplateCompiler implements TemplateCompiler
             ? "    if (\$__out === []) {\n        foreach ((array) ({$emptyArray}) as \$__node) { \$__out[] = \$__node; }\n    }\n"
             : '';
 
-        return '(function (\Folio\Pdf\Template\Scope $scope) {
+        return '(function (\Folio\Pdf\Template\Scope $scope) use ($__tokenSet) {
             $__source = ' . $collExpr . ';
             if (!is_array($__source)) {
                 $__source = is_iterable($__source) ? iterator_to_array($__source) : [];

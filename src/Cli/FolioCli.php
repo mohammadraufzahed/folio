@@ -33,7 +33,7 @@ final class FolioCli
         $options = self::parseOptions($args);
 
         if (!isset($options['template'])) {
-            echo "Usage: folio render --template=<path> [--data=<json>] [--output=<path>] [--v2]\n";
+            echo "Usage: folio render --template=<path> [--data=<json>] [--output=<path>]\n";
             return 1;
         }
 
@@ -52,10 +52,6 @@ final class FolioCli
         }
 
         $engine = new TemplateEngine();
-
-        if (isset($options['v2'])) {
-            $engine->enableFolio2Syntax(dirname($template));
-        }
 
         try {
             $pdf = $engine->renderFile($template, $data);
@@ -167,7 +163,7 @@ final class FolioCli
         echo "Folio CLI\n";
         echo "\n";
         echo "Commands:\n";
-        echo "  render --template=<path> [--data=<json>] [--output=<path>] [--v2]\n";
+        echo "  render --template=<path> [--data=<json>] [--output=<path>]\n";
         echo "  compile --template=<path> [--output=<php>]\n";
         echo "  serve [--port=<number>] [--templates=<dir>]\n";
         echo "  cache:clear [--cache=<dir>]\n";

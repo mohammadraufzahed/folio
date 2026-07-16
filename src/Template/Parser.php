@@ -54,6 +54,7 @@ final class Parser
             TokenType::Directive => $this->parseDirective(),
             TokenType::Keyword => $this->parseKeyword(),
             TokenType::LeftBrace => $this->parseBlock(),
+            TokenType::StyleSheet => $this->parseStyleSheetToken(),
             TokenType::String, TokenType::Identifier, TokenType::Number => $this->parseExpression(),
             default => $this->error("Unexpected token {$token->type->name} '{$token->value}'", $token),
         };
@@ -62,8 +63,22 @@ final class Parser
     private function parseDirective(): AstNode
     {
         $token = $this->advance();
+        $name = $token->value;
 
-        return new AstNode('Directive', [], ['name' => $token->value]);
+        if ($name === '@theme' && $this->check(TokenType::String)) {
+            $themeToken = $this->advance();
+
+            return new AstNode('Theme', [], ['name' => $themeToken->value]);
+        }
+
+        return new AstNode('Directive', [], ['name' => $name]);
+    }
+
+    private function parseStyleSheetToken(): AstNode
+    {
+        $token = $this->advance();
+
+        return new AstNode('StyleSheet', [], ['source' => $token->value]);
     }
 
     private function parseKeyword(): AstNode

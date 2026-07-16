@@ -15,7 +15,6 @@ final class TemplateEngine
     private TemplateCompiler $compiler;
     private LayoutEngine $layoutEngine;
     private RendererPort $renderer;
-    private ?Folio2Preprocessor $preprocessor = null;
 
     public function __construct(
         ?TemplateCompiler $compiler = null,
@@ -32,8 +31,6 @@ final class TemplateEngine
      */
     public function compileToDocument(string $template, array $data = [], ?string $path = null): Document
     {
-        $template = $this->preprocess($template, $path);
-
         if ($this->compiler instanceof PhpTemplateCompiler) {
             if ($path !== null) {
                 $this->compiler->setBaseDir(dirname($path));
@@ -80,13 +77,6 @@ final class TemplateEngine
         return $this->renderer->render($document, $layout);
     }
 
-    public function enableFolio2Syntax(?string $baseDir = null): self
-    {
-        $this->preprocessor = new Folio2Preprocessor($baseDir);
-
-        return $this;
-    }
-
     public function setCompiler(TemplateCompiler $compiler): self
     {
         $this->compiler = $compiler;
@@ -106,20 +96,5 @@ final class TemplateEngine
         $this->renderer = $renderer;
 
         return $this;
-    }
-
-    private function preprocess(string $template, ?string $path): string
-    {
-        if ($this->preprocessor === null) {
-            return $template;
-        }
-
-        $baseDir = $path !== null ? dirname($path) : null;
-
-        if ($baseDir !== null) {
-            $this->preprocessor = new Folio2Preprocessor($baseDir);
-        }
-
-        return $this->preprocessor->process($template, $path);
     }
 }
