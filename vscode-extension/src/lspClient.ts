@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import {
@@ -22,23 +21,11 @@ export class FolioPdfLspClient implements vscode.Disposable {
             return;
         }
 
-        const phpPath = config.get<string>('lsp.phpPath', 'php') || 'php';
-        const serverPath = this.resolveServerPath(config.get<string>('lsp.serverPath', '') || '');
-
-        if (!serverPath || !fs.existsSync(serverPath)) {
-            vscode.window.showWarningMessage(
-                `Folio PDF LSP: server not found at ${serverPath || '(empty)'}. Set folio-pdf.lsp.serverPath.`
-            );
-            return;
-        }
+        const serverModule = this.context.asAbsolutePath(path.join('out', 'server', 'server.js'));
 
         const serverOptions: ServerOptions = {
-            command: phpPath,
-            args: [serverPath],
-            transport: TransportKind.stdio,
-            options: {
-                cwd: path.dirname(path.dirname(serverPath)),
-            },
+            run: { module: serverModule, transport: TransportKind.ipc },
+            debug: { module: serverModule, transport: TransportKind.ipc },
         };
 
         const clientOptions: LanguageClientOptions = {
@@ -58,7 +45,7 @@ export class FolioPdfLspClient implements vscode.Disposable {
             'folioPdfLsp',
             'Folio PDF LSP',
             serverOptions,
-            clientOptions
+            clientOptions,
         );
 
         this.context.subscriptions.push(this.client);
@@ -79,43 +66,5 @@ export class FolioPdfLspClient implements vscode.Disposable {
 
     dispose(): void {
         void this.stop();
-    }
-
-    private resolveServerPath(configured: string): string {
-        if (configured) {
-            return configured;
-        }
-
-        const folders = vscode.workspace.workspaceFolders;
-        if (folders) {
-            for (const folder of folders) {
-                const root = folder.uri.fsPath;
-
-                // Development layout: the repo itself is open.
-                const devCandidate = path.join(root, 'lsp', 'lsp.php');
-                if (fs.existsSync(devCandidate)) {
-                    return devCandidate;
-                }
-
-                // Composer-installed package layout.
-                const packageCandidates = [
-                    path.join(root, 'vendor', 'mohammadraufzahed', 'folio', 'lsp', 'lsp.php'),
-                    path.join(root, 'vendor', 'folio', 'pdf', 'lsp', 'lsp.php'),
-                ];
-                for (const candidate of packageCandidates) {
-                    if (fs.existsSync(candidate)) {
-                        return candidate;
-                    }
-                }
-            }
-        }
-
-        // Fallback: relative to extension install (dev layout: vscode-extension next to lsp)
-        const fromExtension = path.resolve(this.context.extensionPath, '..', 'lsp', 'lsp.php');
-        if (fs.existsSync(fromExtension)) {
-            return fromExtension;
-        }
-
-        return '';
     }
 }
