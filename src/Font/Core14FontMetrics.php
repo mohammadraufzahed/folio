@@ -10,6 +10,12 @@ use Folio\Pdf\Ports\UnicodeRangeSet;
 
 final class Core14FontMetrics implements FontMetricsPort
 {
+    /** @var array<string, int>|null */
+    private static ?array $baseWidths = null;
+
+    /** @var array<string, int>|null */
+    private static ?array $serifAdjustments = null;
+
     public static function default(): self
     {
         return new self();
@@ -123,31 +129,11 @@ final class Core14FontMetrics implements FontMetricsPort
     }
 
     /**
-     * @return array<int|string, int>
+     * @return array<string, int>
      */
     private function baseWidths(): array
     {
-        return [
-            ' ' => 278, '!' => 278, '"' => 355, '#' => 556, '$' => 556,
-            '%' => 889, '&' => 667, '\'' => 191, '(' => 333, ')' => 333,
-            '*' => 389, '+' => 584, ',' => 278, '-' => 333, '.' => 278,
-            '/' => 278, '0' => 556, '1' => 556, '2' => 556, '3' => 556,
-            '4' => 556, '5' => 556, '6' => 556, '7' => 556, '8' => 556,
-            '9' => 556, ':' => 278, ';' => 278, '<' => 584, '=' => 584,
-            '>' => 584, '?' => 556, '@' => 1015, 'A' => 667, 'B' => 667,
-            'C' => 722, 'D' => 722, 'E' => 667, 'F' => 611, 'G' => 778,
-            'H' => 722, 'I' => 278, 'J' => 500, 'K' => 667, 'L' => 611,
-            'M' => 833, 'N' => 722, 'O' => 778, 'P' => 667, 'Q' => 778,
-            'R' => 722, 'S' => 667, 'T' => 611, 'U' => 722, 'V' => 667,
-            'W' => 944, 'X' => 667, 'Y' => 667, 'Z' => 611, '[' => 278,
-            '\\' => 278, ']' => 278, '^' => 469, '_' => 556, '`' => 333,
-            'a' => 556, 'b' => 556, 'c' => 500, 'd' => 556, 'e' => 556,
-            'f' => 278, 'g' => 556, 'h' => 556, 'i' => 222, 'j' => 222,
-            'k' => 500, 'l' => 222, 'm' => 833, 'n' => 556, 'o' => 556,
-            'p' => 556, 'q' => 556, 'r' => 333, 's' => 500, 't' => 278,
-            'u' => 556, 'v' => 500, 'w' => 722, 'x' => 500, 'y' => 500,
-            'z' => 444, '{' => 334, '|' => 260, '}' => 334, '~' => 584,
-        ];
+        return self::$baseWidths ??= $this->loadMetric('base');
     }
 
     /**
@@ -155,20 +141,31 @@ final class Core14FontMetrics implements FontMetricsPort
      */
     private function serifAdjustments(): array
     {
-        return [
-            'A' => 40, 'B' => 20, 'C' => 50, 'D' => 30, 'E' => -30,
-            'F' => -50, 'G' => 60, 'H' => 20, 'I' => -60, 'J' => 20,
-            'K' => 30, 'L' => -20, 'M' => 30, 'N' => 20, 'O' => 30,
-            'P' => 0, 'Q' => 50, 'R' => 20, 'S' => 20, 'T' => -30,
-            'U' => 20, 'V' => 20, 'W' => 60, 'X' => 20, 'Y' => 10,
-            'Z' => 30,
-            'a' => 40, 'b' => 40, 'c' => 30, 'd' => 40, 'e' => 50,
-            'f' => -100, 'g' => 30, 'h' => 30, 'i' => -30, 'j' => -30,
-            'k' => 0, 'l' => -100, 'm' => 30, 'n' => 30, 'o' => 40,
-            'p' => 40, 'q' => 40, 'r' => 0, 's' => 20, 't' => -80,
-            'u' => 30, 'v' => 0, 'w' => 20, 'x' => 0, 'y' => 0,
-            'z' => 20,
-        ];
+        return self::$serifAdjustments ??= $this->loadMetric('serifAdjustments');
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function loadMetric(string $key): array
+    {
+        $path = dirname(__DIR__, 2) . '/data/core14-fonts.json';
+
+        if (!is_file($path)) {
+            return [];
+        }
+
+        $content = file_get_contents($path);
+        if ($content === false) {
+            return [];
+        }
+
+        $decoded = json_decode($content, true);
+        if (!is_array($decoded) || !isset($decoded[$key]) || !is_array($decoded[$key])) {
+            return [];
+        }
+
+        return $decoded[$key];
     }
 
     private function averageWidth(): float
