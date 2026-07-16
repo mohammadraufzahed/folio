@@ -2,7 +2,7 @@
   "name": "folio-pdf",
   "displayName": "Folio PDF Template Language",
   "description": "Language support for Folio PDF template language (.folio)",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "publisher": "folio-pdf",
   "license": "MIT",
   "homepage": "https://mohammadraufzahed.github.io/folio/",
