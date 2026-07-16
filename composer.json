@@ -42,7 +42,8 @@
     ],
     "autoload-dev": {
         "psr-4": {
-            "Folio\\Pdf\\Tests\\": "tests/"
+            "Folio\\Pdf\\Tests\\": "tests/",
+            "Folio\\Pdf\\Benchmarks\\": "benchmarks/"
         }
     },
     "scripts": {
@@ -51,6 +52,7 @@
         "cs-check": "php-cs-fixer fix --dry-run --diff",
         "cs-fix": "php-cs-fixer fix",
         "format": "php bin/format.php",
+        "benchmark": "php benchmarks/run.php",
         "docs:build": "npm --prefix website run build",
         "docs:serve": "npm --prefix website run dev",
         "docs:preview": "npm --prefix website run preview"
