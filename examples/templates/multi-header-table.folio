@@ -1,35 +1,38 @@
-// Multi-Header Table Example
-// Demonstrates multi-level headers with cell spans
 
-page(background="#f1f5f9") {
-  column(padding=48, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=24, fontWeight="bold") "Multi-Header Table Example"
+// Premium multi-header table template
 
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
-        th(colspan=3, align="center") "Employee Information"
-        th(colspan=2, align="center") "Department"
-      }
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
-        th "Name"
-        th "ID"
-        th "Position"
-        th "Name"
-        th "Location"
-      }
-      tr(background="#ffffff", fontSize=10) {
-        td "Alice Williams"
-        td "EMP001"
-        td "Developer"
-        td "Engineering"
-        td "San Francisco"
-      }
-      tr(background="#f1f5f9", fontSize=10) {
-        td "Charlie Brown"
-        td "EMP002"
-        td "Designer"
-        td "Design"
-        td "New York"
+page(background="#ffffff") {
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=40) {
+      heading(color="#ffffff", fontSize=24) "Employee Directory"
+    }
+    column(width="100%", padding=48, gap=20) {
+      table(padding=12, background="#f8fafc", width="100%") {
+        header(background="#334155", color="#ffffff", fontSize=10, fontWeight="bold") {
+          th(colspan=3, align="center") "Employee Information"
+          th(colspan=2, align="center") "Department"
+        }
+        header(background="#0f172a", color="#ffffff", fontSize=10, fontWeight="bold") {
+          th "Name"
+          th "ID"
+          th "Position"
+          th "Name"
+          th "Location"
+        }
+        tr(background="#ffffff", fontSize=10) {
+          td "Alice Williams"
+          td "EMP001"
+          td "Developer"
+          td "Engineering"
+          td "San Francisco"
+        }
+        tr(background="#f1f5f9", fontSize=10) {
+          td "Charlie Brown"
+          td "EMP002"
+          td "Designer"
+          td "Design"
+          td "New York"
+        }
       }
     }
   }

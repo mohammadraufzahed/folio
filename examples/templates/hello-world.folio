@@ -1,17 +1,29 @@
-// Hello World Template
-// Demonstrates basic template syntax with variables and modern styling
+
+// Premium hello world template
 
 var title = "Hello, World!"
 var subtitle = "Welcome to Folio PDF"
 
-page(background="#eef2ff") {
-  column(padding=64, gap=24, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=36, fontWeight="bold") title
-    text(color="#64748b", fontSize=14) subtitle
-
-    column(padding=24, background="#f8fafc", gap=12) {
-      text(color="#334155", fontSize=11) "This PDF was generated using the Folio 2.0 template engine."
-      text(color="#334155", fontSize=11) "Built with pure PHP, no dependencies, and a clean onion architecture."
+page(background="#ffffff") {
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=40) {
+      heading(color="#ffffff", fontSize=32) title
+      text(color="#94a3b8", fontSize=11) subtitle
+    }
+    column(width="100%", padding=48, gap=20) {
+      text(color="#334155", fontSize=11, lineHeight=1.6) "Generate clean, professional PDFs with a declarative template language."
+      column(width="100%", padding=24, background="#f8fafc", gap=12) {
+        row(gap=12) {
+          column(grow=1, padding=14, background="#ffffff", gap=4) {
+            text(color="#2563eb", fontSize=12, fontWeight="bold") "Pure PHP"
+            text(color="#64748b", fontSize=10) "No external dependencies."
+          }
+          column(grow=1, padding=14, background="#ffffff", gap=4) {
+            text(color="#2563eb", fontSize=12, fontWeight="bold") "Clean DSL"
+            text(color="#64748b", fontSize=10) "Declarative templates."
+          }
+        }
+      }
     }
   }
 }

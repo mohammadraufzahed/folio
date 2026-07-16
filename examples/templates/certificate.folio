@@ -1,30 +1,25 @@
-// Certificate of completion template
-// Usage: certificate.php renders this with recipient, course, date and issuer data
+
+// Premium certificate template
 
 prop recipient = ""
 prop course = ""
 prop date = ""
 prop issuer = ""
 
-page(background="#1e3a8a") {
-  column(padding=48, background="#1e3a8a") {
-    column(padding=64, gap=28, background="#ffffff") {
-      heading(color="#1e3a8a", fontSize=32, fontWeight="bold", align="center") "Certificate of Completion"
-      text(color="#64748b", fontSize=14, align="center") "This certifies that"
-      heading(color="#0ea5e9", fontSize=28, fontWeight="bold", align="center") recipient
-      text(color="#64748b", fontSize=14, align="center") "has successfully completed the course"
-      heading(color="#1e3a8a", fontSize=20, fontWeight="bold", align="center") course
+page(background="#0f172a") {
+  column(width="100%", padding=80, background="#0f172a") {
+    column(width="100%", background="#ffffff", padding=64, gap=24, align="center") {
+      text(color="#94a3b8", fontSize=11, fontWeight="bold", letterSpacing=2) "OFFICIAL CERTIFICATE"
+      heading(color="#0f172a", fontSize=34) "Certificate of Completion"
+      text(color="#64748b", fontSize=13) "This certifies that"
+      heading(color="#2563eb", fontSize=28) recipient
+      text(color="#64748b", fontSize=13) "has successfully completed the course"
+      heading(color="#0f172a", fontSize=22) course
 
-      row(gap=0) {
-        text(color="#94a3b8", fontSize=11) "Issued on "
-        text(color="#94a3b8", fontSize=11) date
-      }
-      row(gap=0) {
-        text(color="#94a3b8", fontSize=11) "Issued by "
-        text(color="#94a3b8", fontSize=11) issuer
-      }
+      text(color="#94a3b8", fontSize=10) "Issued on {date}"
+      text(color="#94a3b8", fontSize=10) "Issued by {issuer}"
 
-      row(gap=48) {
+      row(gap=40, width="100%") {
         column(grow=1, gap=4) {
           text(color="#94a3b8", fontSize=9, align="center") "____________________"
           text(color="#64748b", fontSize=9, align="center") "Director"

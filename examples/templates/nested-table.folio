@@ -1,49 +1,52 @@
-// Nested Table Example
-// Demonstrates tables inside table cells
 
-page(background="#f1f5f9") {
-  column(padding=48, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=24, fontWeight="bold") "Nested Table Example"
+// Premium nested table template
 
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
-        th "Student"
-        th "Grades"
-      }
-      tr(background="#ffffff", fontSize=10) {
-        td "John Doe"
-        td {
-          table(padding=4, background="#ffffff") {
-            header(background="#64748b", color="#ffffff", fontSize=9, fontWeight="bold") {
-              th "Subject"
-              th "Score"
-            }
-            tr(background="#f1f5f9", fontSize=9) {
-              td "Math"
-              td(align="right") "95"
-            }
-            tr(background="#ffffff", fontSize=9) {
-              td "Science"
-              td(align="right") "88"
+page(background="#ffffff") {
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=40) {
+      heading(color="#ffffff", fontSize=24) "Student Grades"
+    }
+    column(width="100%", padding=48, gap=20) {
+      table(padding=12, background="#f8fafc", width="100%") {
+        header(background="#0f172a", color="#ffffff", fontSize=10, fontWeight="bold") {
+          th "Student"
+          th "Grades"
+        }
+        tr(background="#ffffff", fontSize=10) {
+          td "John Doe"
+          td {
+            table(padding=6, background="#ffffff", width="100%") {
+              header(background="#64748b", color="#ffffff", fontSize=9, fontWeight="bold") {
+                th "Subject"
+                th "Score"
+              }
+              tr(background="#f1f5f9", fontSize=9) {
+                td "Math"
+                td(align="right") "95"
+              }
+              tr(background="#ffffff", fontSize=9) {
+                td "Science"
+                td(align="right") "88"
+              }
             }
           }
         }
-      }
-      tr(background="#f1f5f9", fontSize=10) {
-        td "Jane Smith"
-        td {
-          table(padding=4, background="#ffffff") {
-            header(background="#64748b", color="#ffffff", fontSize=9, fontWeight="bold") {
-              th "Subject"
-              th "Score"
-            }
-            tr(background="#f1f5f9", fontSize=9) {
-              td "Math"
-              td(align="right") "92"
-            }
-            tr(background="#ffffff", fontSize=9) {
-              td "English"
-              td(align="right") "90"
+        tr(background="#f1f5f9", fontSize=10) {
+          td "Jane Smith"
+          td {
+            table(padding=6, background="#ffffff", width="100%") {
+              header(background="#64748b", color="#ffffff", fontSize=9, fontWeight="bold") {
+                th "Subject"
+                th "Score"
+              }
+              tr(background="#f1f5f9", fontSize=9) {
+                td "Math"
+                td(align="right") "92"
+              }
+              tr(background="#ffffff", fontSize=9) {
+                td "English"
+                td(align="right") "90"
+              }
             }
           }
         }

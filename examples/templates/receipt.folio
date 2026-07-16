@@ -1,5 +1,5 @@
-// 80mm thermal receipt template
-// Usage: receipt.php renders this with store, address, date, items and total data
+
+// Premium receipt template (80mm thermal roll)
 
 prop store = ""
 prop address = ""
@@ -8,34 +8,32 @@ prop items = ""
 prop total = ""
 
 page(size="226 x 842", background="#ffffff") {
-  column(padding=12, gap=8, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=14, fontWeight="bold", align="center") store
-    text(color="#64748b", fontSize=8, align="center") address
-    text(color="#94a3b8", fontSize=8, align="center") date
-    text(color="#94a3b8", fontSize=8, align="center") "----------------------------------------"
-
-    table(padding=4, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=8, fontWeight="bold") {
-        th "Qty"
-        th "Item"
-        th(align="right") "Price"
-      }
-      foreach items as item {
-        tr(background="#ffffff", fontSize=8) {
-          td item.quantity
-          td item.name
-          td(align="right") item.price
+  column(width="100%", background="#ffffff") {
+    column(width="100%", background="#0f172a", padding=20) {
+      heading(color="#ffffff", fontSize=16, align="center") store
+      text(color="#94a3b8", fontSize=8, align="center") address
+    }
+    column(width="100%", padding=16, gap=8, align="center") {
+      text(color="#64748b", fontSize=9) date
+      table(padding=10, background="#f8fafc", width="100%") {
+        header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
+          th "Qty"
+          th "Item"
+          th(align="right") "Price"
+        }
+        foreach items as item {
+          tr(background="#ffffff", fontSize=9) {
+            td item.quantity
+            td item.name
+            td(align="right") item.price
+          }
         }
       }
+      row(gap=8) {
+        text(color="#0f172a", fontSize=10, fontWeight="bold", grow=1) "Total"
+        text(color="#0f172a", fontSize=10, fontWeight="bold", align="right", grow=1) total
+      }
+      text(color="#64748b", fontSize=8, align="center") "Thank you for your business."
     }
-
-    text(color="#94a3b8", fontSize=8, align="center") "----------------------------------------"
-
-    row(gap=8) {
-      column(grow=1) { text(fontSize=9, color="#334155") "Total" }
-      column(grow=1) { text(fontSize=9, color="#1e3a8a", fontWeight="bold", align="right") total }
-    }
-
-    text(color="#64748b", fontSize=8, align="center") "Thank you for your business!"
   }
 }

@@ -1,4 +1,5 @@
-// Company multi-page report driven by PHP $data
+
+// Premium company operations report
 
 prop company = ""
 prop report = ""
@@ -17,45 +18,48 @@ prop regions = ""
 prop vendors = ""
 prop supportTickets = ""
 
-page(background="#f1f5f9") {
-  column(padding=48, gap=24, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=32, fontWeight="bold", align="center") report.title
-    text(color="#64748b", fontSize=14, align="center") company.name
-    text(color="#94a3b8", fontSize=10, align="center") report.period
-    text(color="#94a3b8", fontSize=9, align="center") report.generatedAt
+page(background="#0f172a") {
+  column(width="100%", padding=80, background="#0f172a", gap=20, align="center") {
+    text(color="#64748b", fontSize=11, fontWeight="bold", letterSpacing=3) "OPERATIONS REPORT"
+    heading(color="#ffffff", fontSize=40) report.title
+    text(color="#94a3b8", fontSize=13) company.name
+    text(color="#64748b", fontSize=10) report.period
+    text(color="#64748b", fontSize=9) report.generatedAt
+  }
+}
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Executive Summary"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
-        th "Metric"
-        th(align="right") "Value"
-        th(align="right") "Change"
-        th(align="right") "Trend"
-      }
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=22) "Executive Summary"
+  }
+  column(width="100%", padding=48, gap=24, background="#ffffff") {
+    row(gap=12) {
       foreach summary as item {
-        tr(background="#ffffff", fontSize=10) {
-          td item.label
-          td(align="right") item.value
-          td(align="right") item.change
-          td(align="right") item.trend
+        column(grow=1, padding=16, background="#f8fafc", gap=6) {
+          text(color="#64748b", fontSize=8, fontWeight="bold") item.label
+          heading(color="#0f172a", fontSize=18) item.value
+          text(color="#10b981", fontSize=9) item.change
         }
       }
     }
   }
 }
 
-page(background="#f1f5f9") {
-  column(padding=40, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Departments"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Departments & Employees"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Departments"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Name"
         th "Head"
         th(align="right") "Headcount"
         th(align="right") "Budget"
       }
       foreach departments as dept {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td dept.name
           td dept.head
           td(align="right") dept.headcount
@@ -64,9 +68,9 @@ page(background="#f1f5f9") {
       }
     }
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Employees"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+    heading(color="#0f172a", fontSize=14) "Employees"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "ID"
         th "Name"
         th "Role"
@@ -74,7 +78,7 @@ page(background="#f1f5f9") {
         th(align="right") "Salary"
       }
       foreach employees as emp {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td emp.id
           td emp.name
           td emp.role
@@ -86,11 +90,14 @@ page(background="#f1f5f9") {
   }
 }
 
-page(background="#f1f5f9") {
-  column(padding=40, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Product Catalog"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Products & Sales"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Product Catalog"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "SKU"
         th "Product"
         th "Category"
@@ -98,7 +105,7 @@ page(background="#f1f5f9") {
         th(align="right") "Stock"
       }
       foreach products as product {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td product.sku
           td product.name
           td product.category
@@ -108,16 +115,16 @@ page(background="#f1f5f9") {
       }
     }
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Sales by Product"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+    heading(color="#0f172a", fontSize=14) "Sales by Product"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Product"
         th(align="right") "Units"
         th(align="right") "Revenue"
         th "Region"
       }
       foreach sales as sale {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td sale.product
           td(align="right") sale.units
           td(align="right") sale.revenue
@@ -128,11 +135,14 @@ page(background="#f1f5f9") {
   }
 }
 
-page(background="#f1f5f9") {
-  column(padding=40, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Inventory Status"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Inventory & Customers"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Inventory Status"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Warehouse"
         th "SKU"
         th(align="right") "On Hand"
@@ -140,7 +150,7 @@ page(background="#f1f5f9") {
         th(align="right") "Available"
       }
       foreach inventory as item {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td item.warehouse
           td item.sku
           td(align="right") item.onHand
@@ -150,16 +160,16 @@ page(background="#f1f5f9") {
       }
     }
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Top Customers"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+    heading(color="#0f172a", fontSize=14) "Top Customers"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Name"
         th "Segment"
         th "Country"
         th(align="right") "LTV"
       }
       foreach customers as customer {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td customer.name
           td customer.segment
           td customer.country
@@ -170,11 +180,14 @@ page(background="#f1f5f9") {
   }
 }
 
-page(background="#f1f5f9") {
-  column(padding=40, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Invoices"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Invoices & Expenses"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Invoices"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Invoice #"
         th "Customer"
         th(align="right") "Amount"
@@ -182,7 +195,7 @@ page(background="#f1f5f9") {
         th "Due Date"
       }
       foreach invoices as invoice {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td invoice.number
           td invoice.customer
           td(align="right") invoice.amount
@@ -192,16 +205,16 @@ page(background="#f1f5f9") {
       }
     }
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Operating Expenses"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+    heading(color="#0f172a", fontSize=14) "Operating Expenses"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Category"
         th "Vendor"
         th(align="right") "Amount"
         th "Month"
       }
       foreach expenses as expense {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td expense.category
           td expense.vendor
           td(align="right") expense.amount
@@ -212,11 +225,14 @@ page(background="#f1f5f9") {
   }
 }
 
-page(background="#f1f5f9") {
-  column(padding=40, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Project Portfolio"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Projects & KPIs"
+  }
+  column(width="100%", padding=40, gap=20, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Project Portfolio"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Project"
         th "Owner"
         th "Status"
@@ -224,7 +240,7 @@ page(background="#f1f5f9") {
         th(align="right") "Budget"
       }
       foreach projects as project {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td project.name
           td project.owner
           td project.status
@@ -234,16 +250,16 @@ page(background="#f1f5f9") {
       }
     }
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "KPI Scorecard"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+    heading(color="#0f172a", fontSize=14) "KPI Scorecard"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "KPI"
         th "Target"
         th "Actual"
         th "Status"
       }
       foreach metrics as metric {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td metric.name
           td metric.target
           td metric.actual
@@ -254,18 +270,21 @@ page(background="#f1f5f9") {
   }
 }
 
-page(background="#f1f5f9") {
-  column(padding=40, gap=20, background="#ffffff") {
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Regional Performance"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+page(background="#ffffff") {
+  column(width="100%", background="#0f172a", padding=40) {
+    heading(color="#ffffff", fontSize=18) "Regions, Vendors & Support"
+  }
+  column(width="100%", padding=40, gap=16, background="#ffffff") {
+    heading(color="#0f172a", fontSize=14) "Regional Performance"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Region"
         th(align="right") "Revenue"
         th(align="right") "Growth"
         th(align="right") "Customers"
       }
       foreach regions as region {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td region.name
           td(align="right") region.revenue
           td(align="right") region.growth
@@ -274,16 +293,16 @@ page(background="#f1f5f9") {
       }
     }
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Vendor Management"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+    heading(color="#0f172a", fontSize=14) "Vendors"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Vendor"
         th "Category"
         th "Rating"
         th "Contract End"
       }
       foreach vendors as vendor {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td vendor.name
           td vendor.category
           td vendor.rating
@@ -292,9 +311,9 @@ page(background="#f1f5f9") {
       }
     }
 
-    heading(color="#1e3a8a", fontSize=18, fontWeight="bold") "Support Tickets"
-    table(padding=12, background="#f8fafc") {
-      header(background="#1e3a8a", color="#ffffff", fontSize=10, fontWeight="bold") {
+    heading(color="#0f172a", fontSize=14) "Support Tickets"
+    table(padding=10, background="#f8fafc", width="100%") {
+      header(background="#0f172a", color="#ffffff", fontSize=9, fontWeight="bold") {
         th "Ticket"
         th "Priority"
         th "Customer"
@@ -302,7 +321,7 @@ page(background="#f1f5f9") {
         th "Assignee"
       }
       foreach supportTickets as ticket {
-        tr(background="#ffffff", fontSize=10) {
+        tr(background="#ffffff", fontSize=9) {
           td ticket.id
           td ticket.priority
           td ticket.customer
