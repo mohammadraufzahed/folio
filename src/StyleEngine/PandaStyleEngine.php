@@ -11,44 +11,101 @@ final readonly class PandaStyleEngine implements StyleEngine
 {
     public function resolve(Node $node, StyleContext $context): ComputedStyle
     {
-        $style = $node->style();
+        $style = $node->style() ?? Style::make();
+        $tokens = $context->tokenSet();
 
-        if ($style === null) {
-            $style = Style::make();
+        $builder = ComputedStyleBuilder::fromStyle($style);
+
+        $this->applyInheritance($builder, $context);
+        $this->applyPresets($builder, $context, $tokens);
+        $this->applyRecipes($builder, $context, $tokens);
+
+        if (!empty($context->classList)) {
+            $builder->apply(Utility::resolve($context->classList, $tokens), $tokens);
         }
 
-        return new ComputedStyle(
-            new BoxStyle(
-                padding: $style->padding(),
-                margin: $style->margin(),
-                border: $style->border(),
-                radius: $style->radius(),
-                background: $style->background(),
-                shadow: $style->shadow(),
-                width: $style->width(),
-                height: $style->height(),
-            ),
-            new TextStyle(
-                font: $style->font(),
-                fontSize: $style->fontSize(),
-                fontWeight: $style->fontWeight(),
-                color: $style->color(),
-                lineHeight: $style->lineHeight(),
-                letterSpacing: $style->letterSpacing(),
-                alignment: $style->alignment(),
-            ),
-            new LayoutStyle(
-                width: $style->width(),
-                height: $style->height(),
-                minWidth: $style->minWidth(),
-                maxWidth: $style->maxWidth(),
-                grow: $style->grow(),
-                shrink: $style->shrink(),
-            ),
-            new PaintStyle(
-                fill: $style->background(),
-                opacity: $style->opacity(),
-            ),
+        $this->applyStylesheet($builder, $node, $context, $tokens);
+
+        if (!empty($context->rawProperties)) {
+            $builder->apply($context->rawProperties, $tokens);
+        }
+
+        return $builder->build();
+    }
+
+    private function applyInheritance(ComputedStyleBuilder $builder, StyleContext $context): void
+    {
+        $inherited = $context->parent;
+
+        if ($inherited === null) {
+            return;
+        }
+
+        $builder->withColor($inherited->text->color);
+        $builder->withFont($inherited->text->font);
+        $builder->withFontSize($inherited->text->fontSize);
+        $builder->withLineHeight($inherited->text->lineHeight);
+        $builder->withAlignment($inherited->text->alignment);
+    }
+
+    private function applyPresets(ComputedStyleBuilder $builder, StyleContext $context, TokenSet $tokens): void
+    {
+        $theme = $context->theme;
+
+        if ($theme === null) {
+            return;
+        }
+
+        if ($context->textStyle !== null) {
+            $builder->apply($theme->textStyle($context->textStyle), $tokens);
+        }
+
+        if ($context->layerStyle !== null) {
+            $builder->apply($theme->layerStyle($context->layerStyle), $tokens);
+        }
+    }
+
+    private function applyRecipes(ComputedStyleBuilder $builder, StyleContext $context, TokenSet $tokens): void
+    {
+        $theme = $context->theme;
+
+        if ($theme === null || $context->recipe === null) {
+            return;
+        }
+
+        if ($context->slot !== null) {
+            $slotRecipe = $theme->slotRecipe($context->recipe);
+
+            if ($slotRecipe !== null) {
+                $builder->apply($slotRecipe->resolve($context->slot, $context->variants), $tokens);
+
+                return;
+            }
+        }
+
+        $recipe = $theme->recipe($context->recipe);
+
+        if ($recipe !== null) {
+            $builder->apply($recipe->resolve($context->variants), $tokens);
+        }
+    }
+
+    private function applyStylesheet(ComputedStyleBuilder $builder, Node $node, StyleContext $context, TokenSet $tokens): void
+    {
+        $theme = $context->theme;
+
+        if ($theme === null || $theme->stylesheet === null) {
+            return;
+        }
+
+        $properties = $theme->stylesheet->matchingProperties(
+            $node->type(),
+            $context->classList,
+            $context,
         );
+
+        if (!empty($properties)) {
+            $builder->apply($properties, $tokens);
+        }
     }
 }

@@ -44,6 +44,11 @@ final class Length
         return new self($value, LengthUnit::Percent);
     }
 
+    public static function fr(float $value): self
+    {
+        return new self($value, LengthUnit::Fr);
+    }
+
     public static function auto(): self
     {
         return new self(0, LengthUnit::Auto);
@@ -71,7 +76,7 @@ final class Length
             LengthUnit::Pt => $this->value * $dpi / 72.0,
             LengthUnit::Mm => $this->value * $dpi / 25.4,
             LengthUnit::Cm => $this->value * $dpi / 2.54,
-            LengthUnit::Percent, LengthUnit::Auto => $this->value,
+            LengthUnit::Percent, LengthUnit::Fr, LengthUnit::Auto => $this->value,
         };
     }
 }
@@ -83,5 +88,6 @@ enum LengthUnit: string
     case Mm = 'mm';
     case Cm = 'cm';
     case Percent = '%';
+    case Fr = 'fr';
     case Auto = 'auto';
 }
