@@ -38,6 +38,7 @@ working and tested:
 - `prop` declarations, `@use` partial inlining, `{var}` and `{obj.prop}`
   string interpolation.
 - `if` / `else` and `foreach ... as` control flow.
+- `@theme` design-token loading and `@style` scoped style blocks.
 - Percentage widths, flex `grow`, `gap`, `padding`, `align` and `fontWeight`.
 - Multi-level tables with `colspan`.
 - Multi-page PHP builder documents with automatic pagination.
@@ -47,7 +48,6 @@ working and tested:
 The v2 proposal includes additional features that are not yet wired into the
 engine:
 
-- `@theme` design-token loading and `@style` scoped style blocks.
 - PandaCSS-style recipes, slot recipes and text/layer styles.
 - Components with typed props and named slots.
 - Images, SVG and embedded TrueType/OpenType fonts.
@@ -85,12 +85,10 @@ Render it from PHP:
 use Folio\Pdf\Template\TemplateEngine;
 
 $engine = new TemplateEngine();
-$pdf = $engine
-    ->enableFolio2Syntax(__DIR__)
-    ->renderFile('invoice.folio', [
-        'customer' => 'Acme Inc.',
-        'total' => '$1,250.00',
-    ]);
+$pdf = $engine->renderFile('invoice.folio', [
+    'customer' => 'Acme Inc.',
+    'total' => '$1,250.00',
+]);
 
 file_put_contents('invoice.pdf', $pdf);
 ```

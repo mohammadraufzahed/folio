@@ -15,7 +15,7 @@ pipeline:
 |--------|----------------|
 | `Folio\Pdf\Document` with `generate()` | `Folio\Pdf\Document\Pdf` through `LayoutEngine`/`Pdf1_7Renderer`, or `TemplateEngine` |
 | `PdfFileWriter` | `Pdf1_7Renderer` |
-| Inline `pageHeader()`/`pageFooter()` arrays | Not yet re-implemented; define headers/footers as regular page content for now |
+| Inline `pageHeader()`/`pageFooter()` arrays | Define headers/footers as regular page content for now |
 
 ## Template-first workflow
 
@@ -27,12 +27,10 @@ The recommended v2 workflow is a `.folio` template plus the
 use Folio\Pdf\Template\TemplateEngine;
 
 $engine = new TemplateEngine();
-$pdf = $engine
-    ->enableFolio2Syntax(__DIR__ . '/templates')
-    ->renderFile('invoice.folio', [
-        'customerName' => 'Alice',
-        'total' => '$500.00',
-    ]);
+$pdf = $engine->renderFile('invoice.folio', [
+    'customerName' => 'Alice',
+    'total' => '$500.00',
+]);
 
 file_put_contents('invoice.pdf', $pdf);
 ```
@@ -73,8 +71,6 @@ file_put_contents('hello.pdf', $pdf->toString());
 Some advanced v1 features and proposal items are not in the initial 2.0
 release:
 
-- `@theme` design-token loading
-- `@style` blocks
 - Components with named slots
 - Images and SVG
 - Embedded custom fonts

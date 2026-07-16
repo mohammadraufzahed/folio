@@ -70,8 +70,7 @@ The matching PHP script passes the data array and writes `invoice.pdf`:
 
 ```php
 $engine = new \Folio\Pdf\Template\TemplateEngine();
-$pdf = $engine->enableFolio2Syntax(__DIR__ . '/templates')
-    ->renderFile('invoice.folio', [
+$pdf = $engine->renderFile('invoice.folio', [
         'customerName'  => 'Alice Johnson',
         'customerEmail' => 'alice@example.com',
         'invoiceNumber' => 'INV-001',

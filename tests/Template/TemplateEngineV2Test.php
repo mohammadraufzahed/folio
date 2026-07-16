@@ -11,7 +11,7 @@ final class TemplateEngineV2Test extends TestCase
 {
     public function testRendersPropSyntax(): void
     {
-        $engine = (new TemplateEngine())->enableFolio2Syntax();
+        $engine = new TemplateEngine();
         $pdf = $engine->render("prop name: string = \"Folio\"\npage { text name }", ['name' => 'World']);
 
         self::assertStringStartsWith('%PDF-1.7', $pdf);
@@ -24,7 +24,7 @@ final class TemplateEngineV2Test extends TestCase
         file_put_contents($dir . '/header.folio', 'text "Included"');
         file_put_contents($dir . '/main.folio', '@use "header.folio"' . "\n" . 'page { column { heading "Main" } }');
 
-        $engine = (new TemplateEngine())->enableFolio2Syntax();
+        $engine = new TemplateEngine();
         $pdf = $engine->renderFile($dir . '/main.folio');
 
         self::assertStringStartsWith('%PDF-1.7', $pdf);

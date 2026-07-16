@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax();
+$engine = new \Folio\Pdf\Template\TemplateEngine();
 
 $template = <<<'FOLIO'
 page(background="#ffffff") {

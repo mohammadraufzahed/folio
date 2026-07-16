@@ -1,0 +1,73 @@
+prop customerName = ""
+prop invoiceNumber = ""
+prop invoiceDate = ""
+prop items = ""
+prop total = "$0.00"
+
+@theme "modern"
+
+@style {
+  .brand {
+    color: {colors.brand};
+    fontSize: {fontSizes.2xl};
+  }
+
+  .muted {
+    color: {colors.muted};
+    fontSize: {fontSizes.sm};
+  }
+
+  .card {
+    background: {colors.surface};
+    padding: 24;
+    radius: 4;
+  }
+
+  .total {
+    color: {colors.ink};
+    fontSize: {fontSizes.xl};
+    fontWeight: bold;
+  }
+}
+
+page(background="#ffffff") {
+  column(width="100%", padding=48, gap=24) {
+    row(gap=24) {
+      column(grow=1, gap=4) {
+        heading(class="brand") "Acme Corporation"
+        text(class="muted") "123 Business Street, New York, NY 10001"
+      }
+      column(gap=4, align="right") {
+        text(class="muted", fontWeight="bold") "INVOICE"
+        heading(class="brand") invoiceNumber
+      }
+    }
+
+    column(class="card", gap=8) {
+      text(class="muted") "Date: {invoiceDate}"
+      text(class="muted") "Customer: {customerName}"
+    }
+
+    table(padding=12, background="#f8fafc", width="100%") {
+      header(background="{colors.brand}", color="#ffffff", fontSize=10, fontWeight="bold") {
+        th "Item"
+        th(align="right") "Qty"
+        th(align="right") "Price"
+        th(align="right") "Total"
+      }
+      foreach items as item {
+        tr(background="#ffffff", fontSize=10) {
+          td item.name
+          td(align="right") item.quantity
+          td(align="right") item.price
+          td(align="right") item.total
+        }
+      }
+    }
+
+    row(gap=8) {
+      text(grow=1, class="total") "Total"
+      text(class="total") total
+    }
+  }
+}
