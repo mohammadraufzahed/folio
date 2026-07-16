@@ -89,8 +89,9 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "esbuild src/extension.ts --bundle --outfile=out/extension.js --platform=node --format=cjs --target=es2020 --external:vscode && esbuild src/server/server.ts --bundle --outfile=out/server/server.js --platform=node --format=cjs --target=es2020",
+    "watch": "npm run compile -- --watch",
+    "check": "tsc -p ./ --noEmit",
     "package": "vsce package"
   },
   "dependencies": {
@@ -102,6 +103,7 @@
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.80.0",
     "@vscode/vsce": "^2.22.0",
+    "esbuild": "^0.23.0",
     "typescript": "^5.0.0"
   }
 }
