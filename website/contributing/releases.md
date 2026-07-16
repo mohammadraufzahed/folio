@@ -32,7 +32,7 @@ Source archives and release notes are published to the [GitHub Releases](https:/
 
 ## VS Code Extension Releases
 
-The extension is released separately with `vscode-v*` tags. See the [VS Code Extension guide](../tooling/vscode.md) for how to install the `.vsix` from a release.
+The VSIX is built and attached to every `v*` release. You can also cut an extension-only release with a `vscode-v*` tag; see the [VS Code Extension guide](../tooling/vscode.md) for how to install the `.vsix`.
 
 ## Releasing a new version
 
@@ -53,6 +53,7 @@ Only maintainers can cut releases. The process is fully automated through GitHub
    - runs the full test matrix on PHP 8.3 and 8.4,
    - validates `composer.json`,
    - runs static analysis and code-style checks,
+   - builds the VS Code extension `.vsix` and attaches it to the release,
    - creates a GitHub Release with auto-generated notes,
    - notifies Packagist to refresh its metadata.
 
