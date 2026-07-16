@@ -34,9 +34,31 @@ export default defineConfig({
       { text: 'API', link: '/api/pdf' },
       { text: 'Templates', link: '/template-language/overview' },
       { text: 'Tooling', link: '/tooling/formatter' },
+      {
+        text: 'v2.0',
+        items: [
+          { text: 'Folio 2.0', link: '/v2/' },
+          { text: 'Architecture', link: '/v2/architecture' },
+          { text: 'Template language', link: '/v2/template-language' },
+          { text: 'CLI', link: '/v2/cli' },
+          { text: 'Benchmarks', link: '/v2/benchmarks' },
+        ],
+      },
     ],
 
     sidebar: {
+      '/v2/': [
+        {
+          text: 'Folio 2.0',
+          items: [
+            { text: 'Overview', link: '/v2/' },
+            { text: 'Architecture', link: '/v2/architecture' },
+            { text: 'Template language', link: '/v2/template-language' },
+            { text: 'CLI', link: '/v2/cli' },
+            { text: 'Benchmarks', link: '/v2/benchmarks' },
+          ]
+        }
+      ],
       '/': [
         {
           text: 'Guide',
