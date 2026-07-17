@@ -20,7 +20,7 @@ final readonly class PandaStyleEngine implements StyleEngine
             $context = $context->withClassList($classList);
         }
 
-        $builder = ComputedStyleBuilder::fromStyle($style);
+        $builder = new ComputedStyleBuilder();
 
         $this->applyInheritance($builder, $context);
         $this->applyPresets($builder, $context, $tokens);
@@ -32,6 +32,13 @@ final readonly class PandaStyleEngine implements StyleEngine
         }
 
         $this->applyStylesheet($builder, $node, $context, $tokens);
+
+        $inlineProperties = array_filter(
+            $style->toArray(),
+            static fn (mixed $value): bool => $value !== null && $value !== [],
+        );
+
+        $builder->apply($inlineProperties, $tokens);
 
         if (!empty($context->rawProperties)) {
             $builder->apply($context->rawProperties, $tokens);

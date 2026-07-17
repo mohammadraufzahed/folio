@@ -1,0 +1,12 @@
+column(width="100%", background="{colors.brand}", padding="{space.8}") {
+  row(gap="{space.4}") {
+    column(grow=1, gap="{space.2}") {
+      heading(class="brand-inverse") companyName
+      text(class="muted", color="{colors.subtle}") companyAddress
+    }
+    column(gap="{space.2}", align="right") {
+      text(class="muted", color="{colors.subtle}", fontWeight="bold") documentLabel
+      heading(class="brand-inverse") documentNumber
+    }
+  }
+}
