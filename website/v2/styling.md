@@ -157,6 +157,94 @@ table(padding=12, background="#f8fafc", width="100%") {
 Style inheritance means `fontWeight="bold"` on the `header` row makes each `th`
 inside bold.
 
+## Complete theme example
+
+A real theme keeps every color, spacing and font-size decision in one JSON file:
+
+```json
+{
+  "name": "pro",
+  "tokens": {
+    "colors": {
+      "brand": "#1e3a8a",
+      "surface": "#f8fafc",
+      "muted": "#64748b",
+      "ink": "#0f172a",
+      "paper": "#ffffff"
+    },
+    "fontSizes": {
+      "2xl": 26,
+      "xl": 20,
+      "lg": 14,
+      "base": 11,
+      "sm": 9
+    },
+    "space": {
+      "4": 12,
+      "8": 24,
+      "12": 48
+    },
+    "radii": {
+      "md": 4,
+      "lg": 8
+    }
+  },
+  "styles": {
+    "brand": {
+      "color": "{colors.brand}",
+      "fontSize": "{fontSizes.xl}",
+      "fontWeight": "bold"
+    },
+    "muted": {
+      "color": "{colors.muted}",
+      "fontSize": "{fontSizes.sm}"
+    }
+  }
+}
+```
+
+Use it in a template:
+
+```folio
+@theme "pro"
+
+@style {
+  .card {
+    background: {colors.surface};
+    padding: {space.8};
+    radius: {radii.lg};
+  }
+
+  .total {
+    color: {colors.ink};
+    fontSize: {fontSizes.xl};
+    fontWeight: bold;
+  }
+}
+
+page(background="{colors.paper}") {
+  column(width="100%", padding="{space.12}", gap="{space.8}") {
+    heading(class="brand") "Invoice"
+    column(class="card") { ... }
+    text(class="total") total
+  }
+}
+```
+
+## Style cascade
+
+Folio resolves styles in this order, with later steps overriding earlier ones:
+
+1. Inherited values from the parent element.
+2. Theme named styles for each `class` on the element.
+3. Utility classes such as `p-4`, `rounded-md` and `text-brand`.
+4. Styles from the document's `@style` block that match the element type or
+   class.
+5. Inline attributes on the element (`color="#0f172a"`, `fontSize=12`).
+
+This means you can set a default with a class or `@style` rule and override it
+with an inline attribute when necessary.
+
 ## What is not yet supported
 
 PandaCSS-style recipes and slot recipes, gradients, and filters are not yet

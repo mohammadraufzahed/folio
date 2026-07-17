@@ -32,6 +32,8 @@ working and tested:
 
 - All v2 example PDFs: invoice, certificate, shipping label, resume, receipt,
   company report and several table demonstrations.
+- Premium themed `pro-*` examples showing `@use` partials, `@theme` tokens and
+  `@style` scoped rules.
 - `.folio` template compilation to PHP.
 - `page`, `column`, `row`, `text`, `heading`, `table`, `header`, `tr`, `td`,
   `th` elements.

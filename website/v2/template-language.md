@@ -129,6 +129,66 @@ Token references from the loaded theme work inside `@style` blocks:
 }
 ```
 
+## Partials and reusable headers
+
+`@use` inlines the contents of another `.folio` file, so you can share a header
+or footer across documents. Variables in the partial are resolved from the
+main template scope.
+
+```folio
+// partials/pro-header.folio
+column(width="100%", background="{colors.brand}", padding="{space.6}") {
+    row {
+        column(grow=1) {
+            heading(color="{colors.paper}", fontSize="{fontSizes.2xl}") companyName
+            text(color="{colors.subtle}", fontSize="{fontSizes.sm}") companyAddress
+        }
+        column(align="right") {
+            text(color="{colors.paper}", fontWeight="bold") documentLabel
+            heading(color="{colors.paper}") documentNumber
+        }
+    }
+}
+```
+
+```folio
+// invoice.folio
+prop companyName = ""
+prop companyAddress = ""
+prop documentLabel = ""
+prop documentNumber = ""
+
+@use "partials/pro-header.folio"
+@theme "pro"
+
+page {
+    ...
+}
+```
+
+## Putting it together
+
+A full template combines `@use` partials, `@theme` tokens and `@style` rules:
+
+```folio
+@use "partials/pro-header.folio"
+@theme "pro"
+
+@style {
+    .card {
+        background: {colors.surface};
+        padding: {space.6};
+        radius: {radii.lg};
+    }
+}
+
+page(background="{colors.paper}") {
+    column(class="card") {
+        heading(class="brand") "Hello, Folio 2.0"
+    }
+}
+```
+
 ## Props
 
 Props declare data the template expects. They have an identifier, an optional
