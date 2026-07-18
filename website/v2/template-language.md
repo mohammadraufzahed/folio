@@ -56,10 +56,138 @@ page(background="#ffffff") {
 
 ## Directives
 
-- `@use "path"` — inline a partial template. The path is resolved relative to the
-  current template.
-- `@theme "name"` — parsed but not yet wired to the runtime style engine.
-- `@style { ... }` — parsed but not yet implemented.
+### `@use` partial inlining
+
+Inline a partial template. The path is resolved relative to the current template.
+
+```folio
+@use "partials/logo.folio"
+
+page {
+    column {
+        text "Main content"
+    }
+}
+```
+
+### `@theme` design-token loading
+
+Load a JSON theme file that defines design tokens and named styles.
+
+```folio
+@theme "modern"
+
+page {
+    column {
+        text(class="brand") "Hello"
+    }
+}
+```
+
+The theme file is searched next to the template:
+
+```text
+modern.json
+modern.theme.json
+themes/modern.json
+```
+
+### `@style` scoped style blocks
+
+Write CSS-like rules that apply to elements by class or element type.
+
+```folio
+@style {
+    .brand {
+        color: #1e3a8a;
+        fontSize: 20;
+    }
+
+    .card {
+        background: #f8fafc;
+        padding: 16;
+        radius: 4;
+    }
+}
+
+page {
+    column {
+        text(class="brand") "Branded title"
+        column(class="card") { ... }
+    }
+}
+```
+
+Token references from the loaded theme work inside `@style` blocks:
+
+```folio
+@style {
+    .brand {
+        color: {colors.brand};
+        fontSize: {fontSizes.2xl};
+    }
+}
+```
+
+## Partials and reusable headers
+
+`@use` inlines the contents of another `.folio` file, so you can share a header
+or footer across documents. Variables in the partial are resolved from the
+main template scope.
+
+```folio
+// partials/pro-header.folio
+column(width="100%", background="{colors.brand}", padding="{space.6}") {
+    row {
+        column(grow=1) {
+            heading(color="{colors.paper}", fontSize="{fontSizes.2xl}") companyName
+            text(color="{colors.subtle}", fontSize="{fontSizes.sm}") companyAddress
+        }
+        column(align="right") {
+            text(color="{colors.paper}", fontWeight="bold") documentLabel
+            heading(color="{colors.paper}") documentNumber
+        }
+    }
+}
+```
+
+```folio
+// invoice.folio
+prop companyName = ""
+prop companyAddress = ""
+prop documentLabel = ""
+prop documentNumber = ""
+
+@use "partials/pro-header.folio"
+@theme "pro"
+
+page {
+    ...
+}
+```
+
+## Putting it together
+
+A full template combines `@use` partials, `@theme` tokens and `@style` rules:
+
+```folio
+@use "partials/pro-header.folio"
+@theme "pro"
+
+@style {
+    .card {
+        background: {colors.surface};
+        padding: {space.6};
+        radius: {radii.lg};
+    }
+}
+
+page(background="{colors.paper}") {
+    column(class="card") {
+        heading(class="brand") "Hello, Folio 2.0"
+    }
+}
+```
 
 ## Props
 
@@ -135,7 +263,6 @@ column(padding=24, gap=12, background="#f8fafc", width="100%") {
 
 ## Known limitations
 
-The proposal also describes design-token themes (`@theme`), `@style` blocks,
-components with slots, and filter expressions (`{total | money}`). These are
-not yet implemented in the current Folio 2.0 branch and will be added in
-subsequent releases.
+- Components with slots are not yet implemented.
+- Filter expressions such as `{total | money}` are not yet implemented.
+- Gradients and advanced CSS effects are not yet supported.

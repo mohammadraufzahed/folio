@@ -62,12 +62,10 @@ Render it:
 use Folio\Pdf\Template\TemplateEngine;
 
 $engine = new TemplateEngine();
-$pdf = $engine
-    ->enableFolio2Syntax(__DIR__)
-    ->renderFile('invoice.folio', [
-        'customer' => 'Acme Inc.',
-        'total' => '$1,250.00',
-    ]);
+$pdf = $engine->renderFile('invoice.folio', [
+    'customer' => 'Acme Inc.',
+    'total' => '$1,250.00',
+]);
 
 file_put_contents('invoice.pdf', $pdf);
 ```

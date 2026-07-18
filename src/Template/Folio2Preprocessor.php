@@ -44,6 +44,7 @@ final class Folio2Preprocessor
                 }
 
                 if (str_starts_with($trimmed, '@theme ')) {
+                    $result[] = $line;
                     continue;
                 }
 

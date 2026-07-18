@@ -1,20 +1,51 @@
-
-// Premium styled document demo
+// Premium styled document demo using @theme and @style
 
 var title = "Styled Document"
-var content = "This document demonstrates styling in templates."
+var content = "This document demonstrates design tokens and scoped styles in templates."
 
-page(background="#ffffff") {
-  column(width="100%", background="#ffffff") {
-    column(width="100%", background="#0f172a", padding=40) {
-      heading(color="#ffffff", fontSize=28) title
+@theme "pro"
+
+@style {
+  .hero {
+    background: {colors.brand};
+    padding: {space.8};
+    color: {colors.paper};
+  }
+
+  .card {
+    background: {colors.surface};
+    padding: {space.6};
+    radius: {radii.lg};
+    gap: {space.4};
+  }
+
+  .accent {
+    color: {colors.brandLight};
+    fontWeight: bold;
+  }
+
+  .centered {
+    color: {colors.muted};
+    align: center;
+  }
+
+  .right {
+    color: {colors.muted};
+    align: right;
+  }
+}
+
+page(background="{colors.paper}") {
+  column(width="100%") {
+    column(class="hero", width="100%") {
+      heading(color="{colors.paper}", fontSize="{fontSizes.2xl}") title
     }
-    column(width="100%", padding=48, gap=20) {
-      text(color="#334155", fontSize=11, lineHeight=1.6) content
-      column(width="100%", padding=24, gap=12, background="#f8fafc") {
-        text(color="#2563eb", fontSize=14, fontWeight="bold") "Custom color and size"
-        text(color="#64748b", fontSize=11, align="center") "Centered text"
-        text(color="#10b981", fontSize=11, align="right") "Right-aligned text"
+    column(width="100%", padding="{space.8}", gap="{space.6}") {
+      text(class="muted", fontSize="{fontSizes.base}", lineHeight=1.6) content
+      column(class="card", width="100%") {
+        text(class="accent", fontSize="{fontSizes.lg}") "Custom color and size"
+        text(class="centered", fontSize="{fontSizes.base}") "Centered text"
+        text(class="right", fontSize="{fontSizes.base}") "Right-aligned text"
       }
     }
   }

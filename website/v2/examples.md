@@ -70,8 +70,7 @@ The matching PHP script passes the data array and writes `invoice.pdf`:
 
 ```php
 $engine = new \Folio\Pdf\Template\TemplateEngine();
-$pdf = $engine->enableFolio2Syntax(__DIR__ . '/templates')
-    ->renderFile('invoice.folio', [
+$pdf = $engine->renderFile('invoice.folio', [
         'customerName'  => 'Alice Johnson',
         'customerEmail' => 'alice@example.com',
         'invoiceNumber' => 'INV-001',
@@ -229,3 +228,19 @@ php examples/company-report.php
 ```
 
 Each script generates its PDF next to the source file.
+
+## Premium themed examples
+
+The `pro-` examples demonstrate `@theme`, `@style` and `@use` partials working
+together. They share a single theme file (`examples/templates/themes/pro.json`)
+that defines colors, spacing and font sizes, and a reusable header partial.
+
+```bash
+php examples/pro-invoice.php
+php examples/pro-certificate.php
+php examples/pro-receipt.php
+```
+
+Look inside `examples/templates/pro-*.folio` to see how `@theme "pro"`,
+`@style { ... }` blocks and `class="brand"` keep the markup clean while the
+design tokens live in one place.

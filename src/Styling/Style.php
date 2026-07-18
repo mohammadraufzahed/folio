@@ -42,6 +42,8 @@ final class Style
     private readonly ?Length $height;
     private readonly ?Length $minWidth;
     private readonly ?Length $maxWidth;
+    /** @var list<string> */
+    private readonly array $classList;
 
     private function __construct(array $properties)
     {
@@ -77,6 +79,7 @@ final class Style
         $this->height = $properties['height'] ?? null;
         $this->minWidth = $properties['minWidth'] ?? null;
         $this->maxWidth = $properties['maxWidth'] ?? null;
+        $this->classList = $properties['classList'] ?? [];
     }
 
     public static function make(): self
@@ -139,6 +142,11 @@ final class Style
         return new self([...$this->toArray(), 'opacity' => $value]);
     }
 
+    public function withShadow(?Shadow $value): self
+    {
+        return new self([...$this->toArray(), 'shadow' => $value]);
+    }
+
     public function withGap(?float $value): self
     {
         return new self([...$this->toArray(), 'gap' => $value]);
@@ -172,6 +180,26 @@ final class Style
     public function toArray(): array
     {
         return get_object_vars($this);
+    }
+
+    /**
+     * @param string|list<string> $class
+     */
+    public function withClass(string|array $class): self
+    {
+        if (is_string($class)) {
+            $class = preg_split('/\s+/', trim($class), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        }
+
+        return new self([...$this->toArray(), 'classList' => array_values(array_unique(array_merge($this->classList, $class)))]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function classList(): array
+    {
+        return $this->classList;
     }
 
     public function padding(): ?float

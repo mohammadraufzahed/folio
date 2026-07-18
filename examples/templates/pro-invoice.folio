@@ -1,0 +1,93 @@
+// Premium themed invoice using @use, @theme and @style
+
+prop companyName = ""
+prop companyAddress = ""
+prop documentLabel = ""
+prop documentNumber = ""
+prop customerName = ""
+prop customerEmail = ""
+prop invoiceDate = ""
+prop items = ""
+prop total = "$0.00"
+
+@use "partials/pro-header.folio"
+@theme "pro"
+
+@style {
+  .card {
+    background: {colors.surface};
+    padding: {space.8};
+    radius: {radii.lg};
+  }
+
+  .total-row {
+    color: {colors.ink};
+    fontSize: {fontSizes.xl};
+    fontWeight: bold;
+  }
+
+  table {
+    fontSize: {fontSizes.base};
+  }
+
+  .thanks {
+    color: {colors.subtle};
+    fontSize: {fontSizes.sm};
+    align: center;
+  }
+}
+
+page(background="{colors.paper}") {
+  column(width="100%", padding="{space.12}", gap="{space.8}") {
+    row(gap="{space.8}") {
+      column(grow=1, gap="{space.2}") {
+        heading(class="brand", fontSize="{fontSizes.lg}") "Bill To"
+        text(class="muted") customerName
+        text(class="muted") customerEmail
+      }
+      column(grow=1, gap="{space.2}", align="right") {
+        heading(class="brand", fontSize="{fontSizes.lg}") "Invoice Details"
+        text(class="muted") "Date: {invoiceDate}"
+        text(class="muted") "Terms: Net 30"
+      }
+    }
+
+    heading(class="brand", fontSize="{fontSizes.lg}") "Items"
+    table(width="100%", padding="{space.4}") {
+      header(class="table-header") {
+        th "Description"
+        th(align="right") "Quantity"
+        th(align="right") "Price"
+        th(align="right") "Total"
+      }
+      foreach items as item {
+        tr {
+          td item.name
+          td(align="right") item.quantity
+          td(align="right") item.price
+          td(align="right") item.total
+        }
+      }
+    }
+
+    row(gap="{space.4}") {
+      column(grow=1) {}
+      column(class="card", width="260") {
+        row(gap="{space.4}") {
+          text(class="muted", grow=1) "Subtotal"
+          text(class="total-row", align="right", grow=1) total
+        }
+        row(gap="{space.4}") {
+          text(class="muted", grow=1) "Tax"
+          text(class="total-row", align="right", grow=1) "$0.00"
+        }
+        row(gap="{space.4}") {
+          text(class="total-row", grow=1) "Total"
+          text(class="total-row", align="right", grow=1) total
+        }
+      }
+    }
+
+    text(class="thanks") "Thank you for your business."
+  }
+}

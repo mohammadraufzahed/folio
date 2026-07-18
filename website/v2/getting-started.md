@@ -51,18 +51,16 @@ require 'vendor/autoload.php';
 use Folio\Pdf\Template\TemplateEngine;
 
 $engine = new TemplateEngine();
-$pdf = $engine
-    ->enableFolio2Syntax(__DIR__ . '/templates')
-    ->renderFile('invoice.folio', [
-        'company' => 'Acme Inc.',
-        'amount'  => '$1,250.00',
-    ]);
+$pdf = $engine->renderFile('invoice.folio', [
+    'company' => 'Acme Inc.',
+    'amount'  => '$1,250.00',
+]);
 
 file_put_contents('invoice.pdf', $pdf);
 ```
 
-`enableFolio2Syntax()` turns on the v2 preprocessor, which supports `@use`,
-`prop`, string interpolation, `if` and `foreach`.
+The `TemplateEngine` compiles the `.folio` template into PHP, which supports
+`@use`, `@theme`, `@style`, `prop`, string interpolation, `if` and `foreach`.
 
 ## Your first PHP-only document
 

@@ -4,13 +4,23 @@ declare(strict_types=1);
 
 namespace Folio\Pdf\Document;
 
+use Folio\Pdf\Infrastructure\Theme\FolioThemeRepository;
 use Folio\Pdf\Layout\LayoutEngine;
 use Folio\Pdf\Nodes\Page;
+use Folio\Pdf\Ports\ThemeRepositoryPort;
 use Folio\Pdf\Renderer\Pdf1_7Renderer;
+use Folio\Pdf\StyleEngine\StyleSheet;
+use Folio\Pdf\StyleEngine\Theme;
 
 final class Pdf
 {
     private ?Document $document = null;
+
+    private ?Theme $theme = null;
+
+    private ?StyleSheet $styleSheet = null;
+
+    private static ?ThemeRepositoryPort $defaultThemeRepository = null;
 
     private function __construct()
     {
@@ -21,9 +31,30 @@ final class Pdf
         return new self();
     }
 
-    public function theme(string $name): self
+    public static function setDefaultThemeRepository(ThemeRepositoryPort $repository): void
     {
-        return clone $this;
+        self::$defaultThemeRepository = $repository;
+    }
+
+    public static function defaultThemeRepository(): ThemeRepositoryPort
+    {
+        return self::$defaultThemeRepository ?? new FolioThemeRepository();
+    }
+
+    public function theme(string $name, ?ThemeRepositoryPort $repository = null): self
+    {
+        $newInstance = clone $this;
+        $newInstance->theme = ($repository ?? self::defaultThemeRepository())->load($name);
+
+        return $newInstance;
+    }
+
+    public function withStyleSheet(StyleSheet $styleSheet): self
+    {
+        $newInstance = clone $this;
+        $newInstance->styleSheet = $styleSheet;
+
+        return $newInstance;
     }
 
     /**
@@ -45,8 +76,11 @@ final class Pdf
     public function page(Page $page): self
     {
         $newInstance = clone $this;
-        $document = $newInstance->document ?? Document::make();
-        $newInstance->document = $document->addPage($page);
+        $document = ($newInstance->document ?? Document::make())
+            ->withTheme($newInstance->theme)
+            ->withStyleSheet($newInstance->styleSheet)
+            ->addPage($page);
+        $newInstance->document = $document;
 
         return $newInstance;
     }
@@ -79,7 +113,7 @@ final class Pdf
     private function render(): string
     {
         $document = $this->document();
-        $layout = (new LayoutEngine())->layout($document);
+        $layout = (new LayoutEngine(theme: $this->theme, styleSheet: $this->styleSheet))->layout($document);
 
         return (new Pdf1_7Renderer())->render($document, $layout);
     }

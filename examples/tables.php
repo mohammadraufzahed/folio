@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-$engine = (new \Folio\Pdf\Template\TemplateEngine())->enableFolio2Syntax(__DIR__ . '/templates');
+$engine = new \Folio\Pdf\Template\TemplateEngine();
 
 $templates = [
     'simple-table.folio' => 'simple-table',

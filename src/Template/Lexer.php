@@ -224,10 +224,55 @@ final class Lexer
                 $this->advance();
             }
             $value = substr($this->input, $start, $this->position - $start);
+
+            if ($value === '@style') {
+                $this->skipWhitespace();
+
+                if ($this->currentChar() === '{') {
+                    return $this->lexStyleBlock($start, $startLine, $startCol);
+                }
+            }
+
             return new Token(TokenType::Directive, $value, $start, $startLine, $startCol, strlen($value));
         }
 
         return $this->makeToken(TokenType::At, '@');
+    }
+
+    private function lexStyleBlock(int $start, int $startLine, int $startCol): Token
+    {
+        $this->advance();
+
+        $contentStart = $this->position;
+        $depth = 1;
+
+        while ($this->position < $this->length) {
+            $char = $this->currentChar();
+
+            if ($char === '{') {
+                $depth++;
+            } elseif ($char === '}') {
+                $depth--;
+            }
+
+            $this->advance();
+
+            if ($depth === 0) {
+                break;
+            }
+        }
+
+        $content = substr($this->input, $contentStart, $this->position - $contentStart - 1);
+        $length = $this->position - $start;
+
+        return new Token(TokenType::StyleSheet, $content, $start, $startLine, $startCol, $length);
+    }
+
+    private function skipWhitespace(): void
+    {
+        while ($this->position < $this->length && ctype_space($this->currentChar())) {
+            $this->advance();
+        }
     }
 
     private function lexEquals(): Token

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-07-15
+
+### Added
+- `@use "path"` partial inlining is now fully wired in the v2 template engine.
+- `@theme "name"` loads JSON design-token themes and applies named styles at runtime.
+- `@style { ... }` parses CSS-like style blocks and applies them to the document.
+- `class="..."` attribute support on elements for theme and stylesheet-based styling.
+- New `FolioThemeRepository` and `FolioStyleParser` runtime adapters.
+- New `examples/themed-invoice.php` and `examples/templates/themes/modern.json` demonstrating `@theme` and `@style`.
+
+### Changed
+- `TemplateEngine` no longer requires `enableFolio2Syntax()`; v2 preprocessing is always active.
+- Updated v2 documentation (`template-language.md`, `styling.md`, `index.md`, `migration.md`) to remove "not wired" language.
+
 ## [2.0.2] - 2026-07-16
 
 ### Fixed

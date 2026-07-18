@@ -1,0 +1,32 @@
+{
+  "name": "modern",
+  "tokens": {
+    "colors": {
+      "brand": "#1e3a8a",
+      "surface": "#f8fafc",
+      "muted": "#64748b",
+      "ink": "#0f172a",
+      "slate": "#334155"
+    },
+    "fontSizes": {
+      "2xl": 24,
+      "xl": 18,
+      "lg": 12,
+      "sm": 9
+    },
+    "space": {
+      "4": 12,
+      "6": 18,
+      "8": 24
+    },
+    "radii": {
+      "md": 4
+    }
+  },
+  "styles": {
+    "brand": {
+      "color": "{colors.brand}",
+      "fontSize": "{fontSizes.xl}"
+    }
+  }
+}

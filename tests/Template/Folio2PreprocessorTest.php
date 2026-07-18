@@ -46,10 +46,10 @@ final class Folio2PreprocessorTest extends TestCase
         self::assertStringContainsString('text "Header"', $output);
     }
 
-    public function testIgnoresThemeDirective(): void
+    public function testPreservesThemeDirective(): void
     {
         $preprocessor = new Folio2Preprocessor();
 
-        self::assertSame('', $preprocessor->process('@theme "corporate"'));
+        self::assertSame('@theme "corporate"', $preprocessor->process('@theme "corporate"'));
     }
 }

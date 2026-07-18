@@ -7,10 +7,22 @@ namespace Folio\Pdf\Tests\Document;
 use Folio\Pdf\Document\Pdf;
 use Folio\Pdf\Nodes\Page;
 use Folio\Pdf\Nodes\Text;
+use Folio\Pdf\Ports\ThemeRepositoryPort;
+use Folio\Pdf\StyleEngine\Theme;
 use PHPUnit\Framework\TestCase;
 
 final class PdfTest extends TestCase
 {
+    public static function setUpBeforeClass(): void
+    {
+        Pdf::setDefaultThemeRepository(new class () implements ThemeRepositoryPort {
+            public function load(string $name): Theme
+            {
+                return new Theme($name);
+            }
+        });
+    }
+
     public function testMake(): void
     {
         $pdf = Pdf::make();

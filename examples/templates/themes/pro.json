@@ -1,0 +1,66 @@
+{
+  "name": "pro",
+  "tokens": {
+    "colors": {
+      "brand": "#1e3a8a",
+      "brandLight": "#3b82f6",
+      "surface": "#f8fafc",
+      "surfaceDark": "#0f172a",
+      "muted": "#64748b",
+      "subtle": "#94a3b8",
+      "ink": "#0f172a",
+      "paper": "#ffffff"
+    },
+    "fontSizes": {
+      "2xl": 26,
+      "xl": 20,
+      "lg": 14,
+      "base": 11,
+      "sm": 9
+    },
+    "space": {
+      "2": 6,
+      "4": 12,
+      "6": 18,
+      "8": 24,
+      "10": 32,
+      "12": 48
+    },
+    "radii": {
+      "md": 4,
+      "lg": 8
+    }
+  },
+  "styles": {
+    "brand": {
+      "color": "{colors.brand}",
+      "fontSize": "{fontSizes.xl}",
+      "fontWeight": "bold"
+    },
+    "brand-inverse": {
+      "color": "{colors.paper}",
+      "fontSize": "{fontSizes.xl}",
+      "fontWeight": "bold"
+    },
+    "muted": {
+      "color": "{colors.muted}",
+      "fontSize": "{fontSizes.sm}"
+    },
+    "card": {
+      "background": "{colors.surface}",
+      "padding": "{space.4}",
+      "radius": "{radii.md}"
+    },
+    "total": {
+      "color": "{colors.ink}",
+      "fontSize": "{fontSizes.lg}",
+      "fontWeight": "bold"
+    },
+    "table-header": {
+      "background": "{colors.surfaceDark}",
+      "color": "{colors.paper}",
+      "fontSize": "{fontSizes.base}",
+      "fontWeight": "bold"
+    }
+  }
+}

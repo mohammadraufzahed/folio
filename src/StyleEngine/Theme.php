@@ -70,4 +70,18 @@ final class Theme
     {
         return $this->slotRecipes[$name] ?? null;
     }
+
+    public function withStyleSheet(StyleSheet $stylesheet): self
+    {
+        return new self(
+            $this->name,
+            $this->tokens,
+            $this->styles,
+            $this->recipes,
+            $this->slotRecipes,
+            $this->textStyles,
+            $this->layerStyles,
+            $stylesheet,
+        );
+    }
 }
